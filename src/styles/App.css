@@ -1,0 +1,102 @@
+.ant-form-item-label > label {
+  font-size: 13px !important;
+  font-weight: 620;
+}
+
+.ant-checkbox + span {
+  font-size: 13px !important;
+  font-weight: 450 !important;
+}
+
+.ant-input {
+  font-size: 13px !important;
+}
+
+.ant-btn {
+  font-size: 13px !important;
+}
+
+.role-group-label {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+
+  margin-bottom: 4px;
+  color: #333;
+}
+
+/* Giảm cỡ chữ trong toàn bộ dữ liệu của bảng */
+.ant-table-cell {
+  font-size: 13px !important;
+  padding: 8px 13px !important; /* tùy chỉnh khoảng cách trong cell */
+}
+
+/* Giảm cỡ chữ tiêu đề cột */
+.ant-table-thead > tr > th {
+  font-size: 13px !important;
+  font-weight: 600;
+  background: #fafafa; /* giữ màu nhẹ cho header */
+}
+/* Thẻ card trắng dùng chung */
+.custom-card {
+  background: #fff;
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  height: 100%;
+  width: 100%;
+}
+/* Thẻ card trắng dùng chung */
+.custom-card-small-1 {
+  background: #fff;
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 53%;      /* giữ nguyên */
+  height: auto;    /* ✅ auto để ô card cao theo nội dung */
+  box-sizing: border-box;
+}
+
+
+/* Breadcrumb text */
+.breadcrumb-link {
+  color: #1890ff;
+  font-size: 13px;
+}
+
+.breadcrumb-text {
+  color: #000;
+  font-size: 13px;
+}
+
+.app-container {
+  width: 1100px !important;
+  background: #f0f2f5; /* nếu muốn màu nền như trước */
+}
+
+/* Button "Thêm mới" */
+.btn-add {
+  margin-bottom: 16px;
+  float: right;
+  margin-right: 10px;
+}
+
+/* Content layout */
+.app-content {
+  background: #ebeef4ff;
+  padding: 10px;
+  min-height: 280px;
+}
+
+/* Sidebar layout */
+.app-layout {
+  background: #ebeef4ff;
+}
+
+@media (max-width: 800px) {
+  .ant-layout-sider {
+    display: none !important;
+  }
+}

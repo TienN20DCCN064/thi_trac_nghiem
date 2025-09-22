@@ -1,0 +1,122 @@
+/* styles.css */
+.page-container {
+  background: #ebeef4ff;
+  min-height: 100vh;
+  margin-top: 12px;
+}
+
+.card-container {
+  /* width: 100%;
+    max-width: 1024px; */
+  width: 1024px;
+  margin-left: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.form-container {
+  width: 100%;
+  padding: 25px 20px;
+}
+
+.checkbox-group {
+  width: 100%;
+}
+
+.permission-group {
+  width: 100%;
+  margin-bottom: 30px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  padding: 4px 0;
+}
+
+.group-label {
+  display: block;
+  width: 100%;
+  margin-bottom: 3px;
+  border-bottom: 1px solid #d9d9d9;
+  padding-bottom: 6px;
+  padding-left: 10px;
+  padding-right: 10px;
+  box-sizing: border-box;
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 10px 10px 23px;
+  box-sizing: border-box;
+  max-width: 100%; /* Đảm bảo grid không vượt quá container cha */
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  max-width: 200px; /* Giới hạn chiều rộng của checkbox */
+  width: 100%; /* Đảm bảo checkbox-item chiếm toàn bộ không gian có sẵn */
+}
+
+.checkbox-label {
+  display: -webkit-box; /* Dùng flexbox dạng Webkit để hỗ trợ multi-line ellipsis */
+  -webkit-line-clamp: 2; /* Giới hạn tối đa 2 dòng hiển thị */
+  -webkit-box-orient: vertical; /* Sắp xếp nội dung theo chiều dọc */
+  overflow: hidden; /* Ẩn phần text bị tràn */
+  text-overflow: ellipsis; /* Thêm dấu ... nếu text bị cắt */
+  white-space: normal; /* Cho phép xuống dòng (nếu thiếu thì text sẽ dính 1 dòng) */
+  line-height: 1.4; /* Chiều cao dòng */
+  word-break: break-word; /* Tự động xuống dòng khi từ quá dài */
+  max-width: 100%; /* Không vượt quá chiều ngang container */
+  box-sizing: border-box; /* Tính padding/border vào width */
+}
+
+.button-row {
+  margin-top: 16px;
+}
+/* Phần nội dung câu hỏi */
+.question-text {
+  flex-grow: 1; /* Nội dung câu hỏi chiếm hết không gian còn lại */
+  margin-left: 5px; /* Cách số thứ tự 5px */
+  white-space: normal; /* Cho phép xuống dòng nếu nội dung dài */
+}
+/* Vùng chứa 3 nút */
+.question-actions {
+  margin-left: 440px;
+}
+/* ///////////// */
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  padding: 10px 10px 23px;
+  box-sizing: border-box;
+  width: 1000px; /* Đáp án chiếm 1000px */
+}
+.checkbox-item {
+  display: flex;
+  align-items: center;
+}
+.checkbox-label {
+  margin-left: 8px;
+}
+.add-first-question-btn-container {
+  text-align: center;
+}
+.question-actions {
+  display: flex;
+  gap: 8px;
+}
+.ant-form-item-explain-error {
+  margin-top: 4px;
+  color: #ff4d4f;
+}
+.question-number {
+  flex-grow: 0; /* Không cho số thứ tự chiếm hết không gian */
+  padding-left: 5px; /* Cách lề trái 5px */
+  white-space: nowrap; /* Giữ số thứ tự trên một dòng */
+}
+
+
+
+
