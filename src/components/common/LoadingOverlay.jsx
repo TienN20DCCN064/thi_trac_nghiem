@@ -6,29 +6,22 @@ const LoadingOverlay = ({ loading }) => {
   const [show, setShow] = useState(false);
   const timeoutId = useRef(null);
 
-  // Handle loading changes
   useEffect(() => {
     if (loading) {
-      // nếu loading bật, show ngay
       setShow(true);
-      // cancel timeout cũ nếu có
       if (timeoutId.current) {
         clearTimeout(timeoutId.current);
         timeoutId.current = null;
       }
     } else if (show) {
-      // nếu loading tắt, delay TIME_RUN trước khi hide
       timeoutId.current = setTimeout(() => {
         setShow(false);
         timeoutId.current = null;
       }, TIME_RUN);
     }
 
-    // cleanup khi unmount
     return () => {
-      if (timeoutId.current) {
-        clearTimeout(timeoutId.current);
-      }
+      if (timeoutId.current) clearTimeout(timeoutId.current);
     };
   }, [loading, show]);
 
@@ -64,7 +57,6 @@ const styles = {
   },
 };
 
-// keyframes
 const styleSheet = document.styleSheets[0];
 styleSheet.insertRule(`
 @keyframes spin {

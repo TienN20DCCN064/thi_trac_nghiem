@@ -1,3 +1,10 @@
+/* reset toàn bộ margin, padding mặc định */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
 .ant-form-item-label > label {
   font-size: 13px !important;
   font-weight: 620;
