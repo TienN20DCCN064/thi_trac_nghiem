@@ -1,7 +1,16 @@
 // src/constants/roleStore.js
-
+const JWToken = "jwt_token"; // key lưu trong localStorage
 const ROLE_KEY = "user_role"; // key lưu trong localStorage
 
+export const getToken = () => {
+  return localStorage.getItem(JWToken) || null;
+};
+export const setToken = (token) => {
+  localStorage.setItem(JWToken, token);
+};
+export const clearToken = () => {
+  localStorage.removeItem(JWToken);
+};
 // Lấy role hiện tại
 export const getRole = () => {
   return localStorage.getItem(ROLE_KEY) || null;

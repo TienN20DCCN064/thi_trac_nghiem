@@ -1,69 +1,119 @@
+import { getToken } from "../globals/globals.js";  // 👈 nhớ import hàm getToken
 
-const API_BASE = "http://localhost:5000";
+const API_BASE = "http://localhost:4002/api";
+// const API_BASE = "http://localhost:4002/api_not_token";
 
 const hamChung = {
-    async getAllDangKyThi() {
-        return await getAllDangKyThi();
-    },
-    async getDangKyThiById(id) {
-        return await getDangKyThiById(id);
-    },
-    async getAllChiTiet() {
-        return await getAllChiTiet();
-    },
-    async getChiTietByDangKyId(id) {
-        return await getChiTietByDangKyId(id);
-    },
+  // LOGIN
+  async login(username, password) {
+    try {
+      const response = await fetch(`${API_BASE}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      if (!response.ok) throw new Error("Đăng nhập thất bại");
+      return await response.json();
+    } catch (error) {
+      console.error("Lỗi login:", error);
+      throw error;
+    }
+  },
+ // LẤY TOÀN BỘ (GET ALL)
+  async getAll(tableName) {
+    console.log("Fetching all from:", tableName);
+    try {
+      const token = getToken();  // 👈 lấy token từ localStorage
+      console.log("Using token:", token);
+      const response = await fetch(`${API_BASE}/${tableName}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,  // 👈 gắn token
+        },
+      });
+      if (!response.ok) throw new Error(`Không lấy được dữ liệu ${tableName}`);
+      return await response.json();
+    } catch (error) {
+      console.error(`Lỗi getAll ${tableName}:`, error);
+      throw error;
+    }
+  },
+
+  // LẤY 1 ITEM THEO ID
+  async getOne(tableName, id) {
+    try {
+      const token = getToken();
+      const response = await fetch(`${API_BASE}/${tableName}/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error(`Không tìm thấy ${tableName} id=${id}`);
+      return await response.json();
+    } catch (error) {
+      console.error(`Lỗi getOne ${tableName}:`, error);
+      throw error;
+    }
+  },
+
+  // TẠO MỚI
+  async create(tableName, data) {
+    try {
+      const token = getToken();
+      const response = await fetch(`${API_BASE}/${tableName}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error(`Không thể tạo ${tableName}`);
+      return await response.json();
+    } catch (error) {
+      console.error(`Lỗi create ${tableName}:`, error);
+      throw error;
+    }
+  },
+
+  // CẬP NHẬT
+  async update(tableName, id, data) {
+    try {
+      const token = getToken();
+      const response = await fetch(`${API_BASE}/${tableName}/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error(`Không thể cập nhật ${tableName} id=${id}`);
+      return await response.json();
+    } catch (error) {
+      console.error(`Lỗi update ${tableName}:`, error);
+      throw error;
+    }
+  },
+
+  // XOÁ
+  async delete(tableName, id) {
+    try {
+      const token = getToken();
+      const response = await fetch(`${API_BASE}/${tableName}/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error(`Không thể xoá ${tableName} id=${id}`);
+      return id; // trả về id để reducer xoá trong state
+    } catch (error) {
+      console.error(`Lỗi delete ${tableName}:`, error);
+      throw error;
+    }
+  },
 };
-
-// 1. Lấy danh sách tất cả đăng ký thi
-async function getAllDangKyThi() {
-    try {
-        const response = await fetch(`${API_BASE}/dang_ky_thi`);
-        const data = await response.json();
-        console.log("Danh sách đăng ký thi:", data);
-        return data;
-    } catch (error) {
-        console.error("Lỗi khi lấy danh sách đăng ký thi:", error);
-    }
-}
-
-// 2. Lấy chi tiết 1 đăng ký thi theo id
-async function getDangKyThiById(id) {
-    try {
-        const response = await fetch(`${API_BASE}/dang_ky_thi/${id}`);
-        const data = await response.json();
-        console.log(`Chi tiết đăng ký thi (id=${id}):`, data);
-        return data;
-    } catch (error) {
-        console.error("Lỗi khi lấy chi tiết đăng ký thi:", error);
-    }
-}
-
-// 3. Lấy danh sách tất cả chi tiết đăng ký thi
-async function getAllChiTiet() {
-    try {
-        const response = await fetch(`${API_BASE}/chi_tiet_dang_ky_thi`);
-        const data = await response.json();
-        console.log("Danh sách chi tiết đăng ký thi:", data);
-        return data;
-    } catch (error) {
-        console.error("Lỗi khi lấy danh sách chi tiết:", error);
-    }
-}
-
-// 4. Lấy chi tiết theo id_dang_ky_thi (toàn bộ chương)
-async function getChiTietByDangKyId(id) {
-    try {
-        const response = await fetch(`${API_BASE}/chi_tiet_dang_ky_thi/${id}`);
-        const data = await response.json();
-        console.log(`Chi tiết các chương của đăng ký thi (id=${id}):`, data);
-        return data;
-    } catch (error) {
-        console.error("Lỗi khi lấy chi tiết theo id đăng ký:", error);
-    }
-}
-
-
 
 export default hamChung;

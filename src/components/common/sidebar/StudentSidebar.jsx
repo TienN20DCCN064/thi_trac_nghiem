@@ -7,6 +7,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 const { Sider } = Layout;
 
 const StudentSidebar = () => {
+  console.log("Rendering StudentSidebar");
   const location = useLocation();
   const navigate = useNavigate();
 

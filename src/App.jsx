@@ -7,22 +7,26 @@ import HeaderUserInfo from "./components/common/HeaderUserInfo.jsx";
 import RegisterExamPage from "./components/register/RegisterExamPage.jsx";
 import LoadingOverlay from "./components/common/LoadingOverlay.jsx";
 import LoginPage from "./components/auth/LoginPage.jsx";
+import PrimaryKeys from "./globals/databaseKey.js"; // 👈 import PrimaryKeys
 import "./styles/App.css";
 
 const { Content } = Layout;
 
-
 function App() {
-   // Lấy tất cả state loading từ Redux
-  const dangKyThiLoading = useSelector((state) => state.dangKyThi.loading);
-  // const usersLoading = useSelector((state) => state.users.loading); // nếu có
-  // const rolesLoading = useSelector((state) => state.roles.loading); // nếu có
+  // Lấy tất cả state loading từ Redux cho các bảng
+  const loadingStates = useSelector((state) => {
+    const result = {};
+    Object.keys(PrimaryKeys).forEach((table) => {
+      result[table] = state[table]?.loading || false;
+    });
+    return result;
+  });
 
-  const loading = dangKyThiLoading; // || usersLoading || rolesLoading ...
-  
+  // Nếu bất kỳ bảng nào loading thì hiển thị overlay
+  const loading = Object.values(loadingStates).some((v) => v);
+
   return (
     <>
-
       <Layout className="app-layout">
         <Sidebar />
         <Layout className="app-container">
@@ -32,18 +36,29 @@ function App() {
               <Route path="/" element={<h2>Welcome 🚀</h2>} />
               <Route path="/login" element={<LoginPage />} />
 
-              
-              <Route path="/users/users-list" element={<h2>Welcome /users/user-groups 🚀</h2>} />
-              <Route path="/users/user-groups" element={<h2>Welcome /users/user-groups 🚀</h2>} />
+              <Route
+                path="/users/users-list"
+                element={<h2>Welcome /users/users-list 🚀</h2>}
+              />
+              <Route
+                path="/users/user-groups"
+                element={<h2>Welcome /users/user-groups 🚀</h2>}
+              />
 
-
-              <Route path="/register/register-exam" element={<RegisterExamPage />} />
-              <Route path="/register/register-exam-test" element={<h2>Welcome /register/register-exam-test 🚀</h2>} />
+              <Route
+                path="/register/register-exam"
+                element={<RegisterExamPage />}
+              />
+              <Route
+                path="/register/register-exam-test"
+                element={<h2>Welcome /register/register-exam-test 🚀</h2>}
+              />
             </Routes>
           </Content>
         </Layout>
       </Layout>
-      {/* 👇 thêm cái overlay loading ở đây */}
+
+      {/* Overlay loading */}
       <LoadingOverlay loading={loading} />
     </>
   );

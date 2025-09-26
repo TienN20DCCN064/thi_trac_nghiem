@@ -1,5 +1,5 @@
 import React from "react";
-import { Layout, Button, message, Spin } from "antd";
+import { Layout, Button, Spin } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import RegisterExamList from "./RegisterExamList.jsx";
 import CustomBreadcrumb from "../CustomBreadcrumb.jsx";
@@ -12,7 +12,7 @@ const RegisterExamPage = () => {
 
   return (
     <>
-       <CustomBreadcrumb
+      <CustomBreadcrumb
         items={[
           { label: "Trang Chủ" },
           { label: "Đăng Ký" },

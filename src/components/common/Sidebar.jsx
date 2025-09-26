@@ -7,11 +7,13 @@ const Sidebar = () => {
   const role = getRole();
   console.log("Sidebar role:", role);
 
-
-  
-  if (role === "GV") {
+  if (role === "GiaoVu") {
     return <TeacherSidebar />;
-  } else if (role === "SV") {
+  } 
+  else if (role === "GiaoVien") {
+    return <TeacherSidebar />;
+  } 
+  else if (role === "SinhVien") {
     return <StudentSidebar />;
   } else {
     return null; // chưa đăng nhập thì không hiển thị

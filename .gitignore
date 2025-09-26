@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Bỏ qua file cấu hình nhạy cảm ở bất kỳ đâu
+**/.env

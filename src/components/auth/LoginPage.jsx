@@ -1,38 +1,56 @@
 import React, { useState, useEffect } from "react";
 import { Form, Input, Button, Typography, Card, message } from "antd";
-import { setRole, getRole, clearRole } from "../../globals/globals.js";
-import { useNavigate } from "react-router-dom"; // 👈 import thêm
+import { setRole, clearRole, getRole } from "../../globals/globals.js";
+import { setToken, clearToken, getToken } from "../../globals/globals.js";
 
-const { Title, Link } = Typography;
+import axios from "axios"; // 👈 cần axios
+
+const { Title } = Typography;
 
 const LoginPage = () => {
   const [loading, setLoading] = useState(false);
-  const [messageApi, contextHolder] = message.useMessage(); // 👈 lấy message api
-  const navigate = useNavigate(); // 👈 khởi tạo navigate
-  // 👇 Reset role khi vào trang login
+  const [messageApi, contextHolder] = message.useMessage();
+
   useEffect(() => {
     clearRole();
+    clearToken();
   }, []);
 
-  const onFinish = (values) => {
+  const onFinish = async (values) => {
     setLoading(true);
+    console.log("Received values of form: ", getRole());
+    try {
+      const res = await axios.post("http://localhost:4002/api/dang-nhap", {
+        ten_dang_nhap: values.ma_nguoi_dung,
+        mat_khau: values.password,
+      });
 
-    setTimeout(() => {
-      setLoading(false);
+      const { token, user } = res.data;
 
-      if (values.ma_nguoi_dung === "1" && values.password === "1") {
-        setRole("GV");
-        messageApi.success("Đăng nhập thành công! Vai trò: Giáo viên");
+      // Lưu token + role vào localStorage
+      setToken(token);
+      setRole(user.vai_tro);
+
+      messageApi.success(`Đăng nhập thành công! Vai trò: ${user.vai_tro}`);
+      console.log("User info:", user);
+      console.log("Token:", token);
+
+      // Điều hướng theo vai trò
+      if (user.vai_tro === "GiaoVu") {
+         window.location.href = "/register/register-exam"; // 👈 reload lại app
+      } else if (user.vai_tro === "GiaoVien") {
         window.location.href = "/register/register-exam"; // 👈 reload lại app
-      } else if (values.ma_nguoi_dung === "2" && values.password === "2") {
-        setRole("SV");
-        messageApi.success("Đăng nhập thành công! Vai trò: Sinh viên");
+      } else if (user.vai_tro === "SinhVien") {
         window.location.href = "/my-course"; // 👈 reload lại app
-      } else {
-        messageApi.error("Mã người dùng hoặc mật khẩu không đúng!");
       }
-      console.log("Received values of form: ", values);
-    }, 1500);
+    } catch (error) {
+      messageApi.error(
+        error.response?.data?.message ||
+          "Mã người dùng hoặc mật khẩu không đúng!"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -44,7 +62,7 @@ const LoginPage = () => {
         background: "#f0f2f5",
       }}
     >
-      {contextHolder} {/* 👈 bắt buộc để message hiển thị */}
+      {contextHolder}
       <Card
         style={{
           width: 360,
@@ -73,7 +91,7 @@ const LoginPage = () => {
               { required: true, message: "Vui lòng nhập mã người dùng!" },
             ]}
           >
-            <Input placeholder="Mã người dùng" size="large" />
+            <Input placeholder="Tên đăng nhập" size="large" />
           </Form.Item>
 
           <Form.Item

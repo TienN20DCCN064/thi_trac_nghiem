@@ -7,6 +7,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 const { Sider } = Layout;
 
 const TeacherSidebar = () => {
+  console.log("Rendering TeacherSidebar");
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -67,6 +68,16 @@ const TeacherSidebar = () => {
               { key: "add-question", label: "Thêm câu hỏi" },
             ],
           },
+           {
+            key: "register",
+            icon: <SettingOutlined />,
+            label: "Quản lý đăng ký",
+            children: [
+              { key: "register/register-exam", label: "Danh sách đăng ký" },
+              { key: "register/add-register", label: "Thêm đăng ký" },
+            ],
+          },
+          
         ]}
       />
     </Sider>
