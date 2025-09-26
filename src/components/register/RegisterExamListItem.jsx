@@ -8,6 +8,9 @@ function handleCheckPageParam() {
   const query = new URLSearchParams(window.location.search);
   let page = Number(query.get("page")) || 1;
   let pageSize = Number(query.get("pageSize")) || 10;
+  let ma_lop = query.get("ma_lop") || "";
+  let ma_mh = query.get("ma_mh") || "";
+  console.log("URL Params - page:", page, "pageSize:", pageSize, "ma_lop:", ma_lop, "ma_mh:", ma_mh);
 
   // Đảm bảo page và pageSize là hợp lệ
   page = isNaN(page) || page < 1 ? 1 : page;
@@ -19,8 +22,8 @@ function handleCheckPageParam() {
 const RegisterExamListItem = ({
   data = [],
   onDeleteClick,
-  onEditClick,
-  onViewDetailClick,
+  // onEditClick,
+  // onViewDetailClick,
 }) => {
   console.log("Render RegisterExamListItem with data:", data);
 
@@ -28,8 +31,8 @@ const RegisterExamListItem = ({
   const [pageSize, setPageSize] = useState(handleCheckPageParam().pageSize);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
-// Thêm state cho mode
-const [mode, setMode] = useState("view");
+  // Thêm state cho mode
+  const [mode, setMode] = useState("view");
 
   const total = Array.isArray(data) ? data.length : 0;
 
@@ -64,14 +67,14 @@ const [mode, setMode] = useState("view");
   }, [validCurrentPage, currentPage]);
 
   // Xử lý khi click "Xem chi tiết"
- // Trong RegisterExamListItem.jsx
-const handleViewDetailClick = (status, id) => {
-  console.log("Xem chi tiết đăng ký thi ID:", id);
-  console.log("Trạng thái đăng ký thi:", status);
-  setSelectedId(id);
-  setDetailModalVisible(true);
-  setMode(status); // Thêm state để lưu mode
-};
+  // Trong RegisterExamListItem.jsx
+  const handleViewDetailClick = (status, id) => {
+    console.log("Xem chi tiết đăng ký thi ID:", id);
+    console.log("Trạng thái đăng ký thi:", status);
+    setSelectedId(id);
+    setDetailModalVisible(true);
+    setMode(status); // Thêm state để lưu mode
+  };
 
   // Dữ liệu cho trang hiện tại
   const paginatedData = Array.isArray(data)
@@ -192,7 +195,9 @@ const handleViewDetailClick = (status, id) => {
               disabled={!isEditable} // Khóa nếu không Chờ Duyệt
               style={{ marginLeft: 8 }}
             />
+            
           </div>
+          
         );
       },
     },
@@ -228,15 +233,15 @@ const handleViewDetailClick = (status, id) => {
         style={{ width: "100%" }}
         tableLayout="fixed"
       />
-<RegisterExamDetailModal
-  visible={detailModalVisible}
-  id_dang_ky_thi={selectedId}
-  mode={mode} // Truyền prop mode
-  onCancel={() => {
-    setDetailModalVisible(false);
-    setMode("view"); // Reset mode về view khi đóng
-  }}
-/>
+      <RegisterExamDetailModal
+        visible={detailModalVisible}
+        id_dang_ky_thi={selectedId}
+        mode={mode} // Truyền prop mode
+        onCancel={() => {
+          setDetailModalVisible(false);
+          setMode("view"); // Reset mode về view khi đóng
+        }}
+      />
     </>
   );
 };

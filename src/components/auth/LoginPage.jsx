@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Form, Input, Button, Typography, Card, message } from "antd";
-import { setRole, clearRole, getRole } from "../../globals/globals.js";
-import { setToken, clearToken, getToken } from "../../globals/globals.js";
+import {
+  getUserInfo,
+  setUserInfo,
+  clearUserInfo,
+} from "../../globals/globals.js";
 
 import axios from "axios"; // 👈 cần axios
 
@@ -12,13 +15,12 @@ const LoginPage = () => {
   const [messageApi, contextHolder] = message.useMessage();
 
   useEffect(() => {
-    clearRole();
-    clearToken();
+    clearUserInfo();
   }, []);
 
   const onFinish = async (values) => {
     setLoading(true);
-    console.log("Received values of form: ", getRole());
+    console.log("Received values of form: ", getUserInfo());
     try {
       const res = await axios.post("http://localhost:4002/api/dang-nhap", {
         ten_dang_nhap: values.ma_nguoi_dung,
@@ -26,10 +28,8 @@ const LoginPage = () => {
       });
 
       const { token, user } = res.data;
-
-      // Lưu token + role vào localStorage
-      setToken(token);
-      setRole(user.vai_tro);
+      setUserInfo({ ...user, token }); // Lưu cả token và user info vào localStorage
+      console.log("getUserInfo", getUserInfo());
 
       messageApi.success(`Đăng nhập thành công! Vai trò: ${user.vai_tro}`);
       console.log("User info:", user);
@@ -37,7 +37,7 @@ const LoginPage = () => {
 
       // Điều hướng theo vai trò
       if (user.vai_tro === "GiaoVu") {
-         window.location.href = "/register/register-exam"; // 👈 reload lại app
+        window.location.href = "/register/register-exam"; // 👈 reload lại app
       } else if (user.vai_tro === "GiaoVien") {
         window.location.href = "/register/register-exam"; // 👈 reload lại app
       } else if (user.vai_tro === "SinhVien") {

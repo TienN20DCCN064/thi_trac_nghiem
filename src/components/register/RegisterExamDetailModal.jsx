@@ -10,7 +10,7 @@ import {
   DatePicker,
   Button,
 } from "antd";
-import { DeleteOutlined , PlusOutlined} from "@ant-design/icons"; // Import icon xóa
+import { DeleteOutlined, PlusOutlined } from "@ant-design/icons"; // Import icon xóa
 import hamChung from "../../services/service.hamChung.js";
 import moment from "moment";
 
@@ -32,8 +32,13 @@ const RegisterExamDetailModal = ({
       const fetchDetails = async () => {
         setLoading(true);
         try {
-          const examResponse = await hamChung.getOne("dang_ky_thi", id_dang_ky_thi);
-          const detailExamResponse = await hamChung.getAll("chi_tiet_dang_ky_thi");
+          const examResponse = await hamChung.getOne(
+            "dang_ky_thi",
+            id_dang_ky_thi
+          );
+          const detailExamResponse = await hamChung.getAll(
+            "chi_tiet_dang_ky_thi"
+          );
           const detailExamResponse_for_id = detailExamResponse.filter(
             (item) => item.id_dang_ky_thi === id_dang_ky_thi
           );
@@ -189,23 +194,22 @@ const RegisterExamDetailModal = ({
     },
   ];
 
- const modalFooter =
-  mode === "edit"
-    ? [
-        <Button key="cancel" onClick={onCancel}>
-          Hủy
-        </Button>,
-        <Button
-          key="save"
-          type="primary"
-          onClick={handleSave}
-          loading={loading}
-        >
-          Lưu
-        </Button>,
-      ]
-    : null;
-
+  const modalFooter =
+    mode === "edit"
+      ? [
+          <Button key="cancel" onClick={onCancel}>
+            Hủy
+          </Button>,
+          <Button
+            key="save"
+            type="primary"
+            onClick={handleSave}
+            loading={loading}
+          >
+            Lưu
+          </Button>,
+        ]
+      : null;
 
   return (
     <Modal
@@ -382,16 +386,15 @@ const RegisterExamDetailModal = ({
             tableLayout="fixed"
           />
           {mode === "edit" && (
-  <Button
-    type="dashed"
-    onClick={handleAddChapter}
-    icon={<PlusOutlined />}
-    style={{ width: "100%", marginTop: 8 }}
-  >
-    Thêm chương
-  </Button>
-)}
-
+            <Button
+              type="dashed"
+              onClick={handleAddChapter}
+              icon={<PlusOutlined />}
+              style={{ width: "100%", marginTop: 8 }}
+            >
+              Thêm chương
+            </Button>
+          )}
         </>
       )}
     </Modal>

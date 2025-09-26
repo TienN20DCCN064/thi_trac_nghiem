@@ -1,26 +1,49 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Layout, Dropdown, Avatar } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
+import { getUserInfo } from "../../globals/globals.js";
 
+import hamChiTiet from "../../services/service.hamChiTiet.js"; // Giả sử hamChung nằm trong thư mục utils
 const { Header } = Layout;
 
 const HeaderUserInfo = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
 
-  // Ẩn Header ở 1 số route (ví dụ /login)
+  // Lấy thông tin người dùng khi component mount
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const userInfo = getUserInfo(); // Lấy thông tin từ localStorage
+        if (userInfo?.id_tai_khoan) {
+          const response = await hamChiTiet.getUserInfoByAccountId(
+            userInfo.id_tai_khoan
+          );
+          console.log("Thông tin người dùng:", response);
+          setUser(response); // Giả sử API trả về dữ liệu trong trường 'data'
+        } else {
+          throw new Error("Không tìm thấy id_tai_khoan");
+        }
+      } catch (error) {
+        console.error("Lỗi khi lấy thông tin người dùng:", error);
+        navigate("/login"); // Chuyển hướng về login nếu lỗi
+      }
+    };
+
+    fetchUserInfo();
+  }, [navigate]);
+
+  // Ẩn Header ở các route như /login
   const hiddenRoutes = ["/login"];
   if (hiddenRoutes.includes(location.pathname)) {
     return null;
   }
 
   const handleLogout = () => {
-    console.log("Logout clicked");
-    // Xoá token hoặc dữ liệu user
+    console.log("Đăng xuất được nhấn");
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-
-    // Chuyển về trang login
     navigate("/login");
   };
 
@@ -48,9 +71,9 @@ const HeaderUserInfo = () => {
           style={{ display: "flex", alignItems: "center", cursor: "pointer" }}
         >
           <Avatar style={{ backgroundColor: "#87d068", marginRight: 8 }}>
-            S
+            {user ? user.ten?.charAt(0).toUpperCase() : "U"}
           </Avatar>
-          <span>superadmin</span>
+          <span>{user ? `${user.ho} ${user.ten}` : "Người dùng"}</span>
         </div>
       </Dropdown>
     </Header>
