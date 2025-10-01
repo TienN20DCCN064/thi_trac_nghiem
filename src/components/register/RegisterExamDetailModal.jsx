@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Modal,
   Table,
@@ -9,10 +9,13 @@ import {
   Input,
   DatePicker,
   Button,
+  Select,
 } from "antd";
-import { DeleteOutlined, PlusOutlined } from "@ant-design/icons"; // Import icon xóa
+import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import hamChung from "../../services/service.hamChung.js";
 import moment from "moment";
+
+const { Option } = Select;
 
 const RegisterExamDetailModal = ({
   visible,
@@ -26,177 +29,195 @@ const RegisterExamDetailModal = ({
   const [editChapterDetails, setEditChapterDetails] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Gọi API để lấy thông tin
-  useEffect(() => {
-    if (visible && id_dang_ky_thi) {
-      const fetchDetails = async () => {
-        setLoading(true);
-        try {
-          const examResponse = await hamChung.getOne(
-            "dang_ky_thi",
-            id_dang_ky_thi
-          );
-          const detailExamResponse = await hamChung.getAll(
-            "chi_tiet_dang_ky_thi"
-          );
-          const detailExamResponse_for_id = detailExamResponse.filter(
-            (item) => item.id_dang_ky_thi === id_dang_ky_thi
-          );
+  // options cho select
+  const [lopOptions, setLopOptions] = useState([]);
+  const [monHocOptions, setMonHocOptions] = useState([]);
 
-          setExamDetails(examResponse);
-          setEditExamDetails(examResponse);
-          setChapterDetails(
-            Array.isArray(detailExamResponse_for_id)
-              ? detailExamResponse_for_id
-              : []
-          );
-          setEditChapterDetails(
-            Array.isArray(detailExamResponse_for_id)
-              ? detailExamResponse_for_id
-              : []
-          );
-        } catch (error) {
-          message.error(`Lỗi khi tải chi tiết đăng ký thi: ${error.message}`);
-          setExamDetails(null);
-          setEditExamDetails(null);
-          setChapterDetails([]);
-          setEditChapterDetails([]);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchDetails();
-    }
+  // Gọi API danh sách lớp, môn
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const lops = await hamChung.getAll("lop");
+        const monhocs = await hamChung.getAll("mon_hoc");
+        console.log("Lops:", lops);
+        console.log("Monhocs:", monhocs);
+        setLopOptions(lops);
+        setMonHocOptions(monhocs);
+      } catch {
+        message.error("Lỗi tải danh sách lớp / môn học");
+      }
+    };
+    if (visible) fetchOptions();
+  }, [visible]);
+
+  // Gọi API chi tiết đăng ký thi
+  useEffect(() => {
+    if (!visible || !id_dang_ky_thi) return;
+    const fetchDetails = async () => {
+      setLoading(true);
+      try {
+        const exam = await hamChung.getOne("dang_ky_thi", id_dang_ky_thi);
+        const details = (await hamChung.getAll("chi_tiet_dang_ky_thi")).filter(
+          (d) => d.id_dang_ky_thi === id_dang_ky_thi
+        );
+        const getOne_gv = await hamChung.getOne("giao_vien", exam.ma_gv);
+        exam.ho_ten_gv = getOne_gv ? `${getOne_gv.ho} ${getOne_gv.ten}` : "";
+        setExamDetails(exam);
+        setEditExamDetails(exam);
+        setChapterDetails(details);
+        setEditChapterDetails(details);
+      } catch (error) {
+        message.error(`Lỗi tải dữ liệu: ${error.message}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDetails();
   }, [visible, id_dang_ky_thi]);
 
-  // Xử lý thay đổi dữ liệu chỉnh sửa
-  const handleInputChange = (field, value) => {
-    setEditExamDetails((prev) => ({ ...prev, [field]: value }));
-  };
+  // Handlers
+  const handleInputChange = useCallback(
+    (field, value) =>
+      setEditExamDetails((prev) => ({ ...prev, [field]: value })),
+    []
+  );
 
-  const handleChapterChange = (index, field, value) => {
-    setEditChapterDetails((prev) => {
-      const newData = [...prev];
-      newData[index] = { ...newData[index], [field]: value };
-      return newData;
-    });
-  };
+  const handleChapterChange = (i, field, value) =>
+    setEditChapterDetails((prev) =>
+      prev.map((c, idx) => (idx === i ? { ...c, [field]: value } : c))
+    );
 
-  // Xử lý thêm chương mới
-  const handleAddChapter = () => {
+  const handleAddChapter = () =>
     setEditChapterDetails((prev) => [
       ...prev,
-      {
-        id_dang_ky_thi,
-        chuong_so: "",
-        so_cau: 0,
-        id: `temp_${Date.now()}_${prev.length}`,
-      },
+      { id_dang_ky_thi, chuong_so: "", so_cau: 0, id: `temp_${Date.now()}` },
     ]);
-  };
 
-  // Xử lý xóa chương
-  const handleDeleteChapter = (index) => {
-    setEditChapterDetails((prev) => prev.filter((_, i) => i !== index));
-  };
+  const handleDeleteChapter = (i) =>
+    setEditChapterDetails((prev) => prev.filter((_, idx) => idx !== i));
 
-  // Xử lý lưu dữ liệu
   const handleSave = async () => {
     setLoading(true);
     try {
-      // Cập nhật dang_ky_thi
       await hamChung.update("dang_ky_thi", id_dang_ky_thi, editExamDetails);
 
-      // Xử lý chi_tiet_dang_ky_thi
-      for (const chapter of editChapterDetails) {
-        if (chapter.id.toString().startsWith("temp_")) {
-          const { id, ...chapterData } = chapter;
-          await hamChung.create("chi_tiet_dang_ky_thi", chapterData);
+      for (const c of editChapterDetails) {
+        if (String(c.id).startsWith("temp_")) {
+          const { id, ...data } = c;
+          await hamChung.create("chi_tiet_dang_ky_thi", data);
         } else {
-          await hamChung.update("chi_tiet_dang_ky_thi", chapter.id, chapter);
+          await hamChung.update("chi_tiet_dang_ky_thi", c.id, c);
         }
       }
 
-      // Xóa các chương đã bị xóa
-      const currentIds = editChapterDetails.map((chapter) => chapter.id);
-      const deletedChapters = chapterDetails.filter(
-        (chapter) => !currentIds.includes(chapter.id)
+      const deleted = chapterDetails.filter(
+        (c) => !editChapterDetails.find((ec) => ec.id === c.id)
       );
-      for (const chapter of deletedChapters) {
-        if (!chapter.id.toString().startsWith("temp_")) {
-          await hamChung.delete("chi_tiet_dang_ky_thi", chapter.id);
-        }
-      }
+      for (const c of deleted)
+        await hamChung.delete("chi_tiet_dang_ky_thi", c.id);
 
-      message.success("Cập nhật đăng ký thi thành công!");
+      message.success("Lưu thành công!");
       setExamDetails(editExamDetails);
       setChapterDetails(editChapterDetails);
       onCancel();
-    } catch (error) {
-      message.error(`Lỗi khi lưu dữ liệu: ${error.message}`);
+    } catch (e) {
+      message.error(`Lỗi lưu dữ liệu: ${e.message}`);
     } finally {
       setLoading(false);
     }
   };
 
-  // Cột cho bảng chi_tiet_dang_ky_thi
+  // Render input
+  // const renderInput = (label, field, props = {}) => (
+  //   <Descriptions.Item
+  //     label={<span style={{ fontSize: 13 }}>{label}</span>}
+  //     style={{ width: "50%" }}
+  //   >
+  //     <Input
+  //       {...props}
+  //       value={editExamDetails?.[field]}
+  //       onChange={(e) => handleInputChange(field, e.target.value)}
+  //       style={{ width: "100%" }}
+  //     />
+  //   </Descriptions.Item>
+  // );
+
+  // const renderSelect = (label, field, options) => (
+  //   <Descriptions.Item
+  //     label={<span style={{ fontSize: 13 }}>{label}</span>}
+  //     style={{ width: "50%" }}
+  //   >
+  //     <Select
+  //       value={editExamDetails?.[field]}
+  //       onChange={(val) => handleInputChange(field, val)}
+  //       style={{ width: "100%" }}
+  //       placeholder={`Chọn ${label}`}
+  //     >
+  //       {options.map((opt) => (
+  //         <Option key={opt.id} value={opt.id}>
+  //           {opt.ten || opt.ma || opt.name}
+  //         </Option>
+  //       ))}
+  //     </Select>
+  //   </Descriptions.Item>
+  // );
+
+  const renderValue = (label, value) => (
+    <Descriptions.Item label={label}>{value || "-"}</Descriptions.Item>
+  );
+
+  // Table columns
   const columns = [
     {
       title: "Số Chương",
-      key: "chuong_so",
-      render: (_, record, index) =>
+      render: (_, r, i) =>
         mode === "edit" ? (
           <Input
-            value={editChapterDetails[index]?.chuong_so}
+            value={editChapterDetails[i]?.chuong_so}
             onChange={(e) =>
-              handleChapterChange(index, "chuong_so", e.target.value)
+              handleChapterChange(i, "chuong_so", e.target.value)
             }
           />
         ) : (
-          `Chương ${record.chuong_so || "-"}`
+          `Chương ${r.chuong_so || "-"}`
         ),
-      width: "46%", // Chiếm 4.6 phần (46%)
     },
     {
       title: "Số Câu Hỏi",
-      key: "so_cau",
-      render: (_, record, index) =>
+      render: (_, r, i) =>
         mode === "edit" ? (
           <Input
             type="number"
-            value={editChapterDetails[index]?.so_cau}
-            onChange={(e) =>
-              handleChapterChange(index, "so_cau", e.target.value)
-            }
+            value={editChapterDetails[i]?.so_cau}
+            onChange={(e) => handleChapterChange(i, "so_cau", e.target.value)}
           />
         ) : (
-          record.so_cau || "-"
+          r.so_cau || "-"
         ),
-      width: "46%", // Chiếm 4.6 phần (46%)
     },
     {
       title: "Hành động",
-      key: "action",
-      render: (_, record, index) => (
+      render: (_, __, i) => (
         <Button
-          type="primary"
           danger
           icon={<DeleteOutlined />}
-          onClick={() => handleDeleteChapter(index)}
-          disabled={mode !== "edit"} // Khóa ở chế độ view
-          size="small" // Nút nhỏ hơn
-          style={{ padding: "0 8px" }} // Thu gọn padding
-        >
-          {/* Xóa */}
-        </Button>
+          onClick={() => handleDeleteChapter(i)}
+          disabled={mode !== "edit"}
+          size="small"
+        />
       ),
-      width: "8%", // Chiếm 0.8 phần (8%), nhỏ hơn
+      width: 95,
+      align: "center",
     },
   ];
 
-  const modalFooter =
-    mode === "edit"
-      ? [
+  return (
+    <Modal
+      title={`Chi Tiết Đăng Ký Thi (ID: ${id_dang_ky_thi})`}
+      open={visible}
+      onCancel={onCancel}
+      footer={
+        mode === "edit" && [
           <Button key="cancel" onClick={onCancel}>
             Hủy
           </Button>,
@@ -209,181 +230,184 @@ const RegisterExamDetailModal = ({
             Lưu
           </Button>,
         ]
-      : null;
-
-  return (
-    <Modal
-      title={`Chi Tiết Đăng Ký Thi (ID: ${id_dang_ky_thi})`}
-      visible={visible}
-      onCancel={onCancel}
-      footer={modalFooter}
+      }
       width={800}
     >
       {loading ? (
         <Spin
-          tip="Đang tải chi tiết..."
+          tip="Đang tải..."
           style={{ display: "block", margin: "20px auto" }}
         />
-      ) : (
+      ) : editExamDetails ? (
         <>
-          {/* Thông tin từ dang_ky_thi */}
-          {editExamDetails ? (
-            mode === "edit" ? (
-              <div style={{ marginBottom: 20 }}>
-                <Descriptions bordered column={2}>
-                  <Descriptions.Item label="Mã GV">
-                    <Input
-                      value={editExamDetails.ma_gv}
-                      onChange={(e) =>
-                        handleInputChange("ma_gv", e.target.value)
-                      }
-                    />
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Mã Lớp">
-                    <Input
-                      value={editExamDetails.ma_lop}
-                      onChange={(e) =>
-                        handleInputChange("ma_lop", e.target.value)
-                      }
-                    />
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Mã Môn">
-                    <Input
-                      value={editExamDetails.ma_mh}
-                      onChange={(e) =>
-                        handleInputChange("ma_mh", e.target.value)
-                      }
-                    />
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Ngày Thi">
-                    <DatePicker
-                      value={
-                        editExamDetails.ngay_thi
-                          ? moment(editExamDetails.ngay_thi)
-                          : null
-                      }
-                      onChange={(date) =>
-                        handleInputChange(
-                          "ngay_thi",
-                          date ? date.toISOString() : null
-                        )
-                      }
-                      format="DD/MM/YYYY HH:mm"
-                      showTime
-                    />
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Số Câu Thi">
-                    <Input
-                      type="number"
-                      value={editExamDetails.so_cau_thi}
-                      onChange={(e) =>
-                        handleInputChange("so_cau_thi", e.target.value)
-                      }
-                    />
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Thời Gian (phút)">
-                    <Input
-                      type="number"
-                      value={editExamDetails.thoi_gian}
-                      onChange={(e) =>
-                        handleInputChange("thoi_gian", e.target.value)
-                      }
-                    />
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Trình Độ">
-                    <Input
-                      value={editExamDetails.trinh_do}
-                      onChange={(e) =>
-                        handleInputChange("trinh_do", e.target.value)
-                      }
-                    />
-                  </Descriptions.Item>
-                </Descriptions>
-              </div>
-            ) : (
-              <Descriptions bordered column={2} style={{ marginBottom: 20 }}>
-                <Descriptions.Item label="ID Đăng Ký">
-                  {examDetails.id_dang_ky_thi}
-                </Descriptions.Item>
-                <Descriptions.Item label="Mã GV">
-                  {examDetails.ma_gv || "-"}
-                </Descriptions.Item>
-                <Descriptions.Item label="Mã Lớp">
-                  {examDetails.ma_lop || "-"}
-                </Descriptions.Item>
-                <Descriptions.Item label="Mã Môn">
-                  {examDetails.ma_mh || "-"}
-                </Descriptions.Item>
-                <Descriptions.Item label="Ngày Thi">
-                  {examDetails.ngay_thi
-                    ? new Date(examDetails.ngay_thi).toLocaleString("vi-VN")
-                    : "-"}
-                </Descriptions.Item>
-                <Descriptions.Item label="Số Câu Thi">
-                  {examDetails.so_cau_thi || "-"}
-                </Descriptions.Item>
-                <Descriptions.Item label="Thời Gian (phút)">
-                  {examDetails.thoi_gian || "-"}
-                </Descriptions.Item>
-                <Descriptions.Item label="Trình Độ">
-                  {examDetails.trinh_do || "-"}
-                </Descriptions.Item>
-                <Descriptions.Item label="Trạng Thái">
-                  {examDetails.trang_thai ? (
-                    <Tag
-                      color={
-                        examDetails.trang_thai === "Cho_phe_duyet"
-                          ? "orange"
-                          : examDetails.trang_thai === "Da_phe_duyet"
-                          ? "green"
-                          : examDetails.trang_thai === "Tu_choi"
-                          ? "red"
-                          : "gray"
-                      }
-                    >
-                      {examDetails.trang_thai === "Cho_phe_duyet"
-                        ? "Chờ Duyệt"
-                        : examDetails.trang_thai === "Da_phe_duyet"
-                        ? "Đã Duyệt"
-                        : examDetails.trang_thai === "Tu_choi"
-                        ? "Từ Chối"
-                        : examDetails.trang_thai}
-                    </Tag>
-                  ) : (
-                    "-"
-                  )}
-                </Descriptions.Item>
-                <Descriptions.Item label="Người Phê Duyệt">
-                  {examDetails.nguoi_phe_duyet || "-"}
-                </Descriptions.Item>
-                <Descriptions.Item label="Ngày Tạo">
-                  {examDetails.created_at
-                    ? new Date(examDetails.created_at).toLocaleString("vi-VN")
-                    : "-"}
-                </Descriptions.Item>
-                <Descriptions.Item label="Ngày Cập Nhật">
-                  {examDetails.updated_at
-                    ? new Date(examDetails.updated_at).toLocaleString("vi-VN")
-                    : "-"}
-                </Descriptions.Item>
-              </Descriptions>
-            )
+          {mode === "edit" ? (
+            <Descriptions
+              bordered
+              column={2}
+              style={{ marginBottom: 20 }}
+              styles={{
+                label: { width: 120 }, // 👈 nhãn hẹp hơn
+                content: { width: "calc(100% - 120px)" }, // 👈 nội dung rộng hơn
+              }}
+            >
+              <Descriptions.Item label="Mã GV" span={1}>
+                <Input
+                  value={editExamDetails?.ma_gv}
+                  disabled
+                  style={{ width: "100%" }}
+                />
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Họ Tên GV" span={1}>
+                <Input
+                  value={editExamDetails?.ho_ten_gv}
+                  disabled
+                  style={{ width: "100%" }}
+                />
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Lớp Học" span={1}>
+                <Select
+                  value={editExamDetails?.ma_lop}
+                  onChange={(val) => handleInputChange("ma_lop", val)}
+                  style={{ width: "100%" }}
+                  placeholder="Chọn lớp"
+                >
+                  {lopOptions.map((opt) => (
+                    <Option key={opt.ma_lop} value={opt.ma_lop}>
+                      {opt.ten_lop}
+                    </Option>
+                  ))}
+                </Select>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Môn Học" span={1}>
+                <Select
+                  value={editExamDetails?.ma_mh}
+                  onChange={(val) => handleInputChange("ma_mh", val)}
+                  style={{ width: "100%" }}
+                  placeholder="Chọn môn học"
+                >
+                  {monHocOptions.map((opt) => (
+                    <Option key={opt.ma_mh} value={opt.ma_mh}>
+                      {opt.ten_mh}
+                    </Option>
+                  ))}
+                </Select>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Trình Độ" span={1}>
+                <Select
+                  value={editExamDetails?.trinh_do}
+                  onChange={(val) => handleInputChange("trinh_do", val)}
+                  style={{ width: "100%" }}
+                >
+                  <Option value="ĐH">ĐH</Option>
+                  <Option value="CĐ">CĐ</Option>
+                  <Option value="VB2">VB2</Option>
+                </Select>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Ngày Thi" span={1}>
+                <DatePicker
+                  value={
+                    editExamDetails.ngay_thi
+                      ? moment(editExamDetails.ngay_thi)
+                      : null
+                  }
+                  onChange={(d) =>
+                    handleInputChange("ngay_thi", d ? d.toISOString() : null)
+                  }
+                  format="DD/MM/YYYY HH:mm"
+                  showTime
+                  style={{ width: "100%" }}
+                />
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Thời Gian Thi (phút)" span={1}>
+                <Input
+                  type="number"
+                  value={editExamDetails?.thoi_gian}
+                  onChange={(e) =>
+                    handleInputChange("thoi_gian", e.target.value)
+                  }
+                  style={{ width: "100%" }}
+                />
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Số Câu Thi" span={1}>
+                <Input
+                  type="number"
+                  value={editExamDetails?.so_cau_thi}
+                  onChange={(e) =>
+                    handleInputChange("so_cau_thi", e.target.value)
+                  }
+                  style={{ width: "100%" }}
+                />
+              </Descriptions.Item>
+            </Descriptions>
           ) : (
-            <p>Không có thông tin đăng ký thi.</p>
+            <Descriptions bordered column={2} style={{ marginBottom: 20 }}>
+              {renderValue("Mã GV", examDetails.ma_gv)}
+              {renderValue("Họ Tên GV", examDetails.ho_ten_gv)}
+              {renderValue("Mã Lớp", examDetails.ma_lop)}
+              {renderValue("Mã Môn Học", examDetails.ma_mh)}
+              {renderValue("Trình Độ", examDetails.trinh_do)}
+              {renderValue(
+                "Ngày Thi",
+                examDetails.ngay_thi
+                  ? new Date(examDetails.ngay_thi).toLocaleString("vi-VN")
+                  : "-"
+              )}
+              {renderValue("Thời Gian Thi", examDetails.thoi_gian)}
+              {renderValue("Số Câu Thi", examDetails.so_cau_thi)}
+              <Descriptions.Item label="Trạng Thái">
+                {examDetails.trang_thai ? (
+                  <Tag
+                    color={
+                      examDetails.trang_thai === "Cho_phe_duyet"
+                        ? "orange"
+                        : examDetails.trang_thai === "Da_phe_duyet"
+                        ? "green"
+                        : examDetails.trang_thai === "Tu_choi"
+                        ? "red"
+                        : "gray"
+                    }
+                  >
+                    {examDetails.trang_thai === "Cho_phe_duyet"
+                      ? "Chờ Duyệt"
+                      : examDetails.trang_thai === "Da_phe_duyet"
+                      ? "Đã Duyệt"
+                      : examDetails.trang_thai === "Tu_choi"
+                      ? "Từ Chối"
+                      : examDetails.trang_thai}
+                  </Tag>
+                ) : (
+                  "-"
+                )}
+              </Descriptions.Item>
+
+              {renderValue("Người Phê Duyệt", examDetails.nguoi_phe_duyet)}
+              {renderValue(
+                "Ngày Tạo",
+                examDetails.created_at &&
+                  new Date(examDetails.created_at).toLocaleString("vi-VN")
+              )}
+              {renderValue(
+                "Ngày Cập Nhật",
+                examDetails.updated_at &&
+                  new Date(examDetails.updated_at).toLocaleString("vi-VN")
+              )}
+            </Descriptions>
           )}
 
-          {/* Danh sách chi tiết từ chi_tiet_dang_ky_thi */}
           <h3>Danh Sách Chương</h3>
           <Table
-            rowKey={(record, index) =>
-              `${record.id_dang_ky_thi}_${record.chuong_so}_${index}`
-            }
+            rowKey={(r, i) => `${r.id_dang_ky_thi}_${r.chuong_so}_${i}`}
             columns={columns}
             dataSource={mode === "edit" ? editChapterDetails : chapterDetails}
-            locale={{ emptyText: "Không có dữ liệu chi tiết đăng ký thi" }}
+            locale={{ emptyText: "Không có dữ liệu" }}
             pagination={false}
-            style={{ width: "100%" }}
-            tableLayout="fixed"
           />
           {mode === "edit" && (
             <Button
@@ -396,6 +420,8 @@ const RegisterExamDetailModal = ({
             </Button>
           )}
         </>
+      ) : (
+        <p>Không có thông tin đăng ký thi.</p>
       )}
     </Modal>
   );

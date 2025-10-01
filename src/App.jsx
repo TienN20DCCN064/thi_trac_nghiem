@@ -5,6 +5,7 @@ import { Routes, Route } from "react-router-dom";
 import Sidebar from "./components/common/Sidebar.jsx";
 import HeaderUserInfo from "./components/common/HeaderUserInfo.jsx";
 import RegisterExamPage from "./components/register/RegisterExamPage.jsx";
+import TeacherQuestionPage from "./components/question/TeacherQuestionPage.jsx";
 import LoadingOverlay from "./components/common/LoadingOverlay.jsx";
 import LoginPage from "./components/auth/LoginPage.jsx";
 import PrimaryKeys from "./globals/databaseKey.js"; // 👈 import PrimaryKeys
@@ -43,6 +44,14 @@ function App() {
               <Route
                 path="/users/user-groups"
                 element={<h2>Welcome /users/user-groups 🚀</h2>}
+              />
+              <Route
+                path="/question/list-question"
+                element={<TeacherQuestionPage />}
+              />
+              <Route
+                path="/question/add-question"
+                element={<h2>Welcome /question/add-question 🚀</h2>}
               />
 
               <Route

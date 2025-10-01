@@ -54,30 +54,6 @@ const TeacherSidebar = () => {
               { key: "users/user-groups", label: "Nhóm tài khoản" },
             ],
           },
-          {
-            key: "course",
-            icon: <BookOutlined />,
-            label: "Quản lý môn học",
-          },
-          {
-            key: "question",
-            icon: <SettingOutlined />,
-            label: "Câu hỏi",
-            children: [
-              { key: "question/list-question", label: "Danh sách câu hỏi" },
-              { key: "question/add-question", label: "Thêm câu hỏi" },
-            ],
-          },
-           {
-            key: "register",
-            icon: <SettingOutlined />,
-            label: "Quản lý đăng ký",
-            children: [
-              { key: "register/register-exam", label: "Danh sách đăng ký" },
-              { key: "register/add-register", label: "Thêm đăng ký" },
-            ],
-          },
-          
         ]}
       />
     </Sider>

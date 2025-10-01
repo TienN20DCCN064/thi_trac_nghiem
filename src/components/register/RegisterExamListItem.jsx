@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Table, Button, Modal, Tag } from "antd";
 import { DeleteOutlined, EditOutlined, EyeOutlined } from "@ant-design/icons";
 import RegisterExamDetailModal from "./RegisterExamDetailModal.jsx";
-
+import CellDisplay from "../../components/common/CellDisplay.jsx";
 // Lấy page & pageSize từ URL, nếu không có thì mặc định
 function handleCheckPageParam() {
   const query = new URLSearchParams(window.location.search);
@@ -10,7 +10,16 @@ function handleCheckPageParam() {
   let pageSize = Number(query.get("pageSize")) || 10;
   let ma_lop = query.get("ma_lop") || "";
   let ma_mh = query.get("ma_mh") || "";
-  console.log("URL Params - page:", page, "pageSize:", pageSize, "ma_lop:", ma_lop, "ma_mh:", ma_mh);
+  console.log(
+    "URL Params - page:",
+    page,
+    "pageSize:",
+    pageSize,
+    "ma_lop:",
+    ma_lop,
+    "ma_mh:",
+    ma_mh
+  );
 
   // Đảm bảo page và pageSize là hợp lệ
   page = isNaN(page) || page < 1 ? 1 : page;
@@ -80,24 +89,47 @@ const RegisterExamListItem = ({
   const paginatedData = Array.isArray(data)
     ? data.slice((validCurrentPage - 1) * pageSize, validCurrentPage * pageSize)
     : [];
-
   const columns = [
     {
       title: "#",
       key: "index",
-      width: 60,
+      width: 40,
       align: "center",
       render: (_, __, index) => index + 1 + (validCurrentPage - 1) * pageSize,
     },
     // { title: "ID Đăng Ký", dataIndex: "id_dang_ky_thi", key: "id_dang_ky_thi" },
-    { title: "Mã GV", dataIndex: "ma_gv", key: "ma_gv" },
-    { title: "Mã Lớp", dataIndex: "ma_lop", key: "ma_lop" },
-    { title: "Mã Môn", dataIndex: "ma_mh", key: "ma_mh" },
-    { title: "Trình Độ", dataIndex: "trinh_do", key: "trinh_do" },
+    {
+      title: "Giáo Viên",
+      dataIndex: "ma_gv",
+      width: 150,
+      key: "ma_gv",
+      render: (value) => <CellDisplay table="giao_vien" id={value} />,
+    },
+    {
+      title: "Lớp Học",
+      dataIndex: "ma_lop",
+      key: "ma_lop",
+      width: 150,
+      render: (value) => (
+        <CellDisplay table="lop" id={value} fieldName="ten_lop" />
+      ),
+    },
+    {
+      title: "Môn Học",
+      dataIndex: "ma_mh",
+      width: 150,
+      key: "ma_mh",
+      render: (value) => (
+        <CellDisplay table="mon_hoc" id={value} fieldName="ten_mh" />
+      ),
+    },
+
+    { title: "Trình Độ", dataIndex: "trinh_do", key: "trinh_do", width: 80},
     {
       title: "Ngày Thi",
       dataIndex: "ngay_thi",
       key: "ngay_thi",
+        width: 150,
       render: (value) =>
         value ? new Date(value).toLocaleString("vi-VN") : "-",
     },
@@ -195,9 +227,7 @@ const RegisterExamListItem = ({
               disabled={!isEditable} // Khóa nếu không Chờ Duyệt
               style={{ marginLeft: 8 }}
             />
-            
           </div>
-          
         );
       },
     },

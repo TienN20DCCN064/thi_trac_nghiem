@@ -1,6 +1,7 @@
 import React from "react";
 import TeacherSidebar from "./sidebar/TeacherSidebar";
 import StudentSidebar from "./sidebar/StudentSidebar";
+import RegistrarSidebar from "./sidebar/RegistrarSidebar";
 import { getRole } from "../../globals/globals";
 
 const Sidebar = () => {
@@ -8,7 +9,7 @@ const Sidebar = () => {
   console.log("Sidebar role:", role);
 
   if (role === "GiaoVu") {
-    return <TeacherSidebar />;
+    return <RegistrarSidebar />;
   } 
   else if (role === "GiaoVien") {
     return <TeacherSidebar />;

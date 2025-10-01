@@ -16,6 +16,7 @@ const HeaderUserInfo = () => {
     const fetchUserInfo = async () => {
       try {
         const userInfo = getUserInfo(); // Lấy thông tin từ localStorage
+        console.log("User info from localStorage:", userInfo);
         if (userInfo?.id_tai_khoan) {
           const response = await hamChiTiet.getUserInfoByAccountId(
             userInfo.id_tai_khoan

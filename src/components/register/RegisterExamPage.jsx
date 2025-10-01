@@ -3,7 +3,7 @@ import { Layout, Button, Spin } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import RegisterExamList from "./RegisterExamList.jsx";
 import CustomBreadcrumb from "../CustomBreadcrumb.jsx";
-import RegisterExamListSearch from "../common/SearchList.jsx";
+import SearchList from "../common/SearchList.jsx";
 import FormAddExam from "./FormAddExam.jsx"; // Import component FormAddExam
 
 const RegisterExamPage = () => {
@@ -16,11 +16,11 @@ const RegisterExamPage = () => {
         items={[
           { label: "Trang Chủ" },
           { label: "Đăng Ký" },
-          { label: "Đăng Ký Câu Hỏi", isCurrent: true },
+          { label: "Đăng Ký Thi", isCurrent: true },
         ]}
       />
       <div className="custom-card">
-        <RegisterExamListSearch
+        <SearchList
           fields={[
             { key: "ma_lop", placeholder: "Mã lớp" },
             { key: "ma_mh", placeholder: "Mã môn học" },

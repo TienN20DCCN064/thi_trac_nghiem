@@ -76,7 +76,7 @@ const LoginPage = () => {
           level={2}
           style={{ color: "#1877f2", marginBottom: 20, fontWeight: "bold" }}
         >
-          facebook
+          Đăng nhập
         </Title>
 
         <Form
