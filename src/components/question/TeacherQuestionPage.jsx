@@ -8,7 +8,6 @@ import TeacherQuestionList from "./TeacherQuestionList.jsx"; // 👈 thay Regist
 import FormAddExam from "../register/FormAddExam.jsx";
 
 const TeacherQuestionPage = () => {
-
   return (
     <>
       <CustomBreadcrumb
@@ -22,11 +21,21 @@ const TeacherQuestionPage = () => {
         {/* Ô tìm kiếm */}
         <SearchList
           fields={[
-            { key: "ma_gv", placeholder: "Mã giảng viên" },
-            { key: "ma_mh", placeholder: "Mã môn học" },
+            { key: "name_gv", placeholder: "Tên giảng viên", type: "input" },
+            { key: "name_mh", placeholder: "Tên môn học", type: "input" },
+            {
+              key: "trinh_do",
+              placeholder: "Chọn trình độ",
+              type: "select",
+              options: [
+                { value: "ĐH", label: "Đại học" },
+                { value: "CĐ", label: "Cao đẳng" },
+                { value: "VB2", label: "Văn Bằng 2" },
+              ],
+            },
           ]}
         />
-       
+
         {/* Danh sách môn học giảng viên đã soạn câu hỏi */}
         <TeacherQuestionList />
       </div>

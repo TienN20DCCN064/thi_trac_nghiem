@@ -124,17 +124,23 @@ const RegisterExamListItem = ({
       ),
     },
 
-    { title: "Trình Độ", dataIndex: "trinh_do", key: "trinh_do", width: 80},
+    { title: "Trình Độ", dataIndex: "trinh_do", key: "trinh_do", width: 80 },
     {
       title: "Ngày Thi",
       dataIndex: "ngay_thi",
       key: "ngay_thi",
-        width: 150,
+      width: 150,
       render: (value) =>
         value ? new Date(value).toLocaleString("vi-VN") : "-",
     },
+    // {
+    //   title: "Số Câu / Thời Gian",
+    //   dataIndex: "so_cau_thi/thoi_gian",
+    //   key: "so_cau_thi/thoi_gian",
+    //   render: (_, record) => `${record.so_cau_thi} câu / ${record.thoi_gian} phút`,
+    // },
     { title: "Số Câu Thi", dataIndex: "so_cau_thi", key: "so_cau_thi" },
-    { title: "Thời Gian (phút)", dataIndex: "thoi_gian", key: "thoi_gian" },
+    { title: "Thời Gian", dataIndex: "thoi_gian", key: "thoi_gian", render: (value) => `${value} phút` },
 
     {
       title: "Trạng Thái",

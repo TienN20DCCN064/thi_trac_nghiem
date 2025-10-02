@@ -22,8 +22,29 @@ const RegisterExamPage = () => {
       <div className="custom-card">
         <SearchList
           fields={[
-            { key: "ma_lop", placeholder: "Mã lớp" },
-            { key: "ma_mh", placeholder: "Mã môn học" },
+            { key: "name_gv", placeholder: "Tên giảng viên", type: "input" },
+            { key: "name_lop", placeholder: "Tên lớp học", type: "input" },
+            { key: "name_mh", placeholder: "Tên môn học", type: "input" },
+            {
+              key: "trinh_do",
+              placeholder: "Chọn trình độ",
+              type: "select",
+              options: [
+                { value: "ĐH", label: "Đại học" },
+                { value: "CĐ", label: "Cao đẳng" },
+                { value: "VB2", label: "Văn Bằng 2" },
+              ],
+            },
+            {
+              key: "trang_thai",
+              placeholder: "Chọn trạng thái",
+              type: "select",
+              options: [
+                { value: "Da_phe_duyet", label: "Đã Duyệt" },
+                { value: "Cho_phe_duyet", label: "Chờ Duyệt" },
+                { value: "Tu_choi", label: "Từ Chối" },
+              ],
+            },
           ]}
         />
         <Button

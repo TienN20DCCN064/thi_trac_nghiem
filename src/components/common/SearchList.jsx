@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Input, Button, Space, Row, Col } from "antd";
+import { Input, Button, Space, Row, Col, Select } from "antd";
 import { SearchOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -55,12 +55,28 @@ const RegisterExamListSearch = ({ fields = [] }) => {
     >
       <Row gutter={[16, 16]}>
         {fields.map((field) => (
-          <Col xs={24} sm={12} md={6} key={field.key}>
-            <Input
-              placeholder={field.placeholder || field.key}
-              value={values[field.key] || ""}
-              onChange={(e) => handleInputChange(field.key, e.target.value)}
-            />
+          <Col xs={24} sm={12} md={3} key={field.key}>
+            {field.type === "select" ? (
+              <Select
+                style={{ width: "100%" }}
+                placeholder={field.placeholder || field.key}
+                value={values[field.key] || undefined}
+                onChange={(value) => handleInputChange(field.key, value)}
+                allowClear // 👈 dòng này cho phép clear về rỗng
+              >
+                {field.options?.map((opt) => (
+                  <Select.Option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </Select.Option>
+                ))}
+              </Select>
+            ) : (
+              <Input
+                placeholder={field.placeholder || field.key}
+                value={values[field.key] || ""}
+                onChange={(e) => handleInputChange(field.key, e.target.value)}
+              />
+            )}
           </Col>
         ))}
 
