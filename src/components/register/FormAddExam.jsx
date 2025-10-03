@@ -10,6 +10,7 @@ import {
   InputNumber,
   Select,
   message,
+  Typography,
 } from "antd";
 import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import "../../styles/FormAddQuestionList.css";
@@ -18,10 +19,11 @@ import hamChiTiet from "../../services/service.hamChiTiet.js";
 import { getUserInfo } from "../../globals/globals.js";
 
 const { Option } = Select;
+const { Text } = Typography;
 
 const FormAddExam = ({ visible, onCancel }) => {
   const [chapters, setChapters] = useState([
-    { chapterNumber: "", questionCount: 1 },
+    { chapterNumber: "", questionCount: 1, availableQuestions: 0 },
   ]);
   const [totalQuestions, setTotalQuestions] = useState(1);
   const [dsLop, setDsLop] = useState([]);
@@ -47,6 +49,7 @@ const FormAddExam = ({ visible, onCancel }) => {
       fetchQuestionCounts(selectedSubject, selectedLevel);
     } else {
       setQuestionCounts({});
+      setChapters(chapters.map((ch) => ({ ...ch, availableQuestions: 0 })));
     }
   }, [selectedSubject, selectedLevel]);
 
@@ -72,14 +75,24 @@ const FormAddExam = ({ visible, onCancel }) => {
     try {
       const data = await hamChiTiet.getQuestionCountByChapter(ma_mh, trinh_do);
       setQuestionCounts(data);
+      setChapters(
+        chapters.map((ch) => ({
+          ...ch,
+          availableQuestions: data[ch.chapterNumber] || 0,
+        }))
+      );
     } catch (error) {
       console.error("Lỗi tải số câu hỏi:", error);
       setQuestionCounts({});
+      setChapters(chapters.map((ch) => ({ ...ch, availableQuestions: 0 })));
     }
   };
 
   const handleAddChapter = () => {
-    setChapters([...chapters, { chapterNumber: "", questionCount: 1 }]);
+    setChapters([
+      ...chapters,
+      { chapterNumber: "", questionCount: 1, availableQuestions: 0 },
+    ]);
   };
 
   const handleDeleteChapter = (index) => {
@@ -88,10 +101,25 @@ const FormAddExam = ({ visible, onCancel }) => {
 
   const handleSubjectChange = (value) => {
     setSelectedSubject(value);
+    setChapters(chapters.map((ch) => ({ ...ch, availableQuestions: 0 })));
   };
 
   const handleLevelChange = (value) => {
     setSelectedLevel(value);
+    setChapters(chapters.map((ch) => ({ ...ch, availableQuestions: 0 })));
+  };
+
+  const handleChapterNumberChange = (index, value) => {
+    const newChapters = [...chapters];
+    newChapters[index].chapterNumber = value;
+    newChapters[index].availableQuestions = questionCounts[value] || 0;
+    setChapters(newChapters);
+  };
+
+  const handleQuestionCountChange = (index, value) => {
+    const newChapters = [...chapters];
+    newChapters[index].questionCount = value || 1;
+    setChapters(newChapters);
   };
 
   const handleOk = async () => {
@@ -105,7 +133,6 @@ const FormAddExam = ({ visible, onCancel }) => {
       );
       const ma_gv = gvData?.ma_gv || "";
 
-      // Chuyển ngày sang định dạng YYYY-MM-DD để MySQL hiểu
       const ngayThiSQL = values.ngay_thi
         ? values.ngay_thi.format("YYYY-MM-DD HH:mm:ss")
         : null;
@@ -116,7 +143,6 @@ const FormAddExam = ({ visible, onCancel }) => {
         ma_mh: values.ma_mh,
         trinh_do: values.trinh_do,
         ngay_thi: ngayThiSQL,
-        // so_cau_thi: Number(totalQuestions) || 0,
         thoi_gian: Number(values.thoi_gian) || 60,
         chi_tiet_dang_ky_thi: chapters.map((c) => ({
           chuong_so: Number(c.chapterNumber),
@@ -129,12 +155,13 @@ const FormAddExam = ({ visible, onCancel }) => {
 
       message.success(result.message || "Đăng ký thi thành công!");
       formRef.current.resetFields();
-      setChapters([{ chapterNumber: "", questionCount: 1 }]);
+      setChapters([
+        { chapterNumber: "", questionCount: 1, availableQuestions: 0 },
+      ]);
       setQuestionCounts({});
       setSelectedSubject(null);
       setSelectedLevel(null);
       onCancel();
-      // Tải lại trang web
       hamChung.reloadWeb_test();
     } catch (error) {
       console.error("❌ Lỗi validate hoặc API:", error);
@@ -158,7 +185,9 @@ const FormAddExam = ({ visible, onCancel }) => {
 
   const handleCancel = () => {
     formRef.current.resetFields();
-    setChapters([{ chapterNumber: "", questionCount: 1 }]);
+    setChapters([
+      { chapterNumber: "", questionCount: 1, availableQuestions: 0 },
+    ]);
     setQuestionCounts({});
     setSelectedSubject(null);
     setSelectedLevel(null);
@@ -183,7 +212,7 @@ const FormAddExam = ({ visible, onCancel }) => {
   return (
     <Modal
       title="Đăng Ký Thi"
-      visible={visible}
+      open={visible}
       onOk={handleOk}
       onCancel={handleCancel}
       okText="Lưu"
@@ -305,6 +334,20 @@ const FormAddExam = ({ visible, onCancel }) => {
         </div>
 
         <Form.Item label="Chi tiết chương">
+          <Row gutter={8} style={{ marginBottom: 8 }}>
+            <Col span={8}>
+              <Text strong>Chương</Text>
+            </Col>
+            <Col span={8}>
+              <Text strong>Số câu</Text>
+            </Col>
+            <Col span={4}>
+              <Text strong>Số câu có sẵn</Text>
+            </Col>
+            <Col span={4}>
+              <Text strong>Thao tác</Text>
+            </Col>
+          </Row>
           {chapters.map((chapter, index) => (
             <Row
               key={index}
@@ -312,7 +355,7 @@ const FormAddExam = ({ visible, onCancel }) => {
               align="middle"
               style={{ marginBottom: 8 }}
             >
-              <Col span={10}>
+              <Col span={8}>
                 <Form.Item
                   name={["chapters", index, "chapterNumber"]}
                   rules={[
@@ -325,32 +368,41 @@ const FormAddExam = ({ visible, onCancel }) => {
                     style={{ width: "100%" }}
                     placeholder={`Chương ${index + 1}`}
                     value={chapter.chapterNumber}
-                    onChange={(value) => {
-                      const newChapters = [...chapters];
-                      newChapters[index].chapterNumber = value;
-                      setChapters(newChapters);
-                    }}
+                    onChange={(value) =>
+                      handleChapterNumberChange(index, value)
+                    }
                   />
                 </Form.Item>
               </Col>
-              <Col span={10}>
+              <Col span={8}>
                 <Form.Item
                   name={["chapters", index, "questionCount"]}
                   initialValue={1}
-                  rules={[{ required: true, message: "Vui lòng nhập số câu!" }]}
+                  rules={[
+                    { required: true, message: "Vui lòng nhập số câu!" },
+                    {
+                      validator: (_, value) =>
+                        value <= chapter.availableQuestions
+                          ? Promise.resolve()
+                          : Promise.reject(
+                              `Số câu không được vượt quá ${chapter.availableQuestions}!`
+                            ),
+                    },
+                  ]}
                   noStyle
                 >
                   <InputNumber
                     min={1}
                     style={{ width: "100%" }}
                     value={chapter.questionCount}
-                    onChange={(value) => {
-                      const newChapters = [...chapters];
-                      newChapters[index].questionCount = value || 1;
-                      setChapters(newChapters);
-                    }}
+                    onChange={(value) =>
+                      handleQuestionCountChange(index, value)
+                    }
                   />
                 </Form.Item>
+              </Col>
+              <Col span={4}>
+                <Text type="secondary">{chapter.availableQuestions}</Text>
               </Col>
               <Col span={4}>
                 <Button

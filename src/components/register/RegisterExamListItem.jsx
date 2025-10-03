@@ -8,18 +8,6 @@ function handleCheckPageParam() {
   const query = new URLSearchParams(window.location.search);
   let page = Number(query.get("page")) || 1;
   let pageSize = Number(query.get("pageSize")) || 10;
-  let ma_lop = query.get("ma_lop") || "";
-  let ma_mh = query.get("ma_mh") || "";
-  console.log(
-    "URL Params - page:",
-    page,
-    "pageSize:",
-    pageSize,
-    "ma_lop:",
-    ma_lop,
-    "ma_mh:",
-    ma_mh
-  );
 
   // Đảm bảo page và pageSize là hợp lệ
   page = isNaN(page) || page < 1 ? 1 : page;
@@ -27,10 +15,14 @@ function handleCheckPageParam() {
 
   return { page, pageSize };
 }
+function handleDeleteClick(id) {
+  console.log("ID cần xóa:", id); // In ra id
+  // dispatch(dangKyThiActions.creators.deleteRequest(id)); // Gọi action xóa
+}
 
 const RegisterExamListItem = ({
   data = [],
-  onDeleteClick,
+  //onDeleteClick,
   // onEditClick,
   // onViewDetailClick,
 }) => {
@@ -140,7 +132,12 @@ const RegisterExamListItem = ({
     //   render: (_, record) => `${record.so_cau_thi} câu / ${record.thoi_gian} phút`,
     // },
     { title: "Số Câu Thi", dataIndex: "so_cau_thi", key: "so_cau_thi" },
-    { title: "Thời Gian", dataIndex: "thoi_gian", key: "thoi_gian", render: (value) => `${value} phút` },
+    {
+      title: "Thời Gian",
+      dataIndex: "thoi_gian",
+      key: "thoi_gian",
+      render: (value) => `${value} phút`,
+    },
 
     {
       title: "Trạng Thái",
@@ -219,18 +216,8 @@ const RegisterExamListItem = ({
               danger
               type="primary"
               icon={<DeleteOutlined />}
-              onClick={() =>
-                Modal.confirm({
-                  title: "Bạn có muốn xóa đăng ký thi này không?",
-                  okText: "Có",
-                  okType: "danger",
-                  cancelText: "Không",
-                  onOk() {
-                    onDeleteClick(record.id_dang_ky_thi);
-                  },
-                })
-              }
-              disabled={!isEditable} // Khóa nếu không Chờ Duyệt
+              onClick={() => handleDeleteClick(record.id_dang_ky_thi)}
+              disabled={!isEditable}
               style={{ marginLeft: 8 }}
             />
           </div>

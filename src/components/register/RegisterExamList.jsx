@@ -53,16 +53,12 @@ const RegisterExamList = () => {
   return (
     <RegisterExamListItem
       data={filteredData} // 👈 dữ liệu đã enrich + lọc
-      onDeleteClick={(id) =>
-        dispatch(dangKyThiActions.creators.deleteRequest(id))
-      }
+      onDeleteClick={(id) => console.log("Xóa đăng ký thi:", id)}
       onEditClick={(id) => console.log("Sửa đăng ký thi:", id)}
       onViewDetailClick={(id) => console.log("Xem chi tiết:", id)}
     />
   );
 };
-
-export default RegisterExamList;
 
 // ---------------------------
 // Hàm enrich dữ liệu
@@ -145,3 +141,5 @@ const filterRegisterExams = async (list, locationSearch) => {
   console.log("Filtered Register Exam Data:", dataArr);
   return dataArr;
 };
+
+export default RegisterExamList;

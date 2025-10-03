@@ -11,8 +11,10 @@ import {
   Button,
   Select,
 } from "antd";
+import { notification } from "antd";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import hamChung from "../../services/service.hamChung.js";
+import hamChiTiet from "../../services/service.hamChiTiet.js";
 import moment from "moment";
 
 const { Option } = Select;
@@ -28,10 +30,10 @@ const RegisterExamDetailModal = ({
   const [editExamDetails, setEditExamDetails] = useState(null);
   const [editChapterDetails, setEditChapterDetails] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  // options cho select
+  const [questionCounts, setQuestionCounts] = useState({});
   const [lopOptions, setLopOptions] = useState([]);
   const [monHocOptions, setMonHocOptions] = useState([]);
+  const [validationError, setValidationError] = useState("");
 
   // Gọi API danh sách lớp, môn
   useEffect(() => {
@@ -39,12 +41,10 @@ const RegisterExamDetailModal = ({
       try {
         const lops = await hamChung.getAll("lop");
         const monhocs = await hamChung.getAll("mon_hoc");
-        console.log("Lops:", lops);
-        console.log("Monhocs:", monhocs);
         setLopOptions(lops);
         setMonHocOptions(monhocs);
       } catch {
-        message.error("Lỗi tải danh sách lớp / môn học");
+        message.error("Lỗi tải danh sách lớp / môn học", { duration: 3 }); // 👈 Set duration
       }
     };
     if (visible) fetchOptions();
@@ -62,20 +62,72 @@ const RegisterExamDetailModal = ({
         );
         const getOne_gv = await hamChung.getOne("giao_vien", exam.ma_gv);
         exam.ho_ten_gv = getOne_gv ? `${getOne_gv.ho} ${getOne_gv.ten}` : "";
+        const soCauThi = details.reduce((sum, d) => sum + (d.so_cau || 0), 0);
+        exam.so_cau_thi = soCauThi;
         setExamDetails(exam);
-        setEditExamDetails(exam);
+        setEditExamDetails({ ...exam, so_cau_thi: soCauThi });
         setChapterDetails(details);
         setEditChapterDetails(details);
+        if (mode === "edit" && exam.ma_mh && exam.trinh_do) {
+          fetchQuestionCounts(exam.ma_mh, exam.trinh_do);
+        }
       } catch (error) {
-        message.error(`Lỗi tải dữ liệu: ${error.message}`);
+        message.error(`Lỗi tải dữ liệu: ${error.message}`, { duration: 3 }); // 👈 Set duration
       } finally {
         setLoading(false);
       }
     };
     fetchDetails();
-  }, [visible, id_dang_ky_thi]);
+  }, [visible, id_dang_ky_thi, mode]);
 
-  // Handlers
+  // Fetch questionCounts khi ma_mh hoặc trinh_do thay đổi
+  useEffect(() => {
+    if (
+      mode === "edit" &&
+      editExamDetails?.ma_mh &&
+      editExamDetails?.trinh_do
+    ) {
+      fetchQuestionCounts(editExamDetails.ma_mh, editExamDetails.trinh_do);
+    } else {
+      setQuestionCounts({});
+    }
+  }, [mode, editExamDetails?.ma_mh, editExamDetails?.trinh_do]);
+
+  // Tính tổng so_cau_thi động
+  useEffect(() => {
+    if (mode === "edit") {
+      const total = editChapterDetails.reduce(
+        (sum, c) => sum + (Number(c.so_cau) || 0),
+        0
+      );
+      setEditExamDetails((prev) => ({ ...prev, so_cau_thi: total }));
+    }
+  }, [editChapterDetails, mode]);
+
+  const fetchQuestionCounts = async (ma_mh, trinh_do) => {
+    try {
+      const data = await hamChiTiet.getQuestionCountByChapter(ma_mh, trinh_do);
+      setQuestionCounts(data);
+    } catch (error) {
+      console.error("Lỗi tải số câu hỏi:", error);
+      setQuestionCounts({});
+      message.error("Lỗi tải số câu hỏi theo chương", { duration: 3 }); // 👈 Set duration
+    }
+  };
+
+  const renderQuestionCountText = () => {
+    if (!editExamDetails?.ma_mh || !editExamDetails?.trinh_do) {
+      return "Vui lòng chọn môn học và trình độ để xem số câu hỏi đã soạn.";
+    }
+    if (Object.keys(questionCounts).length === 0) {
+      return "Chưa có câu hỏi nào được soạn cho môn học và trình độ này.";
+    }
+    const text = Object.entries(questionCounts)
+      .map(([chapter, count]) => `Chương ${chapter}: ${count} câu hỏi`)
+      .join(", ");
+    return `Số câu hỏi đã soạn: ${text}`;
+  };
+
   const handleInputChange = useCallback(
     (field, value) =>
       setEditExamDetails((prev) => ({ ...prev, [field]: value })),
@@ -90,92 +142,97 @@ const RegisterExamDetailModal = ({
   const handleAddChapter = () =>
     setEditChapterDetails((prev) => [
       ...prev,
-      { id_dang_ky_thi, chuong_so: "", so_cau: 0, id: `temp_${Date.now()}` },
+      { id_dang_ky_thi, chuong_so: "", so_cau: 1, id: `temp_${Date.now()}` },
     ]);
 
-  const handleDeleteChapter = (i) =>
+  const handleDeleteChapter = (i) => {
+    if (editChapterDetails.length <= 1) {
+      message.warning("Phải có ít nhất 1 chương!", { duration: 3 }); // 👈 Set duration
+      return;
+    }
     setEditChapterDetails((prev) => prev.filter((_, idx) => idx !== i));
+  };
+
+  const validateChapters = () => {
+    console.log("🚀 Validating chapters:", editChapterDetails);
+    let errMsg = "";
+    for (const c of editChapterDetails) {
+      if (!c.chuong_so || c.chuong_so <= 0) {
+        errMsg += `Chương ${c.chuong_so || "không xác định"} không hợp lệ. `;
+        continue;
+      }
+      const available = questionCounts[c.chuong_so] || 0;
+      if (c.so_cau > available) {
+        errMsg += `Chương ${c.chuong_so} thiếu ${
+          c.so_cau - available
+        } câu (chỉ có ${available}). `;
+      }
+    }
+    console.log("🚀 Validation error message:", errMsg);
+
+    setValidationError(errMsg); // 🔹 Set state
+    return !errMsg; // trả về true nếu không có lỗi
+  };
 
   const handleSave = async () => {
+    if (!validateChapters()) return;
     setLoading(true);
+    console.log("🚀 Edit Exam Details:", editExamDetails);
     try {
-      await hamChung.update("dang_ky_thi", id_dang_ky_thi, editExamDetails);
+      // Xây dựng payload giống FormAddExam
+      const payload = {
+        ma_gv: editExamDetails.ma_gv,
+        ma_lop: editExamDetails.ma_lop,
+        ma_mh: editExamDetails.ma_mh,
+        trinh_do: editExamDetails.trinh_do,
+        ngay_thi: editExamDetails.ngay_thi
+          ? moment(editExamDetails.ngay_thi).format("YYYY-MM-DD HH:mm:ss")
+          : null,
+        thoi_gian: Number(editExamDetails.thoi_gian) || 0,
+        chi_tiet_dang_ky_thi: editChapterDetails.map((c) => ({
+          chuong_so: Number(c.chuong_so),
+          so_cau: Number(c.so_cau),
+        })),
+      };
 
-      for (const c of editChapterDetails) {
-        if (String(c.id).startsWith("temp_")) {
-          const { id, ...data } = c;
-          await hamChung.create("chi_tiet_dang_ky_thi", data);
-        } else {
-          await hamChung.update("chi_tiet_dang_ky_thi", c.id, c);
-        }
-      }
+      console.log("🚀 Payload cập nhật đăng ký thi:", payload);
 
-      const deleted = chapterDetails.filter(
-        (c) => !editChapterDetails.find((ec) => ec.id === c.id)
-      );
-      for (const c of deleted)
-        await hamChung.delete("chi_tiet_dang_ky_thi", c.id);
+      // Gọi API updateExam
+      const result = await hamChung.updateExam(id_dang_ky_thi, payload);
 
-      message.success("Lưu thành công!");
+      message.success(result.message || "Cập nhật thành công!", {
+        duration: 3,
+      });
       setExamDetails(editExamDetails);
       setChapterDetails(editChapterDetails);
+      const soCauThi = editChapterDetails.reduce(
+        (sum, c) => sum + (Number(c.so_cau) || 0),
+        0
+      );
+      setExamDetails((prev) => ({ ...prev, so_cau_thi: soCauThi }));
       onCancel();
     } catch (e) {
-      message.error(`Lỗi lưu dữ liệu: ${e.message}`);
+      message.error(`Lỗi lưu dữ liệu: ${e.message}`, { duration: 3 });
     } finally {
       setLoading(false);
     }
   };
 
-  // Render input
-  // const renderInput = (label, field, props = {}) => (
-  //   <Descriptions.Item
-  //     label={<span style={{ fontSize: 13 }}>{label}</span>}
-  //     style={{ width: "50%" }}
-  //   >
-  //     <Input
-  //       {...props}
-  //       value={editExamDetails?.[field]}
-  //       onChange={(e) => handleInputChange(field, e.target.value)}
-  //       style={{ width: "100%" }}
-  //     />
-  //   </Descriptions.Item>
-  // );
-
-  // const renderSelect = (label, field, options) => (
-  //   <Descriptions.Item
-  //     label={<span style={{ fontSize: 13 }}>{label}</span>}
-  //     style={{ width: "50%" }}
-  //   >
-  //     <Select
-  //       value={editExamDetails?.[field]}
-  //       onChange={(val) => handleInputChange(field, val)}
-  //       style={{ width: "100%" }}
-  //       placeholder={`Chọn ${label}`}
-  //     >
-  //       {options.map((opt) => (
-  //         <Option key={opt.id} value={opt.id}>
-  //           {opt.ten || opt.ma || opt.name}
-  //         </Option>
-  //       ))}
-  //     </Select>
-  //   </Descriptions.Item>
-  // );
-
   const renderValue = (label, value) => (
     <Descriptions.Item label={label}>{value || "-"}</Descriptions.Item>
   );
 
-  // Table columns
   const columns = [
     {
       title: "Số Chương",
       render: (_, r, i) =>
         mode === "edit" ? (
           <Input
+            type="number"
+            min={1}
             value={editChapterDetails[i]?.chuong_so}
             onChange={(e) =>
-              handleChapterChange(i, "chuong_so", e.target.value)
+              handleChapterChange(i, "chuong_so", Number(e.target.value) || "")
             }
           />
         ) : (
@@ -188,13 +245,31 @@ const RegisterExamDetailModal = ({
         mode === "edit" ? (
           <Input
             type="number"
+            min={1}
             value={editChapterDetails[i]?.so_cau}
-            onChange={(e) => handleChapterChange(i, "so_cau", e.target.value)}
+            onChange={(e) =>
+              handleChapterChange(i, "so_cau", Number(e.target.value) || 0)
+            }
           />
         ) : (
           r.so_cau || "-"
         ),
     },
+    ...(mode === "edit"
+      ? [
+          {
+            title: "Số câu có sẵn",
+            render: (_, r, i) => {
+              const currentChapter = editChapterDetails[i];
+              const available = questionCounts[currentChapter?.chuong_so] || 0;
+              const required = currentChapter?.so_cau || 0;
+              const color = required > available ? "red" : "green";
+              return <Tag color={color}>{available}</Tag>;
+            },
+            width: 120,
+          },
+        ]
+      : []),
     {
       title: "Hành động",
       render: (_, __, i) => (
@@ -211,14 +286,21 @@ const RegisterExamDetailModal = ({
     },
   ];
 
+  const handleCancel = () => {
+    setQuestionCounts({});
+    onCancel();
+  };
+
   return (
     <Modal
-      title={`Chi Tiết Đăng Ký Thi (ID: ${id_dang_ky_thi})`}
+      title={`Chi Tiết Đăng Ký Thi (ID: ${id_dang_ky_thi}) ${
+        mode === "edit" ? "(Chỉnh sửa)" : ""
+      }`}
       open={visible}
-      onCancel={onCancel}
+      onCancel={handleCancel}
       footer={
         mode === "edit" && [
-          <Button key="cancel" onClick={onCancel}>
+          <Button key="cancel" onClick={handleCancel}>
             Hủy
           </Button>,
           <Button
@@ -231,7 +313,7 @@ const RegisterExamDetailModal = ({
           </Button>,
         ]
       }
-      width={800}
+      width={900}
     >
       {loading ? (
         <Spin
@@ -246,8 +328,8 @@ const RegisterExamDetailModal = ({
               column={2}
               style={{ marginBottom: 20 }}
               styles={{
-                label: { width: 120 }, // 👈 nhãn hẹp hơn
-                content: { width: "calc(100% - 120px)" }, // 👈 nội dung rộng hơn
+                label: { width: 120 },
+                content: { width: "calc(100% - 120px)" },
               }}
             >
               <Descriptions.Item label="Mã GV" span={1}>
@@ -257,7 +339,6 @@ const RegisterExamDetailModal = ({
                   style={{ width: "100%" }}
                 />
               </Descriptions.Item>
-
               <Descriptions.Item label="Họ Tên GV" span={1}>
                 <Input
                   value={editExamDetails?.ho_ten_gv}
@@ -265,7 +346,6 @@ const RegisterExamDetailModal = ({
                   style={{ width: "100%" }}
                 />
               </Descriptions.Item>
-
               <Descriptions.Item label="Lớp Học" span={1}>
                 <Select
                   value={editExamDetails?.ma_lop}
@@ -280,7 +360,6 @@ const RegisterExamDetailModal = ({
                   ))}
                 </Select>
               </Descriptions.Item>
-
               <Descriptions.Item label="Môn Học" span={1}>
                 <Select
                   value={editExamDetails?.ma_mh}
@@ -295,7 +374,6 @@ const RegisterExamDetailModal = ({
                   ))}
                 </Select>
               </Descriptions.Item>
-
               <Descriptions.Item label="Trình Độ" span={1}>
                 <Select
                   value={editExamDetails?.trinh_do}
@@ -307,7 +385,6 @@ const RegisterExamDetailModal = ({
                   <Option value="VB2">VB2</Option>
                 </Select>
               </Descriptions.Item>
-
               <Descriptions.Item label="Ngày Thi" span={1}>
                 <DatePicker
                   value={
@@ -323,27 +400,21 @@ const RegisterExamDetailModal = ({
                   style={{ width: "100%" }}
                 />
               </Descriptions.Item>
-
               <Descriptions.Item label="Thời Gian Thi (phút)" span={1}>
                 <Input
                   type="number"
+                  min={1}
                   value={editExamDetails?.thoi_gian}
                   onChange={(e) =>
-                    handleInputChange("thoi_gian", e.target.value)
+                    handleInputChange("thoi_gian", Number(e.target.value) || 0)
                   }
                   style={{ width: "100%" }}
                 />
               </Descriptions.Item>
-
-              <Descriptions.Item label="Số Câu Thi" span={1}>
+              <Descriptions.Item label="Số Câu Thi (tổng)" span={1}>
                 <Input
                   type="number"
-                  value={
-                    editChapterDetails?.reduce(
-                      (sum, c) => sum + (Number(c.so_cau) || 0),
-                      0
-                    ) || 0
-                  }
+                  value={editExamDetails?.so_cau_thi || 0}
                   disabled
                   style={{ width: "100%" }}
                 />
@@ -362,8 +433,8 @@ const RegisterExamDetailModal = ({
                   ? new Date(examDetails.ngay_thi).toLocaleString("vi-VN")
                   : "-"
               )}
-              {renderValue("Thời Gian Thi", examDetails.thoi_gian)}
-              {renderValue("Số Câu Thi", examDetails.so_cau_thi)}
+              {renderValue("Thời Gian Thi", `${examDetails.thoi_gian} phút`)}
+              {renderValue("Số Câu Thi (tổng)", examDetails.so_cau_thi)}
               <Descriptions.Item label="Trạng Thái">
                 {examDetails.trang_thai ? (
                   <Tag
@@ -389,7 +460,6 @@ const RegisterExamDetailModal = ({
                   "-"
                 )}
               </Descriptions.Item>
-
               {renderValue("Người Phê Duyệt", examDetails.nguoi_phe_duyet)}
               {renderValue(
                 "Ngày Tạo",
@@ -403,8 +473,12 @@ const RegisterExamDetailModal = ({
               )}
             </Descriptions>
           )}
-
           <h3>Danh Sách Chương</h3>
+          {mode === "edit" && (
+            <div style={{ marginBottom: 16, color: "#1890ff", fontSize: 14 }}>
+              {renderQuestionCountText()}
+            </div>
+          )}
           <Table
             rowKey={(r, i) => `${r.id_dang_ky_thi}_${r.chuong_so}_${i}`}
             columns={columns}
@@ -413,14 +487,22 @@ const RegisterExamDetailModal = ({
             pagination={false}
           />
           {mode === "edit" && (
-            <Button
-              type="dashed"
-              onClick={handleAddChapter}
-              icon={<PlusOutlined />}
-              style={{ width: "100%", marginTop: 8 }}
-            >
-              Thêm chương
-            </Button>
+            <>
+              <Button
+                type="dashed"
+                onClick={handleAddChapter}
+                icon={<PlusOutlined />}
+                style={{ width: "100%", marginTop: 8 }}
+              >
+                Thêm chương
+              </Button>
+
+              {validationError && (
+                <div style={{ color: "red", marginTop: 8 }}>
+                  {validationError}
+                </div>
+              )}
+            </>
           )}
         </>
       ) : (

@@ -190,6 +190,62 @@ app.post("/api/dang-ky-thi", verifyToken, async (req, res) => {
     }
 });
 
+app.put("/api/dang-ky-thi/:id", verifyToken, async (req, res) => {
+    const { id } = req.params;
+    const { ma_gv, ma_lop, ma_mh, trinh_do, ngay_thi, thoi_gian, chi_tiet_dang_ky_thi } = req.body;
+    console.log("🚀 Payload cập nhật đăng ký thi:", req.body);
+    const connection = db.promise();
+
+    try {
+        await connection.beginTransaction();
+
+        let errMsg = "";
+
+        // Kiểm tra từng chương (validation giống POST)
+        for (const { chuong_so, so_cau } of chi_tiet_dang_ky_thi) {
+            const [rows] = await connection.query(
+                `SELECT COUNT(*) AS total FROM cau_hoi WHERE ma_mh = ? AND trinh_do = ? AND chuong_so = ?`,
+                [ma_mh, trinh_do, chuong_so]
+            );
+            const soCauTrongDB = rows[0].total;
+            if (soCauTrongDB < so_cau) {
+                errMsg += `Chương ${chuong_so} thiếu ${so_cau - soCauTrongDB} câu. `;
+            }
+        }
+
+        if (errMsg) {
+            await connection.rollback();
+            return res.status(400).json({ success: false, message: errMsg });
+        }
+
+        // Cập nhật bảng dang_ky_thi
+        await connection.query(
+            `UPDATE dang_ky_thi SET ma_gv = ?, ma_lop = ?, ma_mh = ?, trinh_do = ?, ngay_thi = ?, thoi_gian = ? WHERE id_dang_ky_thi = ?`,
+            [ma_gv, ma_lop, ma_mh, trinh_do, ngay_thi, thoi_gian, id]
+        );
+
+        // Xóa hết chi_tiet_dang_ky_thi cũ
+        await connection.query(
+            `DELETE FROM chi_tiet_dang_ky_thi WHERE id_dang_ky_thi = ?`,
+            [id]
+        );
+
+        // Thêm chi_tiet_dang_ky_thi mới
+        for (const { chuong_so, so_cau } of chi_tiet_dang_ky_thi) {
+            await connection.query(
+                `INSERT INTO chi_tiet_dang_ky_thi (id_dang_ky_thi, chuong_so, so_cau) VALUES (?, ?, ?)`,
+                [id, chuong_so, so_cau]
+            );
+        }
+
+        await connection.commit();
+        res.json({ success: true, message: "Cập nhật đăng ký thi thành công", id_dang_ky_thi: id });
+    } catch (e) {
+        console.error("Lỗi cập nhật đăng ký thi:", e);
+        await connection.rollback();
+        res.status(500).json({ success: false, message: "Lỗi server", error: e.message });
+    }
+});
 
 
 
