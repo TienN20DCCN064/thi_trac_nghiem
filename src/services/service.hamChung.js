@@ -5,8 +5,14 @@ const API_BASE = "http://localhost:4002/api";
 // const API_BASE = "http://localhost:4002/api_not_token";
 
 const hamChung = {
+  async reloadWeb_test () {
+    window.location.reload();
+  },
   async login(username, password) {
     return login(username, password);
+  },
+  async registerExam(payload) {
+    return registerExam(payload);
   },
   async getAll(tableName) {
     return getAll(tableName);
@@ -39,6 +45,34 @@ async function login(username, password) {
     throw error;
   }
 }
+/** ✅ Gọi API đăng ký thi */
+async function registerExam(payload) {
+  try {
+    const token = getToken();
+    const res = await fetch(`${API_BASE}/dang-ky-thi`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => null); // parse JSON, nếu fail => null
+
+    if (!res.ok || !data?.success) {
+      // ném lỗi với message backend, để UI show
+      throw new Error(data?.message || `Lỗi API đăng ký thi (${res.status})`);
+    }
+
+    return data; // { success, message, id_dang_ky_thi }
+  } catch (err) {
+    console.error("❌ Lỗi registerExam:", err);
+    throw err; // để handle ở FormAddExam
+  }
+}
+
+
 // LẤY TOÀN BỘ (GET ALL)
 async function getAll(tableName) {
   console.log("Fetching all from:", tableName);

@@ -131,6 +131,67 @@ app.post("/api/dang-nhap", (req, res) => {
         });
     });
 });
+// =============== API Đăng ký thi ===============
+app.post("/api/dang-ky-thi", verifyToken, async (req, res) => {
+    const { ma_gv, ma_lop, ma_mh, trinh_do, ngay_thi, thoi_gian, chi_tiet_dang_ky_thi } = req.body;
+    // in ra 
+    console.log("🚀 Payload đăng ký thi:", req.body);
+    const connection = db.promise();
+
+    try {
+        await connection.beginTransaction();
+
+        let tongSoCau = 0;
+        let errMsg = "";
+
+        // Kiểm tra từng chương
+        for (const { chuong_so, so_cau } of chi_tiet_dang_ky_thi) {
+            const [rows] = await connection.query(
+                `SELECT COUNT(*) AS total FROM cau_hoi WHERE ma_mh = ? AND trinh_do = ? AND chuong_so = ?`,
+                [ma_mh, trinh_do, chuong_so]
+            );
+
+            const soCauTrongDB = rows[0].total;
+            if (soCauTrongDB < so_cau) {
+                errMsg += `Chương ${chuong_so} thiếu ${so_cau - soCauTrongDB} câu. `;
+            }
+            tongSoCau += so_cau;
+        }
+
+        if (errMsg) {
+            await connection.rollback();
+            return res.status(400).json({ success: false, message: errMsg });
+        }
+
+        // Thêm bản ghi vào bảng dang_ky_thi (bỏ so_cau_thi)
+        const [result] = await connection.query(
+            `INSERT INTO dang_ky_thi (ma_gv, ma_lop, ma_mh, trinh_do, ngay_thi, thoi_gian) VALUES (?, ?, ?, ?, ?, ?)`,
+            [ma_gv, ma_lop, ma_mh, trinh_do, ngay_thi, thoi_gian]
+        );
+
+
+        const idDangKy = result.insertId;
+
+        // Thêm chi tiết vào chi_tiet_dang_ky_thi
+        for (const { chuong_so, so_cau } of chi_tiet_dang_ky_thi) {
+            await connection.query(
+                `INSERT INTO chi_tiet_dang_ky_thi (id_dang_ky_thi, chuong_so, so_cau) VALUES (?, ?, ?)`,
+                [idDangKy, chuong_so, so_cau]
+            );
+        }
+
+        await connection.commit();
+        res.json({ success: true, message: "Đăng ký thi thành công", id_dang_ky_thi: idDangKy });
+
+    } catch (e) {
+        console.error("Lỗi đăng ký thi:", e);
+        await connection.rollback();
+        res.status(500).json({ success: false, message: "Lỗi server", error: e.message });
+    }
+});
+
+
+
 
 // đây là api không cần tocken // trả về nguyên bản
 

@@ -338,10 +338,13 @@ const RegisterExamDetailModal = ({
               <Descriptions.Item label="Số Câu Thi" span={1}>
                 <Input
                   type="number"
-                  value={editExamDetails?.so_cau_thi}
-                  onChange={(e) =>
-                    handleInputChange("so_cau_thi", e.target.value)
+                  value={
+                    editChapterDetails?.reduce(
+                      (sum, c) => sum + (Number(c.so_cau) || 0),
+                      0
+                    ) || 0
                   }
+                  disabled
                   style={{ width: "100%" }}
                 />
               </Descriptions.Item>

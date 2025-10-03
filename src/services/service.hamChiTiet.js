@@ -8,6 +8,9 @@ const hamChiTiet = {
 
   async getQuestionWithChoicesByChoiceId(choiceId) {
     return getQuestionWithChoicesByChoiceId(choiceId);
+  },
+  async getQuestionCountByChapter(ma_mh, trinh_do) {
+    return getQuestionCountByChapter(ma_mh, trinh_do);
   }
 };
 // LOGIN
@@ -58,6 +61,24 @@ export async function getQuestionWithChoicesByChoiceId(choiceId) {
 
   return { ...dataOneQuestion, chon_lua, dap_an_dung };
 }
-
+async function getQuestionCountByChapter(ma_mh, trinh_do) {
+  try {
+    const allQuestions = await hamChung.getAll("cau_hoi");
+    // Lọc câu hỏi theo ma_mh và trinh_do
+    const filteredQuestions = allQuestions.filter(
+      (q) => q.ma_mh === ma_mh && q.trinh_do === trinh_do
+    );
+    // Đếm số câu hỏi theo chương
+    const questionCounts = filteredQuestions.reduce((acc, question) => {
+      const chapter = question.chuong_so.toString();
+      acc[chapter] = (acc[chapter] || 0) + 1;
+      return acc;
+    }, {});
+    return questionCounts; // Trả về object dạng { "1": 50, "2": 30, ... }
+  } catch (error) {
+    console.error("Lỗi khi lấy số câu hỏi theo chương:", error);
+    return {};
+  }
+}
 
 export default hamChiTiet;

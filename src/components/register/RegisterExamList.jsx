@@ -5,6 +5,8 @@ import { createActions } from "../../redux/actions/factoryActions.js";
 import RegisterExamListItem from "./RegisterExamListItem.jsx";
 import { useLocation } from "react-router-dom";
 
+import { getUserInfo, getRole } from "../../globals/globals.js";
+import hamChiTiet from "../../services/service.hamChiTiet.js";
 import hamChung from "../../services/service.hamChung.js";
 
 const dangKyThiActions = createActions("dang_ky_thi");
@@ -134,7 +136,12 @@ const filterRegisterExams = async (list, locationSearch) => {
       (trang_thai ? item.trang_thai?.toLowerCase().includes(trang_thai) : true)
     );
   });
-
+  if (getRole() === "GiaoVien") {
+    const userInfo = await hamChiTiet.getUserInfoByAccountId(
+      getUserInfo().id_tai_khoan
+    );
+    dataArr = dataArr.filter((item) => item.ma_gv === userInfo.ma_gv);
+  }
   console.log("Filtered Register Exam Data:", dataArr);
   return dataArr;
 };
