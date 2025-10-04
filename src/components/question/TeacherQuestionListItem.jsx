@@ -81,6 +81,7 @@ const TeacherQuestionListItem = ({ data = [], onDelete }) => {
       dataIndex: "trinh_do",
       key: "trinh_do",
       align: "center",
+      render: (value) => (value === "ĐH" ? "Đại Học" : value === "CĐ" ? "Cao Đẳng" : value === "VB2" ? "Văn Bằng 2" : "Khác"),
     },
     {
       title: "Số câu hỏi đã soạn",

@@ -3,6 +3,16 @@ import { useSelector } from "react-redux";
 import { Layout } from "antd";
 import { Routes, Route } from "react-router-dom";
 import Sidebar from "./components/common/Sidebar.jsx";
+
+import HomePage from "./components/common/HomePage.jsx";
+
+import KhoaPage from "./components/khoa/KhoaPage.jsx";
+import ClassPage from "./components/classHoc/ClassPage.jsx";
+import SubjectPage from "./components/subject/SubjectPage.jsx";
+
+import StudentInfoPage from "./components/user/StudentInfoPage.jsx";
+import TeacherInfoPage from "./components/user/TeacherInfoPage.jsx";
+
 import HeaderUserInfo from "./components/common/HeaderUserInfo.jsx";
 import RegisterExamPage from "./components/register/RegisterExamPage.jsx";
 import TeacherQuestionPage from "./components/question/TeacherQuestionPage.jsx";
@@ -34,17 +44,23 @@ function App() {
           <HeaderUserInfo />
           <Content className="app-content">
             <Routes>
-              <Route path="/" element={<h2>Welcome 🚀</h2>} />
+              <Route path="/" element={<HomePage />} />
+              <Route path="/home" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
 
+              {/* dành cho giáo vụ */}
               <Route
-                path="/users/users-list"
-                element={<h2>Welcome /users/users-list 🚀</h2>}
+                path="/users/list-teachers"
+                element={<TeacherInfoPage />}
               />
               <Route
-                path="/users/user-groups"
-                element={<h2>Welcome /users/user-groups 🚀</h2>}
+                path="/users/list-students"
+                element={<StudentInfoPage />}
               />
+              <Route path="/khoa/list-khoa" element={<KhoaPage />} />
+              <Route path="/class/list-class" element={<ClassPage />} />
+              <Route path="/subject/list-subjects" element={<SubjectPage />} />
+
               <Route
                 path="/question/list-question"
                 element={<TeacherQuestionPage />}
@@ -53,6 +69,8 @@ function App() {
                 path="/question/add-question"
                 element={<h2>Welcome /question/add-question 🚀</h2>}
               />
+
+              {/* dành cho giáo viên */}
 
               <Route
                 path="/register/register-exam"

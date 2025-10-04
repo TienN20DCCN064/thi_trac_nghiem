@@ -17,6 +17,10 @@ import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import hamChung from "../../services/service.hamChung.js";
 import hamChiTiet from "../../services/service.hamChiTiet.js";
 
+import { useDispatch } from "react-redux";
+import { createActions } from "../../redux/actions/factoryActions.js";
+const teacherSubjectActions = createActions("cau_hoi");
+
 const { Option } = Select;
 
 const TeacherQuestionDetailModal = ({
@@ -33,7 +37,9 @@ const TeacherQuestionDetailModal = ({
   const [gvOptions, setGvOptions] = useState([]);
   const [monHocOptions, setMonHocOptions] = useState([]);
   const [questions, setQuestions] = useState([]);
-  const [errors, setErrors] = useState({}); // lỗi từng câu hỏi
+  const [errors, setErrors] = useState({});
+
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (!visible) return;
@@ -101,6 +107,7 @@ const TeacherQuestionDetailModal = ({
         noi_dung: "",
         loai: "chon_1",
         dap_an_dung: "",
+        chuong_so: 1, // Giá trị chương mặc định
         chon_lua: [
           { id_chon_lua: Date.now(), id_ch: newQuestionId, noi_dung: "" },
           { id_chon_lua: Date.now() + 1, id_ch: newQuestionId, noi_dung: "" },
@@ -192,12 +199,18 @@ const TeacherQuestionDetailModal = ({
 
   const handleSave = async () => {
     try {
-      await form.validateFields(); // validate GV, môn học, trình độ
+      await form.validateFields();
       let newErrors = {};
 
-      questions.forEach((q, idx) => {
+      questions.forEach((q) => {
         if (!q.noi_dung.trim()) {
           newErrors[q.id_ch] = "Nội dung câu hỏi không được để trống";
+        } else if (
+          !q.chuong_so ||
+          !Number.isInteger(Number(q.chuong_so)) ||
+          Number(q.chuong_so) <= 0
+        ) {
+          newErrors[q.id_ch] = "Chương phải là số nguyên dương";
         } else if (q.loai === "dien_khuyet" && !q.dap_an_dung.trim()) {
           newErrors[q.id_ch] = "Đáp án điền khuyết không được để trống";
         } else if (q.loai === "yes_no" && !q.dap_an_dung) {
@@ -223,22 +236,39 @@ const TeacherQuestionDetailModal = ({
       setErrors({});
       setLoading(true);
 
-      for (const q of questions) {
-        const questionData = {
-          ...q,
-          ma_gv: maGV,
-          ma_mh: maMH,
-          trinh_do: trinhDo,
-        };
-        if (q.id_ch.toString().startsWith("tmp")) {
-          console.log("Tạo mới câu hỏi:", questionData);
-        } else {
-          console.log("Cập nhật câu hỏi:", questionData);
-        }
+      if (mode === "edit") {
+        console.log("Gọi API cập nhật danh sách câu hỏi");
+        console.log("Dữ liệu sẽ gửi lên server:", {
+          ma_gv: form.getFieldValue("ma_gv"),
+          ma_mh: form.getFieldValue("ma_mh"),
+          trinh_do: form.getFieldValue("trinh_do"),
+          questions,
+        });
+        await hamChung.updateListQuestions({
+          ma_gv: form.getFieldValue("ma_gv"),
+          ma_mh: form.getFieldValue("ma_mh"),
+          trinh_do: form.getFieldValue("trinh_do"),
+          questions,
+        });
+      } else {
+        console.log("Gọi API tạo mới danh sách câu hỏi");
+        console.log("Dữ liệu sẽ gửi lên server:", {
+          ma_gv: form.getFieldValue("ma_gv"),
+          ma_mh: form.getFieldValue("ma_mh"),
+          trinh_do: form.getFieldValue("trinh_do"),
+          questions,
+        });
+        await hamChung.createListQuestions({
+          ma_gv: form.getFieldValue("ma_gv"),
+          ma_mh: form.getFieldValue("ma_mh"),
+          trinh_do: form.getFieldValue("trinh_do"),
+          questions,
+        });
       }
 
       message.success("Lưu danh sách câu hỏi thành công!");
-      // onCancel();
+      dispatch(teacherSubjectActions.creators.fetchAllRequest());
+      onCancel();
     } catch (e) {
       message.error(e.message || "Chưa điền đủ thông tin bắt buộc!");
     } finally {
@@ -363,6 +393,36 @@ const TeacherQuestionDetailModal = ({
                           )
                         }
                         placeholder="Nhập nội dung câu hỏi"
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col flex="50px">
+                    <Form.Item
+                      label="Chương"
+                      validateStatus={
+                        errors[q.id_ch] && q.chuong_so === undefined
+                          ? "error"
+                          : ""
+                      }
+                      help={
+                        errors[q.id_ch] && q.chuong_so === undefined
+                          ? "Chưa nhập chương"
+                          : ""
+                      }
+                    >
+                      <Input
+                        type="number"
+                        value={q.chuong_so}
+                        onChange={(e) =>
+                          handleChangeQuestion(
+                            q.id_ch,
+                            "chuong_so",
+                            e.target.value
+                          )
+                        }
+                        placeholder="Nhập chương"
+                        disabled={mode === "view"}
+                        min={1}
                       />
                     </Form.Item>
                   </Col>

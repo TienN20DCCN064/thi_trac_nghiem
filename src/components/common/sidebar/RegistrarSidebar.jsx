@@ -1,13 +1,20 @@
 // TeacherSidebar.jsx (code bạn đã có)
 import React from "react";
 import { Layout, Menu } from "antd";
-import { UserOutlined, BookOutlined, SettingOutlined } from "@ant-design/icons";
+import {
+  UserOutlined,
+  TeamOutlined,
+  IdcardOutlined,
+  ApartmentOutlined,
+  BookOutlined,
+  PlusCircleOutlined,
+} from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const { Sider } = Layout;
 
-const TeacherSidebar = () => {
-  console.log("Rendering TeacherSidebar");
+const RegistrarSidebar = () => {
+  console.log("Rendering RegistrarSidebar");
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -26,10 +33,11 @@ const TeacherSidebar = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          cursor: "pointer", // Thêm hiệu ứng con trỏ
         }}
+        onClick={() => navigate("/")} // Thêm sự kiện click
       >
         <img
-          //C:\Users\vanti\Desktop\tot_nghiep\my-react-trac-nghiem\public\images\cms.png
           src="/images/cms.png"
           alt="CMS"
           style={{
@@ -47,11 +55,87 @@ const TeacherSidebar = () => {
         items={[
           {
             key: "user",
-            icon: <UserOutlined />,
+            icon: <TeamOutlined />,
             label: "Quản lý người dùng",
             children: [
-              { key: "users/users-list", label: "Người dùng" },
-              { key: "users/user-groups", label: "Nhóm tài khoản" },
+              {
+                key: "users/list-teachers",
+                label: "Giáo viên",
+                icon: <UserOutlined />,
+              },
+              {
+                key: "users/list-students",
+                label: "Học sinh",
+                icon: <IdcardOutlined />,
+              },
+            ],
+          },
+          {
+            key: "account",
+            icon: <IdcardOutlined />,
+            label: "Quản lý tài khoản",
+            children: [
+              {
+                key: "account/list-accounts",
+                label: "Tài khoản",
+                icon: <UserOutlined />,
+              },
+              {
+                key: "account/user-groups",
+                label: "Nhóm tài khoản",
+                icon: <TeamOutlined />,
+              },
+            ],
+          },
+          {
+            key: "khoa",
+            icon: <BookOutlined />,
+            label: "Quản lý khoa",
+            children: [
+              {
+                key: "khoa/list-khoa",
+                label: "Danh sách khoa",
+                icon: <ApartmentOutlined />,
+              },
+              {
+                key: "khoa/add-khoa",
+                label: "Thêm khoa",
+                icon: <PlusCircleOutlined />,
+              },
+            ],
+          },
+          {
+            key: "class",
+            icon: <ApartmentOutlined />,
+            label: "Quản lý lớp",
+            children: [
+              {
+                key: "class/list-class",
+                label: "Danh sách lớp",
+                icon: <TeamOutlined />,
+              },
+              {
+                key: "class/add-class",
+                label: "Thêm lớp",
+                icon: <PlusCircleOutlined />,
+              },
+            ],
+          },
+          {
+            key: "subject",
+            icon: <ApartmentOutlined />,
+            label: "Quản lý môn học",
+            children: [
+              {
+                key: "subject/list-subjects",
+                label: "Danh sách môn học",
+                icon: <TeamOutlined />,
+              },
+              {
+                key: "subject/add-subject",
+                label: "Thêm môn học",
+                icon: <PlusCircleOutlined />,
+              },
             ],
           },
         ]}
@@ -60,4 +144,4 @@ const TeacherSidebar = () => {
   );
 };
 
-export default TeacherSidebar;
+export default RegistrarSidebar;

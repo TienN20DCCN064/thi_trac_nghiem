@@ -3,6 +3,7 @@ import { Table, Button, Modal, Tag } from "antd";
 import { DeleteOutlined, EditOutlined, EyeOutlined } from "@ant-design/icons";
 import RegisterExamDetailModal from "./RegisterExamDetailModal.jsx";
 import CellDisplay from "../../components/common/CellDisplay.jsx";
+import hamChiTiet from "../../services/service.hamChiTiet.js";
 // Lấy page & pageSize từ URL, nếu không có thì mặc định
 function handleCheckPageParam() {
   const query = new URLSearchParams(window.location.search);
@@ -121,9 +122,9 @@ const RegisterExamListItem = ({
       title: "Ngày Thi",
       dataIndex: "ngay_thi",
       key: "ngay_thi",
-      width: 150,
+      width: 100,
       render: (value) =>
-        value ? new Date(value).toLocaleString("vi-VN") : "-",
+        value ? new Date(value).toLocaleDateString("vi-VN") : "-",
     },
     // {
     //   title: "Số Câu / Thời Gian",
@@ -131,7 +132,12 @@ const RegisterExamListItem = ({
     //   key: "so_cau_thi/thoi_gian",
     //   render: (_, record) => `${record.so_cau_thi} câu / ${record.thoi_gian} phút`,
     // },
-    { title: "Số Câu Thi", dataIndex: "so_cau_thi", key: "so_cau_thi" },
+    {
+      title: "Số Câu Thi",
+      dataIndex: "so_cau_thi",
+      key: "so_cau_thi",
+      render: async (value, record) => await hamChiTiet.countSoCauThiByidDangKyThi(record.id_dang_ky_thi) || "-",
+    },
     {
       title: "Thời Gian",
       dataIndex: "thoi_gian",

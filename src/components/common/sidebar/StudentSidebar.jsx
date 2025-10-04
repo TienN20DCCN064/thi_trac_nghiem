@@ -26,10 +26,11 @@ const StudentSidebar = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          cursor: "pointer", // Thêm hiệu ứng con trỏ
         }}
+        onClick={() => navigate("/")} // Thêm sự kiện click
       >
         <img
-          //C:\Users\vanti\Desktop\tot_nghiep\my-react-trac-nghiem\public\images\cms.png
           src="/images/cms.png"
           alt="CMS"
           style={{

@@ -1,6 +1,11 @@
 // src/constants/roleStore.js
 
 const USER_KEY = "user_info"; // key lưu toàn bộ thông tin user vào localStorage
+const congAPI = 4002;
+const congAPI_image = 5000;
+const congAPI_gmail = 5002; // Phần tạo trận đấu
+const IPv4_Address = "192.168.2.145";
+
 
 // Lấy thông tin user
 export const getUserInfo = () => {
@@ -27,4 +32,19 @@ export const getToken = () => {
 export const getRole = () => {
   const user = getUserInfo();
   return user?.vai_tro || null;
+}
+
+export const getLinkCongAPI = () => {
+  return "http://" + IPv4_Address + ":" + congAPI + "/api";
+}
+export const getLinkCongApi_notToken = () => {
+  return "http://" + IPv4_Address + ":" + congAPI + "/api_not_token";
+}
+export const getLinkCongApi_image = () => {
+  // http://
+  return "http://" + IPv4_Address + ":" + congAPI_image + "/api/image";
+}
+
+export const getLinkCongApi_gmail = () => {
+  return "http://" + IPv4_Address + ":" + congAPI_gmail + "/api/";
 }

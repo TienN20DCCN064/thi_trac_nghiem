@@ -1,13 +1,14 @@
-import { getToken, getUserInfo } from "../globals/globals.js";  // 👈 nhớ import hàm getToken
+import { getToken, getUserInfo, getLinkCongAPI } from "../globals/globals.js";  // 👈 nhớ import hàm getToken
 
-
-const API_BASE = "http://localhost:4002/api";
+const API_BASE = getLinkCongAPI();
 // const API_BASE = "http://localhost:4002/api_not_token";
 
 const hamChung = {
   async reloadWeb_test() {
     window.location.reload();
   },
+
+
   async login(username, password) {
     return login(username, password);
   },
@@ -17,6 +18,18 @@ const hamChung = {
   async updateExam(id_dang_ky_thi, payload) {
     return updateExam(id_dang_ky_thi, payload);
   },
+  // 👇 Thêm mới 3 API cho list-questions
+  async createListQuestions(payload) {
+    return createListQuestions(payload);
+  },
+  async updateListQuestions(payload) {
+    return updateListQuestions(payload);
+  },
+  async deleteListQuestions(payload) {
+    return deleteListQuestions(payload);
+  },
+
+
   async getAll(tableName) {
     return getAll(tableName);
   },
@@ -98,6 +111,83 @@ async function updateExam(id_dang_ky_thi, payload) {
     throw err; // để handle ở RegisterExamDetailModal
   }
 }
+// Tạo danh sách câu hỏi
+async function createListQuestions(payload) {
+  try {
+    const token = getToken();
+    const res = await fetch(`${API_BASE}/list-questions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok || !data?.success) {
+      throw new Error(data?.message || `Lỗi API thêm câu hỏi (${res.status})`);
+    }
+
+    return data; // { success, message }
+  } catch (err) {
+    console.error("❌ Lỗi createListQuestions:", err);
+    throw err;
+  }
+}
+
+// Cập nhật danh sách câu hỏi
+async function updateListQuestions(payload) {
+  try {
+    const token = getToken();
+    const res = await fetch(`${API_BASE}/list-questions`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok || !data?.success) {
+      throw new Error(data?.message || `Lỗi API cập nhật câu hỏi (${res.status})`);
+    }
+
+    return data; // { success, message }
+  } catch (err) {
+    console.error("❌ Lỗi updateListQuestions:", err);
+    throw err;
+  }
+}
+
+// Xoá danh sách câu hỏi
+async function deleteListQuestions(payload) {
+  try {
+    const token = getToken();
+    const res = await fetch(`${API_BASE}/list-questions`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok || !data?.success) {
+      throw new Error(data?.message || `Lỗi API xoá câu hỏi (${res.status})`);
+    }
+
+    return data; // { success, message }
+  } catch (err) {
+    console.error("❌ Lỗi deleteListQuestions:", err);
+    throw err;
+  }
+}
 
 
 // LẤY TOÀN BỘ (GET ALL)
@@ -152,14 +242,20 @@ async function create(tableName, data) {
       body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error(`Không thể tạo ${tableName}`);
-    return await response.json();
+
+    try {
+      return await response.json();
+    } catch {
+      const text = await response.text();
+      console.warn(`⚠️ Phản hồi từ ${tableName} không phải JSON:`, text);
+      return { message: text }; // fallback tránh crash
+    }
   } catch (error) {
     console.error(`Lỗi create ${tableName}:`, error);
     throw error;
   }
 }
 
-// CẬP NHẬT
 async function update(tableName, id, data) {
   try {
     const token = getToken();
@@ -171,16 +267,29 @@ async function update(tableName, id, data) {
       },
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error(`Không thể cập nhật ${tableName} id=${id}`);
-    return await response.json();
+
+    if (!response.ok)
+      throw new Error(
+        `Không thể cập nhật ${tableName} id=${id} (HTTP ${response.status})`
+      );
+
+    try {
+      return await response.json();
+    } catch {
+      const text = await response.text();
+      console.warn(`⚠️ Phản hồi từ ${tableName} (update) không phải JSON:`, text);
+      return { message: text };
+    }
   } catch (error) {
-    console.error(`Lỗi update ${tableName}:`, error);
+    console.error(`❌ Lỗi update ${tableName}:`, error);
     throw error;
   }
 }
 
-
-async function remove(tableName, id) {  // đổi tên từ delete -> remove
+// =============================
+// 🔴 REMOVE
+// =============================
+async function remove(tableName, id) {
   try {
     const token = getToken();
     const response = await fetch(`${API_BASE}/${tableName}/${id}`, {
@@ -189,10 +298,23 @@ async function remove(tableName, id) {  // đổi tên từ delete -> remove
         Authorization: `Bearer ${token}`,
       },
     });
-    if (!response.ok) throw new Error(`Không thể xoá ${tableName} id=${id}`);
-    return id;
+
+    if (!response.ok)
+      throw new Error(
+        `Không thể xoá ${tableName} id=${id} (HTTP ${response.status})`
+      );
+
+    try {
+      // Nếu API trả JSON
+      return await response.json();
+    } catch {
+      // Nếu API chỉ trả text
+      const text = await response.text();
+      console.warn(`⚠️ Phản hồi từ ${tableName} (remove) không phải JSON:`, text);
+      return { message: text || "Đã xoá thành công", id };
+    }
   } catch (error) {
-    console.error(`Lỗi remove ${tableName}:`, error);
+    console.error(`❌ Lỗi remove ${tableName}:`, error);
     throw error;
   }
 }

@@ -4,6 +4,7 @@ import {
   getUserInfo,
   setUserInfo,
   clearUserInfo,
+  getLinkCongAPI,
 } from "../../globals/globals.js";
 
 import axios from "axios"; // 👈 cần axios
@@ -22,7 +23,7 @@ const LoginPage = () => {
     setLoading(true);
     console.log("Received values of form: ", getUserInfo());
     try {
-      const res = await axios.post("http://localhost:4002/api/dang-nhap", {
+      const res = await axios.post(getLinkCongAPI() + "/dang-nhap", {
         ten_dang_nhap: values.ma_nguoi_dung,
         mat_khau: values.password,
       });
@@ -36,12 +37,12 @@ const LoginPage = () => {
       console.log("Token:", token);
 
       // Điều hướng theo vai trò
-      if (user.vai_tro === "GiaoVu") {
-        window.location.href = "/register/register-exam"; // 👈 reload lại app
-      } else if (user.vai_tro === "GiaoVien") {
-        window.location.href = "/register/register-exam"; // 👈 reload lại app
-      } else if (user.vai_tro === "SinhVien") {
-        window.location.href = "/my-course"; // 👈 reload lại app
+      if (
+        user.vai_tro === "GiaoVu" ||
+        user.vai_tro === "GiaoVien" ||
+        user.vai_tro === "SinhVien"
+      ) {
+        window.location.href = "/home"; // 👈 reload lại app
       }
     } catch (error) {
       messageApi.error(

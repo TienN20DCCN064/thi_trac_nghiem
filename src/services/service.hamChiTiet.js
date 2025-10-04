@@ -11,6 +11,9 @@ const hamChiTiet = {
   },
   async getQuestionCountByChapter(ma_mh, trinh_do) {
     return getQuestionCountByChapter(ma_mh, trinh_do);
+  },
+  async countSoCauThiByidDangKyThi(id_dang_ky_thi) {
+    return countSoCauThiByidDangKyThi(id_dang_ky_thi);
   }
 };
 // LOGIN
@@ -78,6 +81,23 @@ async function getQuestionCountByChapter(ma_mh, trinh_do) {
   } catch (error) {
     console.error("Lỗi khi lấy số câu hỏi theo chương:", error);
     return {};
+  }
+}
+async function countSoCauThiByidDangKyThi(id_dang_ky_thi) {
+  try {
+    const allDangKyThiChiTiet = await hamChung.getAll("chi_tiet_dang_ky_thi");
+    // Lọc chi tiết đăng ký thi theo id_dang_ky_thi
+    const filteredDetails = allDangKyThiChiTiet.filter(d => d.id_dang_ky_thi === id_dang_ky_thi);
+    let count = 0;
+    for(const detail of filteredDetails) {
+      const so_cau = detail.so_cau || 0;
+      count += so_cau;
+    }
+    console.log("Số câu thi cho id_dang_ky_thi", id_dang_ky_thi, "là:", count);
+    return count;
+  } catch (error) {
+    console.error("Lỗi khi đếm số câu thi:", error);
+    return 0;
   }
 }
 

@@ -18,10 +18,16 @@ import hamChung from "../../services/service.hamChung.js";
 import hamChiTiet from "../../services/service.hamChiTiet.js";
 import { getUserInfo } from "../../globals/globals.js";
 
+import { useDispatch } from "react-redux";
+import { createActions } from "../../redux/actions/factoryActions.js";
+
 const { Option } = Select;
 const { Text } = Typography;
+const dangKyThiActions = createActions("dang_ky_thi");
 
 const FormAddExam = ({ visible, onCancel }) => {
+  const dispatch = useDispatch();
+
   const [chapters, setChapters] = useState([
     { chapterNumber: "", questionCount: 1, availableQuestions: 0 },
   ]);
@@ -134,7 +140,7 @@ const FormAddExam = ({ visible, onCancel }) => {
       const ma_gv = gvData?.ma_gv || "";
 
       const ngayThiSQL = values.ngay_thi
-        ? values.ngay_thi.format("YYYY-MM-DD HH:mm:ss")
+        ? values.ngay_thi.format("YYYY-MM-DD") // chỉ lưu ngày
         : null;
 
       const payload = {
@@ -162,7 +168,8 @@ const FormAddExam = ({ visible, onCancel }) => {
       setSelectedSubject(null);
       setSelectedLevel(null);
       onCancel();
-      hamChung.reloadWeb_test();
+      // Dispatch action Redux để làm mới danh sách
+      dispatch(dangKyThiActions.creators.fetchAllRequest());
     } catch (error) {
       console.error("❌ Lỗi validate hoặc API:", error);
 

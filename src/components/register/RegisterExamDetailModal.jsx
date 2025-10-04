@@ -11,11 +11,15 @@ import {
   Button,
   Select,
 } from "antd";
-import { notification } from "antd";
+
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import hamChung from "../../services/service.hamChung.js";
 import hamChiTiet from "../../services/service.hamChiTiet.js";
 import moment from "moment";
+import { useDispatch } from "react-redux";
+import { createActions } from "../../redux/actions/factoryActions.js";
+
+const dangKyThiActions = createActions("dang_ky_thi");
 
 const { Option } = Select;
 
@@ -25,6 +29,7 @@ const RegisterExamDetailModal = ({
   mode = "view",
   onCancel,
 }) => {
+  const dispatch = useDispatch();
   const [examDetails, setExamDetails] = useState(null);
   const [chapterDetails, setChapterDetails] = useState([]);
   const [editExamDetails, setEditExamDetails] = useState(null);
@@ -210,6 +215,9 @@ const RegisterExamDetailModal = ({
         0
       );
       setExamDetails((prev) => ({ ...prev, so_cau_thi: soCauThi }));
+      // Dispatch action Redux để làm mới danh sách
+      dispatch(dangKyThiActions.creators.fetchAllRequest());
+
       onCancel();
     } catch (e) {
       message.error(`Lỗi lưu dữ liệu: ${e.message}`, { duration: 3 });
@@ -389,17 +397,21 @@ const RegisterExamDetailModal = ({
                 <DatePicker
                   value={
                     editExamDetails.ngay_thi
-                      ? moment(editExamDetails.ngay_thi)
+                      ? moment(editExamDetails.ngay_thi, "YYYY-MM-DD")
                       : null
                   }
                   onChange={(d) =>
-                    handleInputChange("ngay_thi", d ? d.toISOString() : null)
+                    handleInputChange(
+                      "ngay_thi",
+                      d ? d.format("YYYY-MM-DD") : editExamDetails.ngay_thi
+                    )
                   }
-                  format="DD/MM/YYYY HH:mm"
-                  showTime
+                  format="DD/MM/YYYY"
+                  placeholder="Chọn ngày thi" // giống Form Add
                   style={{ width: "100%" }}
                 />
               </Descriptions.Item>
+
               <Descriptions.Item label="Thời Gian Thi (phút)" span={1}>
                 <Input
                   type="number"
@@ -463,13 +475,19 @@ const RegisterExamDetailModal = ({
               {renderValue("Người Phê Duyệt", examDetails.nguoi_phe_duyet)}
               {renderValue(
                 "Ngày Tạo",
-                examDetails.created_at &&
-                  new Date(examDetails.created_at).toLocaleString("vi-VN")
+                examDetails.created_at
+                  ? moment(examDetails.created_at)
+                      .subtract(17, "hours")
+                      .format("DD-MM-YYYY HH:mm:ss")
+                  : "-"
               )}
               {renderValue(
                 "Ngày Cập Nhật",
-                examDetails.updated_at &&
-                  new Date(examDetails.updated_at).toLocaleString("vi-VN")
+                examDetails.updated_at
+                  ? moment(examDetails.updated_at)
+                      .subtract(17, "hours")
+                      .format("DD-MM-YYYY HH:mm:ss")
+                  : "-"
               )}
             </Descriptions>
           )}
