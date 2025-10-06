@@ -63,61 +63,88 @@ const StudentInfoListItem = ({ data = [], onDataChange }) => {
   const paginatedData = Array.isArray(data)
     ? data.slice((validCurrentPage - 1) * pageSize, validCurrentPage * pageSize)
     : [];
+// Xử lý khi submit form
+const handleSubmit = () => {
+  if (!formData.ma_sv || !formData.ho || !formData.ten || !formData.phai || !formData.ma_lop) {
+    message.error("Vui lòng nhập đầy đủ thông tin bắt buộc!");
+    return;
+  }
 
-  const handleSubmit = async () => {
-    if (!formData.ma_sv || !formData.ho || !formData.ten || !formData.phai || !formData.ma_lop) {
-      message.error("Vui lòng nhập đầy đủ thông tin bắt buộc!");
-      return;
-    }
+  const payload = {
+    ma_sv: formData.ma_sv,
+    ho: formData.ho,
+    ten: formData.ten,
+    phai: formData.phai,
+    dia_chi: formData.dia_chi,
+    ngay_sinh: formData.ngay_sinh
+      ? moment(formData.ngay_sinh).format("YYYY-MM-DD")
+      : null,
+    ma_lop: formData.ma_lop,
+    hinh_anh: formData.hinh_anh,
+  };
 
-    try {
-      const payload = {
-        ma_sv: formData.ma_sv,
-        ho: formData.ho,
-        ten: formData.ten,
-        phai: formData.phai,
-        dia_chi: formData.dia_chi,
-        ngay_sinh: formData.ngay_sinh
-          ? moment(formData.ngay_sinh).format("YYYY-MM-DD")
-          : null,
-        ma_lop: formData.ma_lop,
-        hinh_anh: formData.hinh_anh,
-      };
-      if (modalMode === "create") {
-        await dispatch(studentSubjectActions.creators.createRequest(payload));
-        message.success("Thêm sinh viên thành công!");
-      } else if (modalMode === "edit") {
-        await dispatch(
-          studentSubjectActions.creators.updateRequest(formData.ma_sv, payload)
-        );
-        message.success("Cập nhật sinh viên thành công!");
+  if (modalMode === "create") {
+    dispatch(
+      studentSubjectActions.creators.createRequest(payload, (res) => {
+        if (res.success) {
+          message.success(res.message || "Thêm sinh viên thành công!");
+          setModalVisible(false);
+          setFormData({
+            ma_sv: "",
+            ho: "",
+            ten: "",
+            phai: "",
+            dia_chi: "",
+            ngay_sinh: null,
+            ma_lop: "",
+            hinh_anh: "",
+          });
+          onDataChange();
+        } else {
+          message.error(res.message || "Thêm sinh viên thất bại!");
+        }
+      })
+    );
+  } else if (modalMode === "edit") {
+    dispatch(
+      studentSubjectActions.creators.updateRequest(formData.ma_sv, payload, (res) => {
+        if (res.success) {
+          message.success(res.message || "Cập nhật sinh viên thành công!");
+          setModalVisible(false);
+          setFormData({
+            ma_sv: "",
+            ho: "",
+            ten: "",
+            phai: "",
+            dia_chi: "",
+            ngay_sinh: null,
+            ma_lop: "",
+            hinh_anh: "",
+          });
+          onDataChange();
+        } else {
+          message.error(res.message || "Cập nhật sinh viên thất bại!");
+        }
+      })
+    );
+  }
+};
+
+// Xử lý xóa
+const handleDelete = (record) => {
+  dispatch(
+    studentSubjectActions.creators.deleteRequest(record.ma_sv, (res) => {
+      if (res.success) {
+        message.success(res.message || "Xóa sinh viên thành công!");
+        onDataChange();
+      } else {
+        message.error(res.message || "Xóa sinh viên thất bại!");
       }
-      setModalVisible(false);
-      setFormData({
-        ma_sv: "",
-        ho: "",
-        ten: "",
-        phai: "",
-        dia_chi: "",
-        ngay_sinh: null,
-        ma_lop: "",
-        hinh_anh: "",
-      });
-      onDataChange();
-    } catch (error) {
-      message.error(`Lỗi: ${error.message}`);
-    }
-  };
+    })
+  );
+};
 
-  const handleDelete = async (record) => {
-    try {
-      await dispatch(studentSubjectActions.creators.deleteRequest(record.ma_sv));
-      message.success("Xóa sinh viên thành công!");
-      onDataChange();
-    } catch (error) {
-      message.error(`Lỗi khi xóa sinh viên: ${error.message}`);
-    }
-  };
+
 
   const columns = [
     {

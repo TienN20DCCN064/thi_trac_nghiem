@@ -228,12 +228,13 @@ async function getOne(tableName, id) {
     throw error;
   }
 }
-
-// TẠO MỚI
+// =============================
+// 🟢 TẠO MỚI (CREATE)
+// =============================
 async function create(tableName, data) {
   try {
     const token = getToken();
-    const response = await fetch(`${API_BASE}/${tableName}`, {
+    const res = await fetch(`${API_BASE}/${tableName}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -241,25 +242,38 @@ async function create(tableName, data) {
       },
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error(`Không thể tạo ${tableName}`);
 
-    try {
-      return await response.json();
-    } catch {
-      const text = await response.text();
-      console.warn(`⚠️ Phản hồi từ ${tableName} không phải JSON:`, text);
-      return { message: text }; // fallback tránh crash
+    const contentType = res.headers.get("content-type");
+    const body =
+      contentType && contentType.includes("application/json")
+        ? await res.json()
+        : await res.text();
+
+    if (!res.ok) {
+      return {
+        success: false,
+        message: body?.message || `Không thể tạo1 ${tableName}`
+      };
     }
+
+    return {
+      success: true,
+      message: body?.message || `Thêm ${tableName} thành công`,
+      data: body,
+    };
   } catch (error) {
-    console.error(`Lỗi create ${tableName}:`, error);
-    throw error;
+    console.error(`❌ Lỗi create ${tableName}:`, error);
+    return { success: false, message: error.message };
   }
 }
 
+// =============================
+// 🟡 CẬP NHẬT (UPDATE)
+// =============================
 async function update(tableName, id, data) {
   try {
     const token = getToken();
-    const response = await fetch(`${API_BASE}/${tableName}/${id}`, {
+    const res = await fetch(`${API_BASE}/${tableName}/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -268,56 +282,68 @@ async function update(tableName, id, data) {
       body: JSON.stringify(data),
     });
 
-    if (!response.ok)
-      throw new Error(
-        `Không thể cập nhật ${tableName} id=${id} (HTTP ${response.status})`
-      );
+    const contentType = res.headers.get("content-type");
+    const body =
+      contentType && contentType.includes("application/json")
+        ? await res.json()
+        : await res.text();
 
-    try {
-      return await response.json();
-    } catch {
-      const text = await response.text();
-      console.warn(`⚠️ Phản hồi từ ${tableName} (update) không phải JSON:`, text);
-      return { message: text };
+    if (!res.ok) {
+
+      return {
+        success: false,
+        message: body?.message || `Không thể 1cập nhật ${tableName}`
+      };
     }
+
+    return {
+      success: true,
+      message: body?.message || `Cập nhật ${tableName} thành công`,
+      data: body,
+    };
   } catch (error) {
     console.error(`❌ Lỗi update ${tableName}:`, error);
-    throw error;
+    return { success: false, message: error.message };
   }
 }
 
 // =============================
-// 🔴 REMOVE
+// 🔴 XOÁ (REMOVE)
 // =============================
 async function remove(tableName, id) {
   try {
     const token = getToken();
-    const response = await fetch(`${API_BASE}/${tableName}/${id}`, {
+    const res = await fetch(`${API_BASE}/${tableName}/${id}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
 
-    if (!response.ok)
-      throw new Error(
-        `Không thể xoá ${tableName} id=${id} (HTTP ${response.status})`
-      );
+    const contentType = res.headers.get("content-type");
+    const body =
+      contentType && contentType.includes("application/json")
+        ? await res.json()
+        : await res.text();
 
-    try {
-      // Nếu API trả JSON
-      return await response.json();
-    } catch {
-      // Nếu API chỉ trả text
-      const text = await response.text();
-      console.warn(`⚠️ Phản hồi từ ${tableName} (remove) không phải JSON:`, text);
-      return { message: text || "Đã xoá thành công", id };
+    if (!res.ok) {
+      return {
+        success: false,
+        message: body?.message || `Không thể xoá ${tableName}`
+      };
     }
+
+    return {
+      success: true,
+      message: body?.message || `Xoá ${tableName} thành công`,
+      id,
+    };
   } catch (error) {
     console.error(`❌ Lỗi remove ${tableName}:`, error);
-    throw error;
+    return { success: false, message: error.message };
   }
 }
+
 
 
 export default hamChung;

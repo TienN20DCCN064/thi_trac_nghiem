@@ -1,14 +1,15 @@
-// redux/sagas/factorySaga.js
 import { call, put, takeLatest } from "redux-saga/effects";
 import hamChung from "../../services/service.hamChung.js";
 
 export const createSaga = (tableName, types) => {
-  function* fetchAll() {
+  function* fetchAll(action) {
     try {
       const data = yield call(hamChung.getAll, tableName);
       yield put({ type: types.FETCH_ALL_SUCCESS, payload: data });
+      if (action.callback) action.callback({ success: true, data });
     } catch (error) {
       yield put({ type: types.FETCH_ALL_FAILURE, payload: error.message });
+      if (action.callback) action.callback({ success: false, message: error.message });
     }
   }
 
@@ -16,17 +17,25 @@ export const createSaga = (tableName, types) => {
     try {
       const data = yield call(hamChung.getOne, tableName, action.payload);
       yield put({ type: types.FETCH_ONE_SUCCESS, payload: data });
+      if (action.callback) action.callback({ success: true, data });
     } catch (error) {
       yield put({ type: types.FETCH_ONE_FAILURE, payload: error.message });
+      if (action.callback) action.callback({ success: false, message: error.message });
     }
   }
 
   function* createItem(action) {
     try {
-      const data = yield call(hamChung.create, tableName, action.payload);
-      yield put({ type: types.CREATE_SUCCESS, payload: data });
+      const res = yield call(hamChung.create, tableName, action.payload);
+      if (res.success) {
+        yield put({ type: types.CREATE_SUCCESS, payload: res.data });
+      } else {
+        yield put({ type: types.CREATE_FAILURE, payload: res.message });
+      }
+      if (action.callback) action.callback(res);
     } catch (error) {
       yield put({ type: types.CREATE_FAILURE, payload: error.message });
+      if (action.callback) action.callback({ success: false, message: error.message });
     }
   }
 
@@ -34,18 +43,30 @@ export const createSaga = (tableName, types) => {
     try {
       const { id, data } = action.payload;
       const res = yield call(hamChung.update, tableName, id, data);
-      yield put({ type: types.UPDATE_SUCCESS, payload: res });
+      if (res.success) {
+        yield put({ type: types.UPDATE_SUCCESS, payload: res.data });
+      } else {
+        yield put({ type: types.UPDATE_FAILURE, payload: res.message });
+      }
+      if (action.callback) action.callback(res);
     } catch (error) {
       yield put({ type: types.UPDATE_FAILURE, payload: error.message });
+      if (action.callback) action.callback({ success: false, message: error.message });
     }
   }
 
   function* deleteItem(action) {
     try {
-      const id = yield call(hamChung.delete, tableName, action.payload);
-      yield put({ type: types.DELETE_SUCCESS, payload: id });
+      const res = yield call(hamChung.remove, tableName, action.payload);
+      if (res.success) {
+        yield put({ type: types.DELETE_SUCCESS, payload: action.payload });
+      } else {
+        yield put({ type: types.DELETE_FAILURE, payload: res.message });
+      }
+      if (action.callback) action.callback(res);
     } catch (error) {
       yield put({ type: types.DELETE_FAILURE, payload: error.message });
+      if (action.callback) action.callback({ success: false, message: error.message });
     }
   }
 

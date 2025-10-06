@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Modal, Tag } from "antd";
+import { Table, Button, Modal, Tag, message } from "antd";
 import { DeleteOutlined, EditOutlined, EyeOutlined } from "@ant-design/icons";
 import RegisterExamDetailModal from "./RegisterExamDetailModal.jsx";
 import CellDisplay from "../../components/common/CellDisplay.jsx";
 import hamChiTiet from "../../services/service.hamChiTiet.js";
 // Lấy page & pageSize từ URL, nếu không có thì mặc định
+import { useDispatch } from "react-redux";
+import { createActions } from "../../redux/actions/factoryActions.js";
+
+const dangKyThiSubjectActions = createActions("dang_ky_thi");
+
 function handleCheckPageParam() {
   const query = new URLSearchParams(window.location.search);
   let page = Number(query.get("page")) || 1;
@@ -16,10 +21,6 @@ function handleCheckPageParam() {
 
   return { page, pageSize };
 }
-function handleDeleteClick(id) {
-  console.log("ID cần xóa:", id); // In ra id
-  // dispatch(dangKyThiActions.creators.deleteRequest(id)); // Gọi action xóa
-}
 
 const RegisterExamListItem = ({
   data = [],
@@ -28,13 +29,14 @@ const RegisterExamListItem = ({
   // onViewDetailClick,
 }) => {
   console.log("Render RegisterExamListItem with data:", data);
-
+  const dispatch = useDispatch();
   const [currentPage, setCurrentPage] = useState(handleCheckPageParam().page);
   const [pageSize, setPageSize] = useState(handleCheckPageParam().pageSize);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   // Thêm state cho mode
   const [mode, setMode] = useState("view");
+  const [soCauThiMap, setSoCauThiMap] = useState({});
 
   const total = Array.isArray(data) ? data.length : 0;
 
@@ -67,7 +69,23 @@ const RegisterExamListItem = ({
       );
     }
   }, [validCurrentPage, currentPage]);
+  // 🔁 Tự động đếm số câu thi khi có data
+  useEffect(() => {
+    const fetchSoCauThi = async () => {
+      const newMap = {};
+      for (const item of data) {
+        const count = await hamChiTiet.countSoCauThiByidDangKyThi(
+          item.id_dang_ky_thi
+        );
+        newMap[item.id_dang_ky_thi] = count;
+      }
+      setSoCauThiMap(newMap);
+    };
 
+    if (data.length > 0) {
+      fetchSoCauThi();
+    }
+  }, [data]);
   // Xử lý khi click "Xem chi tiết"
   // Trong RegisterExamListItem.jsx
   const handleViewDetailClick = (status, id) => {
@@ -78,6 +96,24 @@ const RegisterExamListItem = ({
     setMode(status); // Thêm state để lưu mode
   };
 
+  const handleDelete = (record) => {
+    console.log("ID cần xóa:", record.id_dang_ky_thi); // In ra id
+
+    // dispatch(
+    //   dangKyThiSubjectActions.creators.deleteRequest(
+    //     record.id_dang_ky_thi,
+    //     (res) => {
+    //       if (res.success) {
+    //         message.success(res.message || "Xóa khoa thành công!");
+    //         //  onDataChange(); // tải lại dữ liệu sau khi xóa thành công
+    //       } else {
+    //         message.error(res.message || "Xóa khoa thất bại!");
+    //         // dispatch(dangKyThiSubjectActions.creators.fetchAllRequest());
+    //       }
+    //     }
+    //   )
+    // );
+  };
   // Dữ liệu cho trang hiện tại
   const paginatedData = Array.isArray(data)
     ? data.slice((validCurrentPage - 1) * pageSize, validCurrentPage * pageSize)
@@ -94,7 +130,7 @@ const RegisterExamListItem = ({
     {
       title: "Giáo Viên",
       dataIndex: "ma_gv",
-      width: 150,
+      // width: 150,
       key: "ma_gv",
       render: (value) => <CellDisplay table="giao_vien" id={value} />,
     },
@@ -102,7 +138,7 @@ const RegisterExamListItem = ({
       title: "Lớp Học",
       dataIndex: "ma_lop",
       key: "ma_lop",
-      width: 150,
+      // width: 150,
       render: (value) => (
         <CellDisplay table="lop" id={value} fieldName="ten_lop" />
       ),
@@ -110,19 +146,30 @@ const RegisterExamListItem = ({
     {
       title: "Môn Học",
       dataIndex: "ma_mh",
-      width: 150,
+      // width: 150,
       key: "ma_mh",
       render: (value) => (
         <CellDisplay table="mon_hoc" id={value} fieldName="ten_mh" />
       ),
     },
 
-    { title: "Trình Độ", dataIndex: "trinh_do", key: "trinh_do", width: 80 },
+    {
+      title: "Trình Độ",
+      dataIndex: "trinh_do",
+      key: "trinh_do",
+      // width: 150,
+      render: (value) => {
+        if (value === "ĐH") return "ĐH - Đại Học";
+        if (value === "CĐ") return "CĐ - Cao Đẳng";
+        if (value === "VB2") return "VB2 - Văn Bằng 2";
+        return value;
+      },
+    },
     {
       title: "Ngày Thi",
       dataIndex: "ngay_thi",
       key: "ngay_thi",
-      width: 100,
+      // width: 100,
       render: (value) =>
         value ? new Date(value).toLocaleDateString("vi-VN") : "-",
     },
@@ -133,15 +180,16 @@ const RegisterExamListItem = ({
     //   render: (_, record) => `${record.so_cau_thi} câu / ${record.thoi_gian} phút`,
     // },
     {
-      title: "Số Câu Thi",
+      title: "Số Câu",
       dataIndex: "so_cau_thi",
-      key: "so_cau_thi",
-      render: async (value, record) => await hamChiTiet.countSoCauThiByidDangKyThi(record.id_dang_ky_thi) || "-",
+      // width: 100,
+      render: (_, record) => soCauThiMap[record.id_dang_ky_thi] ?? "-",
     },
     {
-      title: "Thời Gian",
+      title: "Thời Gian ",
       dataIndex: "thoi_gian",
       key: "thoi_gian",
+      // width: 100,
       render: (value) => `${value} phút`,
     },
 
@@ -149,6 +197,7 @@ const RegisterExamListItem = ({
       title: "Trạng Thái",
       dataIndex: "trang_thai",
       key: "trang_thai",
+      width: 100,
       render: (value) => {
         if (!value) return "-";
 
@@ -176,12 +225,12 @@ const RegisterExamListItem = ({
         return <Tag color={color}>{text}</Tag>;
       },
     },
-    {
-      title: "Người Phê Duyệt",
-      dataIndex: "nguoi_phe_duyet",
-      key: "nguoi_phe_duyet",
-      render: (value) => value || "-",
-    },
+    // {
+    //   title: "Người Phê Duyệt",
+    //   dataIndex: "nguoi_phe_duyet",
+    //   key: "nguoi_phe_duyet",
+    //   render: (value) => value || "-",
+    // },
     {
       title: "Hành Động",
       key: "action",
@@ -222,7 +271,16 @@ const RegisterExamListItem = ({
               danger
               type="primary"
               icon={<DeleteOutlined />}
-              onClick={() => handleDeleteClick(record.id_dang_ky_thi)}
+              onClick={() =>
+                Modal.confirm({
+                  title: "Xác nhận xóa",
+                  content: "Bạn có chắc chắn muốn xóa đăng ký thi này không?",
+                  okText: "Xóa",
+                  okType: "danger",
+                  cancelText: "Hủy",
+                  onOk: () => handleDelete(record),
+                })
+              }
               disabled={!isEditable}
               style={{ marginLeft: 8 }}
             />

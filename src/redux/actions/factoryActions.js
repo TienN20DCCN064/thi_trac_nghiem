@@ -30,27 +30,31 @@ export const createActions = (tableName) => {
 
   const creators = {
     // GET ALL
-    fetchAllRequest: () => ({ type: types.FETCH_ALL_REQUEST }),
+    fetchAllRequest: (callback) => ({ type: types.FETCH_ALL_REQUEST, callback }),
     fetchAllSuccess: (data) => ({ type: types.FETCH_ALL_SUCCESS, payload: data }),
     fetchAllFailure: (error) => ({ type: types.FETCH_ALL_FAILURE, payload: error }),
 
     // GET ONE
-    fetchOneRequest: (id) => ({ type: types.FETCH_ONE_REQUEST, payload: id }),
+    fetchOneRequest: (id, callback) => ({ type: types.FETCH_ONE_REQUEST, payload: id, callback }),
     fetchOneSuccess: (data) => ({ type: types.FETCH_ONE_SUCCESS, payload: data }),
     fetchOneFailure: (error) => ({ type: types.FETCH_ONE_FAILURE, payload: error }),
 
     // DELETE
-    deleteRequest: (id) => ({ type: types.DELETE_REQUEST, payload: id }),
+    deleteRequest: (id, callback) => ({ type: types.DELETE_REQUEST, payload: id, callback }),
     deleteSuccess: (id) => ({ type: types.DELETE_SUCCESS, payload: id }),
     deleteFailure: (error) => ({ type: types.DELETE_FAILURE, payload: error }),
 
     // CREATE
-    createRequest: (data) => ({ type: types.CREATE_REQUEST, payload: data }),
+    createRequest: (data, callback) => ({ type: types.CREATE_REQUEST, payload: data, callback }),
     createSuccess: (data) => ({ type: types.CREATE_SUCCESS, payload: data }),
     createFailure: (error) => ({ type: types.CREATE_FAILURE, payload: error }),
 
     // UPDATE
-    updateRequest: (id, data) => ({ type: types.UPDATE_REQUEST, payload: { id, data } }),
+    updateRequest: (id, data, callback) => ({
+      type: types.UPDATE_REQUEST,
+      payload: { id, data },
+      callback,
+    }),
     updateSuccess: (data) => ({ type: types.UPDATE_SUCCESS, payload: data }),
     updateFailure: (error) => ({ type: types.UPDATE_FAILURE, payload: error }),
   };

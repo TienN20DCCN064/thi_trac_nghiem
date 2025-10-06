@@ -65,48 +65,76 @@ const ClassListItem = ({ data = [], onDataChange }) => {
     : [];
 
   // Xử lý khi submit form
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!formData.ma_lop || !formData.ten_lop || !formData.ma_khoa) {
       message.error("Vui lòng nhập đầy đủ mã lớp, tên lớp và mã khoa!");
       return;
     }
 
-    try {
-      const payload = {
-        ma_lop: formData.ma_lop,
-        ten_lop: formData.ten_lop,
-        nam_nhap_hoc: formData.nam_nhap_hoc
-          ? moment(formData.nam_nhap_hoc).format("YYYY-MM-DD")
-          : null,
-        ma_khoa: formData.ma_khoa,
-      };
-      console.log("modalMode:", modalMode);
-      if (modalMode === "create") {
-        await dispatch(classSubjectActions.creators.createRequest(payload));
-        message.success("Thêm lớp thành công!");
-      } else if (modalMode === "edit") {
-        await dispatch(
-          classSubjectActions.creators.updateRequest(formData.ma_lop, payload)
-        );
-        message.success("Cập nhật lớp thành công!");
-      }
-      setModalVisible(false);
-      setFormData({ ma_lop: "", ten_lop: "", nam_nhap_hoc: null, ma_khoa: "" });
-      onDataChange();
-    } catch (error) {
-      message.error(`Lỗi: ${error.message}`);
+    const payload = {
+      ma_lop: formData.ma_lop,
+      ten_lop: formData.ten_lop,
+      nam_nhap_hoc: formData.nam_nhap_hoc
+        ? moment(formData.nam_nhap_hoc).format("YYYY-MM-DD")
+        : null,
+      ma_khoa: formData.ma_khoa,
+    };
+
+    if (modalMode === "create") {
+      dispatch(
+        classSubjectActions.creators.createRequest(payload, (res) => {
+          if (res.success) {
+            message.success(res.message || "Thêm lớp thành công!");
+            setModalVisible(false);
+            setFormData({
+              ma_lop: "",
+              ten_lop: "",
+              nam_nhap_hoc: null,
+              ma_khoa: "",
+            });
+            onDataChange(); // tải lại dữ liệu sau khi thêm thành công
+          } else {
+            message.error(res.message || "Thêm lớp thất bại!");
+          }
+        })
+      );
+    } else if (modalMode === "edit") {
+      dispatch(
+        classSubjectActions.creators.updateRequest(
+          formData.ma_lop,
+          payload,
+          (res) => {
+            if (res.success) {
+              message.success(res.message || "Cập nhật lớp thành công!");
+              setModalVisible(false);
+              setFormData({
+                ma_lop: "",
+                ten_lop: "",
+                nam_nhap_hoc: null,
+                ma_khoa: "",
+              });
+              onDataChange(); // tải lại dữ liệu sau khi cập nhật thành công
+            } else {
+              message.error(res.message || "Cập nhật lớp thất bại!");
+            }
+          }
+        )
+      );
     }
   };
 
   // Xử lý xóa
-  const handleDelete = async (record) => {
-    try {
-      await dispatch(classSubjectActions.creators.deleteRequest(record.ma_lop));
-      message.success("Xóa lớp thành công!");
-      onDataChange();
-    } catch (error) {
-      message.error(`Lỗi khi xóa lớp: ${error.message}`);
-    }
+  const handleDelete = (record) => {
+    dispatch(
+      classSubjectActions.creators.deleteRequest(record.ma_lop, (res) => {
+        if (res.success) {
+          message.success(res.message || "Xóa lớp thành công!");
+          onDataChange(); // tải lại dữ liệu sau khi xóa thành công
+        } else {
+          message.error(res.message || "Xóa lớp thất bại!");
+        }
+      })
+    );
   };
 
   const columns = [

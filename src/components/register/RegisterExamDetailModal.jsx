@@ -18,6 +18,7 @@ import hamChiTiet from "../../services/service.hamChiTiet.js";
 import moment from "moment";
 import { useDispatch } from "react-redux";
 import { createActions } from "../../redux/actions/factoryActions.js";
+import CellDisplay from "../../components/common/CellDisplay.jsx";
 
 const dangKyThiActions = createActions("dang_ky_thi");
 
@@ -388,9 +389,9 @@ const RegisterExamDetailModal = ({
                   onChange={(val) => handleInputChange("trinh_do", val)}
                   style={{ width: "100%" }}
                 >
-                  <Option value="ĐH">ĐH</Option>
-                  <Option value="CĐ">CĐ</Option>
-                  <Option value="VB2">VB2</Option>
+                  <Option value="ĐH">Đại Học</Option>
+                  <Option value="CĐ">Cao Đẳng</Option>
+                  <Option value="VB2">Văn Bằng 2</Option>
                 </Select>
               </Descriptions.Item>
               <Descriptions.Item label="Ngày Thi" span={1}>
@@ -436,13 +437,37 @@ const RegisterExamDetailModal = ({
             <Descriptions bordered column={2} style={{ marginBottom: 20 }}>
               {renderValue("Mã GV", examDetails.ma_gv)}
               {renderValue("Họ Tên GV", examDetails.ho_ten_gv)}
-              {renderValue("Mã Lớp", examDetails.ma_lop)}
-              {renderValue("Mã Môn Học", examDetails.ma_mh)}
-              {renderValue("Trình Độ", examDetails.trinh_do)}
+              {/* {renderValue("Mã Lớp", examDetails.ma_lop)} */}
+              {renderValue(
+                "Lớp",
+                <CellDisplay
+                  table="lop"
+                  id={examDetails.ma_lop}
+                  fieldName="ten_lop"
+                />
+              )}
+              {renderValue(
+                "Môn Học",
+                <CellDisplay
+                  table="mon_hoc"
+                  id={examDetails.ma_mh}
+                  fieldName="ten_mh"
+                />
+              )}
+              {renderValue(
+                "Trình Độ",
+                examDetails.trinh_do === "ĐH"
+                  ? "Đại Học"
+                  : examDetails.trinh_do === "CĐ"
+                  ? "Cao Đẳng"
+                  : examDetails.trinh_do === "VB2"
+                  ? "Văn Bằng 2"
+                  : examDetails.trinh_do
+              )}
               {renderValue(
                 "Ngày Thi",
                 examDetails.ngay_thi
-                  ? new Date(examDetails.ngay_thi).toLocaleString("vi-VN")
+                  ? new Date(examDetails.ngay_thi).toLocaleDateString("vi-VN")
                   : "-"
               )}
               {renderValue("Thời Gian Thi", `${examDetails.thoi_gian} phút`)}

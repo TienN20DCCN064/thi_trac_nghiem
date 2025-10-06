@@ -35,36 +35,55 @@ const SubjectListItem = ({ data = [], onDataChange }) => {
       message.error("Vui lòng nhập đầy đủ thông tin!");
       return;
     }
-
+    const payload = {
+      ma_mh: formData.ma_mh,
+      ten_mh: formData.ten_mh,
+    };
     try {
-      const payload = {
-        ma_mh: formData.ma_mh,
-        ten_mh: formData.ten_mh,
-      };
       if (modalMode === "create") {
-        await dispatch(subjectActions.creators.createRequest(payload));
-        message.success("Thêm môn học thành công!");
-      } else if (modalMode === "edit") {
-        await dispatch(
-          subjectActions.creators.updateRequest(formData.ma_mh, payload)
+        // await dispatch(subjectActions.creators.createRequest(payload));
+        dispatch(
+          subjectActions.creators.createRequest(payload, (res) => {
+            if (res.success) {
+              message.success(res.message);
+              onDataChange();
+            } else {
+              message.error(res.message);
+            }
+          })
         );
-        message.success("Cập nhật môn học thành công!");
+      } else if (modalMode === "edit") {
+        dispatch(
+          subjectActions.creators.updateRequest(
+            formData.ma_mh,
+            payload,
+            (res) => {
+              if (res.success) message.success(res.message);
+              else message.error(res.message);
+            }
+          )
+        );
       }
+      // Reset form + reload
       setModalVisible(false);
       setFormData({ ma_mh: "", ten_mh: "" });
       onDataChange();
     } catch (error) {
-      message.error(`Lỗi: ${error.message}`);
+      message.error(`Thao tác thất bại: ${error.message}`);
     }
   };
 
   const handleDelete = async (record) => {
     try {
-      await dispatch(subjectActions.creators.deleteRequest(record.ma_mh));
-      message.success("Xóa môn học thành công!");
+      dispatch(
+        subjectActions.creators.deleteRequest(record.ma_mh, (res) => {
+          if (res.success) message.success(res.message);
+          else message.error(res.message);
+        })
+      );
       onDataChange();
     } catch (error) {
-      message.error(`Lỗi khi xóa môn học: ${error.message}`);
+      message.error(`Xoá ${record.ten_mh} thất bại: ${error.message}`);
     }
   };
 

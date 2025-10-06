@@ -68,7 +68,7 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
     : [];
 
   // Xử lý khi submit form
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (
       !formData.ma_gv ||
       !formData.ho ||
@@ -80,52 +80,77 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
       return;
     }
 
-    try {
-      const payload = {
-        ma_gv: formData.ma_gv,
-        ho: formData.ho,
-        ten: formData.ten,
-        hoc_vi: formData.hoc_vi,
-        ma_khoa: formData.ma_khoa,
-        hinh_anh: formData.hinh_anh || null,
-        ghi_chu: formData.ghi_chu || null,
-      };
-      if (modalMode === "create") {
-        await dispatch(teacherSubjectActions.creators.createRequest(payload));
-        message.success("Thêm giảng viên thành công!");
-      } else if (modalMode === "edit") {
-        await dispatch(
-          teacherSubjectActions.creators.updateRequest(formData.ma_gv, payload)
-        );
-        message.success("Cập nhật giảng viên thành công!");
-      }
-      setModalVisible(false);
-      setFormData({
-        ma_gv: "",
-        ho: "",
-        ten: "",
-        hoc_vi: "",
-        ma_khoa: "",
-        hinh_anh: "",
-        ghi_chu: "",
-      });
-      onDataChange();
-    } catch (error) {
-      message.error(`Lỗi: ${error.message}`);
+    const payload = {
+      ma_gv: formData.ma_gv,
+      ho: formData.ho,
+      ten: formData.ten,
+      hoc_vi: formData.hoc_vi,
+      ma_khoa: formData.ma_khoa,
+      hinh_anh: formData.hinh_anh || null,
+      ghi_chu: formData.ghi_chu || null,
+    };
+
+    if (modalMode === "create") {
+      dispatch(
+        teacherSubjectActions.creators.createRequest(payload, (res) => {
+          if (res.success) {
+            message.success(res.message || "Thêm giảng viên thành công!");
+            setModalVisible(false);
+            setFormData({
+              ma_gv: "",
+              ho: "",
+              ten: "",
+              hoc_vi: "",
+              ma_khoa: "",
+              hinh_anh: "",
+              ghi_chu: "",
+            });
+            onDataChange();
+          } else {
+            message.error(res.message || "Thêm giảng viên thất bại!");
+          }
+        })
+      );
+    } else if (modalMode === "edit") {
+      dispatch(
+        teacherSubjectActions.creators.updateRequest(
+          formData.ma_gv,
+          payload,
+          (res) => {
+            if (res.success) {
+              message.success(res.message || "Cập nhật giảng viên thành công!");
+              setModalVisible(false);
+              setFormData({
+                ma_gv: "",
+                ho: "",
+                ten: "",
+                hoc_vi: "",
+                ma_khoa: "",
+                hinh_anh: "",
+                ghi_chu: "",
+              });
+              onDataChange();
+            } else {
+              message.error(res.message || "Cập nhật giảng viên thất bại!");
+            }
+          }
+        )
+      );
     }
   };
 
   // Xử lý xóa
-  const handleDelete = async (record) => {
-    try {
-      await dispatch(
-        teacherSubjectActions.creators.deleteRequest(record.ma_gv)
-      );
-      message.success("Xóa giảng viên thành công!");
-      onDataChange();
-    } catch (error) {
-      message.error(`Lỗi khi xóa giảng viên: ${error.message}`);
-    }
+  const handleDelete = (record) => {
+    dispatch(
+      teacherSubjectActions.creators.deleteRequest(record.ma_gv, (res) => {
+        if (res.success) {
+          message.success(res.message || "Xóa giảng viên thành công!");
+          onDataChange();
+        } else {
+          message.error(res.message || "Xóa giảng viên thất bại!");
+        }
+      })
+    );
   };
 
   const columns = [
