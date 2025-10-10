@@ -5,11 +5,12 @@ import RegisterExamList from "./RegisterExamList.jsx";
 import CustomBreadcrumb from "../CustomBreadcrumb.jsx";
 import SearchList from "../common/SearchList.jsx";
 import FormAddExam from "./FormAddExam.jsx"; // Import component FormAddExam
+import { getUserInfo } from "../../globals/globals.js";
 
 const RegisterExamPage = () => {
   // State để kiểm soát modal
   const [modalVisible, setModalVisible] = React.useState(false);
-
+  console.log("User Info:", getUserInfo());
   return (
     <>
       <CustomBreadcrumb
@@ -47,14 +48,21 @@ const RegisterExamPage = () => {
             },
           ]}
         />
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          className="btn-add"
-          onClick={() => setModalVisible(true)} // Mở modal khi click
-        >
-          Đăng Ký Thi
-        </Button>
+        {getUserInfo().vai_tro === "GiaoVien" && (
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            className="btn-add"
+            onClick={() => setModalVisible(true)} // Mở modal khi click
+          >
+            Đăng Ký Thi
+          </Button>
+        )}
+        {getUserInfo().vai_tro === "GiaoVu" && (
+          <div style={{ marginTop: 60 }}>
+         
+          </div>
+        )}
 
         {/* Modal chứa form đăng ký thi */}
         <FormAddExam

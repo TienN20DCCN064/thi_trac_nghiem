@@ -12,6 +12,9 @@ import SubjectPage from "./components/subject/SubjectPage.jsx";
 
 import StudentInfoPage from "./components/user/StudentInfoPage.jsx";
 import TeacherInfoPage from "./components/user/TeacherInfoPage.jsx";
+import AccoutPage from "./components/accouts/AccoutPage.jsx";
+import StudentAccoutPage from "./components/accouts/StudentAccoutPage.jsx";
+import TeacherAccountPage from "./components/accouts/TeacherAccoutPage.jsx";
 
 import HeaderUserInfo from "./components/common/HeaderUserInfo.jsx";
 import RegisterExamPage from "./components/register/RegisterExamPage.jsx";
@@ -57,6 +60,16 @@ function App() {
                 path="/users/list-students"
                 element={<StudentInfoPage />}
               />
+              <Route path="/account/list" element={<AccoutPage />} />
+              <Route
+                path="/account/list-teachers"
+                element={<TeacherAccountPage />}
+              />
+              <Route
+                path="/account/list-students"
+                element={<StudentAccoutPage />}
+              />
+
               <Route path="/khoa/list-khoa" element={<KhoaPage />} />
               <Route path="/class/list-class" element={<ClassPage />} />
               <Route path="/subject/list-subjects" element={<SubjectPage />} />

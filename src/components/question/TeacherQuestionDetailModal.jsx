@@ -235,35 +235,18 @@ const TeacherQuestionDetailModal = ({
 
       setErrors({});
       setLoading(true);
+      const formData = {
+        ma_gv: form.getFieldValue("ma_gv"),
+        ma_mh: form.getFieldValue("ma_mh"),
+        trinh_do: form.getFieldValue("trinh_do"),
+        questions,
+      };
+      console.log(questions);
 
       if (mode === "edit") {
-        console.log("Gọi API cập nhật danh sách câu hỏi");
-        console.log("Dữ liệu sẽ gửi lên server:", {
-          ma_gv: form.getFieldValue("ma_gv"),
-          ma_mh: form.getFieldValue("ma_mh"),
-          trinh_do: form.getFieldValue("trinh_do"),
-          questions,
-        });
-        await hamChung.updateListQuestions({
-          ma_gv: form.getFieldValue("ma_gv"),
-          ma_mh: form.getFieldValue("ma_mh"),
-          trinh_do: form.getFieldValue("trinh_do"),
-          questions,
-        });
+        await hamChung.updateListQuestions(formData);
       } else {
-        console.log("Gọi API tạo mới danh sách câu hỏi");
-        console.log("Dữ liệu sẽ gửi lên server:", {
-          ma_gv: form.getFieldValue("ma_gv"),
-          ma_mh: form.getFieldValue("ma_mh"),
-          trinh_do: form.getFieldValue("trinh_do"),
-          questions,
-        });
-        await hamChung.createListQuestions({
-          ma_gv: form.getFieldValue("ma_gv"),
-          ma_mh: form.getFieldValue("ma_mh"),
-          trinh_do: form.getFieldValue("trinh_do"),
-          questions,
-        });
+        await hamChung.createListQuestions(formData);
       }
 
       message.success("Lưu danh sách câu hỏi thành công!");

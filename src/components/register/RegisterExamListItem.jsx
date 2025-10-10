@@ -2,13 +2,16 @@ import React, { useState, useEffect } from "react";
 import { Table, Button, Modal, Tag, message } from "antd";
 import { DeleteOutlined, EditOutlined, EyeOutlined } from "@ant-design/icons";
 import RegisterExamDetailModal from "./RegisterExamDetailModal.jsx";
+import { useDispatch } from "react-redux";
+import RegisterExamApproveModal from "./RegisterExamApproveModal.jsx"; // Thêm dòng này
+import { createActions } from "../../redux/actions/factoryActions.js";
 import CellDisplay from "../../components/common/CellDisplay.jsx";
 import hamChiTiet from "../../services/service.hamChiTiet.js";
-// Lấy page & pageSize từ URL, nếu không có thì mặc định
-import { useDispatch } from "react-redux";
-import { createActions } from "../../redux/actions/factoryActions.js";
+import hamChung from "../../services/service.hamChung.js";
+import { getUserInfo } from "../../globals/globals.js";
+// import { useDispatch } from "react-redux";
 
-const dangKyThiSubjectActions = createActions("dang_ky_thi");
+const dangKyThiActions = createActions("dang_ky_thi");
 
 function handleCheckPageParam() {
   const query = new URLSearchParams(window.location.search);
@@ -96,23 +99,19 @@ const RegisterExamListItem = ({
     setMode(status); // Thêm state để lưu mode
   };
 
+  // Xử lý xóa
   const handleDelete = (record) => {
-    console.log("ID cần xóa:", record.id_dang_ky_thi); // In ra id
-
-    // dispatch(
-    //   dangKyThiSubjectActions.creators.deleteRequest(
-    //     record.id_dang_ky_thi,
-    //     (res) => {
-    //       if (res.success) {
-    //         message.success(res.message || "Xóa khoa thành công!");
-    //         //  onDataChange(); // tải lại dữ liệu sau khi xóa thành công
-    //       } else {
-    //         message.error(res.message || "Xóa khoa thất bại!");
-    //         // dispatch(dangKyThiSubjectActions.creators.fetchAllRequest());
-    //       }
-    //     }
-    //   )
-    // );
+    hamChung
+      .deleteExam(record.id_dang_ky_thi)
+      .then(() => {
+        message.success("Xóa đăng ký thi thành công");
+        // // Cập nhật lại danh sách sau khi xóa
+        dispatch(dangKyThiActions.creators.fetchAllRequest());
+      })
+      .catch((error) => {
+        console.error("Lỗi khi xóa đăng ký thi:", error);
+        message.error("Xóa đăng ký thi thất bại");
+      });
   };
   // Dữ liệu cho trang hiện tại
   const paginatedData = Array.isArray(data)
@@ -320,15 +319,32 @@ const RegisterExamListItem = ({
         style={{ width: "100%" }}
         tableLayout="fixed"
       />
-      <RegisterExamDetailModal
-        visible={detailModalVisible}
-        id_dang_ky_thi={selectedId}
-        mode={mode} // Truyền prop mode
-        onCancel={() => {
-          setDetailModalVisible(false);
-          setMode("view"); // Reset mode về view khi đóng
-        }}
-      />
+      {/* Hiển thị modal phù hợp */}
+      {getUserInfo().vai_tro === "GiaoVu" && mode === "edit" ? (
+        <RegisterExamApproveModal
+          visible={detailModalVisible}
+          id_dang_ky_thi={selectedId}
+          onCancel={() => {
+            setDetailModalVisible(false);
+            setMode("view");
+          }}
+          onSuccess={() => {
+            setDetailModalVisible(false);
+            setMode("view");
+            // Có thể reload lại danh sách nếu cần
+          }}
+        />
+      ) : (
+        <RegisterExamDetailModal
+          visible={detailModalVisible}
+          id_dang_ky_thi={selectedId}
+          mode={mode}
+          onCancel={() => {
+            setDetailModalVisible(false);
+            setMode("view");
+          }}
+        />
+      )}
     </>
   );
 };

@@ -18,6 +18,9 @@ const hamChung = {
   async updateExam(id_dang_ky_thi, payload) {
     return updateExam(id_dang_ky_thi, payload);
   },
+  async deleteExam(id_dang_ky_thi) {
+    return deleteExam(id_dang_ky_thi);
+  },
   // 👇 Thêm mới 3 API cho list-questions
   async createListQuestions(payload) {
     return createListQuestions(payload);
@@ -111,6 +114,29 @@ async function updateExam(id_dang_ky_thi, payload) {
     throw err; // để handle ở RegisterExamDetailModal
   }
 }
+async function deleteExam(id_dang_ky_thi) {
+  try {
+    const token = getToken();
+    const res = await fetch(`${API_BASE}/dang-ky-thi/${id_dang_ky_thi}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok || !data?.success) {
+      throw new Error(data?.message || `Lỗi API xóa đăng ký thi (${res.status})`);
+    }
+
+    return data; // { success, message, id_dang_ky_thi }
+  } catch (err) {
+    console.error("❌ Lỗi deleteExam:", err);
+    throw err;
+  }
+}
+
 // Tạo danh sách câu hỏi
 async function createListQuestions(payload) {
   try {

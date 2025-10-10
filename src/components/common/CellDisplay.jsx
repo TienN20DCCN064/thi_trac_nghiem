@@ -1,27 +1,41 @@
 import React from "react";
 import hamChung from "../../services/service.hamChung.js";
 
-const CellDisplay = ({ table, id, fieldHo = "ho", fieldTen = "ten", fieldName = null }) => {
-  const [text, setText] = React.useState(null);
+const CellDisplay = ({
+  table,
+  id,
+  fieldHo = "ho",
+  fieldTen = "ten",
+  fieldName = null,
+}) => {
+  const [text, setText] = React.useState("----");
 
   React.useEffect(() => {
-    if (!id) return;
+    if (!id) {
+      setText("----");
+      return;
+    }
 
     hamChung
       .getOne(table, id)
       .then((res) => {
+        if (!res) {
+          setText("----");
+          return;
+        }
+
         if (fieldName && res[fieldName]) {
-          setText(res[fieldName]); // lấy theo tên cột cụ thể (vd: ten_lop, ten_mh)
+          setText(res[fieldName]); // Lấy theo cột cụ thể (vd: ma_gv hoặc ma_sv)
         } else if (res[fieldHo] && res[fieldTen]) {
-          setText(res[fieldHo] + " " + res[fieldTen]); // mặc định họ + tên
+          setText(`${res[fieldHo]} ${res[fieldTen]}`); // fallback họ tên
         } else {
-          setText(id); // fallback
+          setText(id); // fallback hiển thị id
         }
       })
-      .catch(() => setText(id));
+      .catch(() => setText("----"));
   }, [table, id, fieldHo, fieldTen, fieldName]);
 
-  return <>{text || id}</>;
+  return <>{text}</>;
 };
 
 export default CellDisplay;

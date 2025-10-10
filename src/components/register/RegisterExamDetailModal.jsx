@@ -204,11 +204,8 @@ const RegisterExamDetailModal = ({
       console.log("🚀 Payload cập nhật đăng ký thi:", payload);
 
       // Gọi API updateExam
-      const result = await hamChung.updateExam(id_dang_ky_thi, payload);
-
-      message.success(result.message || "Cập nhật thành công!", {
-        duration: 3,
-      });
+      await hamChung.updateExam(id_dang_ky_thi, payload);
+      message.success("Cập nhật thành công!");
       setExamDetails(editExamDetails);
       setChapterDetails(editChapterDetails);
       const soCauThi = editChapterDetails.reduce(
@@ -307,11 +304,11 @@ const RegisterExamDetailModal = ({
       }`}
       open={visible}
       onCancel={handleCancel}
-      footer={
-        mode === "edit" && [
-          <Button key="cancel" onClick={handleCancel}>
-            Hủy
-          </Button>,
+      footer={[
+        <Button key="cancel" onClick={handleCancel}>
+          Hủy
+        </Button>,
+        mode === "edit" && (
           <Button
             key="save"
             type="primary"
@@ -319,9 +316,9 @@ const RegisterExamDetailModal = ({
             loading={loading}
           >
             Lưu
-          </Button>,
-        ]
-      }
+          </Button>
+        ),
+      ]}
       width={900}
     >
       {loading ? (
@@ -497,7 +494,13 @@ const RegisterExamDetailModal = ({
                   "-"
                 )}
               </Descriptions.Item>
-              {renderValue("Người Phê Duyệt", examDetails.nguoi_phe_duyet)}
+              {renderValue(
+                "Người Phê Duyệt",
+                <CellDisplay
+                  table="giao_vien"
+                  id={examDetails.nguoi_phe_duyet}
+                />
+              )}
               {renderValue(
                 "Ngày Tạo",
                 examDetails.created_at

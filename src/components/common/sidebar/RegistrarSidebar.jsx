@@ -8,6 +8,7 @@ import {
   ApartmentOutlined,
   BookOutlined,
   PlusCircleOutlined,
+  SettingOutlined,
 } from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -54,6 +55,28 @@ const RegistrarSidebar = () => {
         onClick={({ key }) => navigate("/" + key)}
         items={[
           {
+            key: "hocVu",
+            icon: <BookOutlined />,
+            label: "Quản lý học vụ",
+            children: [
+              {
+                key: "khoa/list-khoa",
+                label: "Danh sách khoa",
+                icon: <ApartmentOutlined />,
+              },
+              {
+                key: "class/list-class",
+                label: "Danh sách lớp",
+                icon: <TeamOutlined />,
+              },
+              {
+                key: "subject/list-subjects",
+                label: "Danh sách môn học",
+                icon: <TeamOutlined />,
+              },
+            ],
+          },
+          {
             key: "user",
             icon: <TeamOutlined />,
             label: "Quản lý người dùng",
@@ -76,66 +99,29 @@ const RegistrarSidebar = () => {
             label: "Quản lý tài khoản",
             children: [
               {
-                key: "account/list-accounts",
-                label: "Tài khoản",
+                key: "account/list",
+                label: "Tất cả",
                 icon: <UserOutlined />,
               },
               {
-                key: "account/user-groups",
-                label: "Nhóm tài khoản",
-                icon: <TeamOutlined />,
+                key: "account/list-teachers",
+                label: "Giáo viên",
+                icon: <UserOutlined />,
+              },
+              {
+                key: "account/list-students",
+                label: "Học sinh",
+                icon: <IdcardOutlined />,
               },
             ],
           },
           {
-            key: "khoa",
-            icon: <BookOutlined />,
-            label: "Quản lý khoa",
+            key: "register",
+            icon: <SettingOutlined />,
+            label: "Quản lý đăng ký",
             children: [
-              {
-                key: "khoa/list-khoa",
-                label: "Danh sách khoa",
-                icon: <ApartmentOutlined />,
-              },
-              {
-                key: "khoa/add-khoa",
-                label: "Thêm khoa",
-                icon: <PlusCircleOutlined />,
-              },
-            ],
-          },
-          {
-            key: "class",
-            icon: <ApartmentOutlined />,
-            label: "Quản lý lớp",
-            children: [
-              {
-                key: "class/list-class",
-                label: "Danh sách lớp",
-                icon: <TeamOutlined />,
-              },
-              {
-                key: "class/add-class",
-                label: "Thêm lớp",
-                icon: <PlusCircleOutlined />,
-              },
-            ],
-          },
-          {
-            key: "subject",
-            icon: <ApartmentOutlined />,
-            label: "Quản lý môn học",
-            children: [
-              {
-                key: "subject/list-subjects",
-                label: "Danh sách môn học",
-                icon: <TeamOutlined />,
-              },
-              {
-                key: "subject/add-subject",
-                label: "Thêm môn học",
-                icon: <PlusCircleOutlined />,
-              },
+              { key: "register/register-exam", label: "Đăng Ký Thi" },
+              { key: "question/list-question", label: "Danh sách câu hỏi" },
             ],
           },
         ]}
