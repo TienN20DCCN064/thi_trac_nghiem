@@ -11,7 +11,7 @@ import hamChung from "../../services/service.hamChung.js";
 
 const teacherSubjectActions = createActions("cau_hoi");
 
-const TeacherQuestionList = () => {
+const TeacherQuestionList = ({ status_question }) => {
   const dispatch = useDispatch();
   const location = useLocation();
 
@@ -40,25 +40,24 @@ const TeacherQuestionList = () => {
   // Gom nhóm & lọc dữ liệu -> dùng hàm riêng
   useEffect(() => {
     const buildData = async () => {
-      const data = await filterQuestions(questionList, location.search);
+      console.log(questionList);
+
+      const data = await filterQuestions(questionList, location.search, status_question);
       setGroupedData(data);
     };
     buildData();
-  }, [questionList, location.search]);
+  }, [questionList, location.search, status_question]);
 
   if (loading) return <Spin style={{ margin: 20 }} />;
   if (!questionList || questionList.length === 0)
     return <div>Không có dữ liệu</div>;
 
-  return <TeacherQuestionListItem data={groupedData} />;
+  return <TeacherQuestionListItem data={groupedData} status_question={status_question} />;
 };
 
 // Hàm thêm thuộc tính chi tiết vào questionList
 const addDetailsToQuestions = async (questionList) => {
   if (!questionList || questionList.length === 0) return [];
-
-  // Giả sử bạn có service gọi API lấy thông tin môn học + giáo viên
-  // Ví dụ: hamChiTiet.getSubjectById(ma_mh), hamChiTiet.getTeacherById(ma_gv)
 
   const enrichedData = await Promise.all(
     questionList.map(async (q) => {
@@ -93,7 +92,12 @@ const addDetailsToQuestions = async (questionList) => {
   return enrichedData;
 };
 // 👉 Hàm riêng xử lý lọc dữ liệu + enrich
-const filterQuestions = async (questionList, locationSearch) => {
+// Thêm đối số mới `trangThaiXoaFilter` (có thể null hoặc chuỗi)
+const filterQuestions = async (
+  questionList,
+  locationSearch,
+  trangThaiXoaFilter = null
+) => {
   if (!questionList) return [];
 
   // enrich trước
@@ -104,12 +108,19 @@ const filterQuestions = async (questionList, locationSearch) => {
   const name_mh = params.get("name_mh")?.toLowerCase() || "";
   const trinh_do = params.get("trinh_do")?.toLowerCase() || "";
 
+  // Ưu tiên đầu vào trực tiếp hơn URL param
+  const trang_thai_xoa =
+    (trangThaiXoaFilter ?? params.get("trang_thai_xoa"))?.toLowerCase() || "";
+
   const map = {};
   dataArr.forEach((q) => {
     if (
       (name_gv ? q.ten_gv?.toLowerCase().includes(name_gv) : true) &&
       (name_mh ? q.ten_mh?.toLowerCase().includes(name_mh) : true) &&
-      (trinh_do ? q.trinh_do?.toLowerCase().includes(trinh_do) : true)
+      (trinh_do ? q.trinh_do?.toLowerCase().includes(trinh_do) : true) &&
+      (trang_thai_xoa
+        ? q.trang_thai_xoa?.toLowerCase() === trang_thai_xoa
+        : true)
     ) {
       const key = `${q.ma_gv}_${q.ma_mh}_${q.trinh_do}`;
       if (!map[key]) {

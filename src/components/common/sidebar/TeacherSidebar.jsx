@@ -66,7 +66,7 @@ const TeacherSidebar = () => {
             label: "Câu hỏi",
             children: [
               { key: "question/list-question", label: "Danh sách câu hỏi" },
-              { key: "question/add-question", label: "Thêm câu hỏi" },
+              { key: "question/list-question-deleted", label: "Danh sách câu hỏi đã xóa" },
             ],
           },
           {

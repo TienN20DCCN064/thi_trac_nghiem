@@ -134,14 +134,13 @@ app.post("/api/dang-nhap", (req, res) => {
 // =============== API Đăng ký thi ===============
 app.post("/api/dang-ky-thi", verifyToken, async (req, res) => {
     const { ma_gv, ma_lop, ma_mh, trinh_do, ngay_thi, thoi_gian, chi_tiet_dang_ky_thi } = req.body;
-    // in ra 
     console.log("🚀 Payload đăng ký thi:", req.body);
+
     const connection = db.promise();
 
     try {
         await connection.beginTransaction();
 
-        let tongSoCau = 0;
         let errMsg = "";
 
         // Kiểm tra từng chương
@@ -155,7 +154,6 @@ app.post("/api/dang-ky-thi", verifyToken, async (req, res) => {
             if (soCauTrongDB < so_cau) {
                 errMsg += `Chương ${chuong_so} thiếu ${so_cau - soCauTrongDB} câu. `;
             }
-            tongSoCau += so_cau;
         }
 
         if (errMsg) {
@@ -163,19 +161,16 @@ app.post("/api/dang-ky-thi", verifyToken, async (req, res) => {
             return res.status(400).json({ success: false, message: errMsg });
         }
 
-        // Thêm bản ghi vào bảng dang_ky_thi (bỏ so_cau_thi)
         const now = new Date();
         const [result] = await connection.query(
             `INSERT INTO dang_ky_thi 
-                    (ma_gv, ma_lop, ma_mh, trinh_do, ngay_thi, thoi_gian, created_at, updated_at) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                (ma_gv, ma_lop, ma_mh, trinh_do, ngay_thi, thoi_gian, created_at, updated_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [ma_gv, ma_lop, ma_mh, trinh_do, ngay_thi, thoi_gian, now, now]
         );
 
-
         const idDangKy = result.insertId;
 
-        // Thêm chi tiết vào chi_tiet_dang_ky_thi
         for (const { chuong_so, so_cau } of chi_tiet_dang_ky_thi) {
             await connection.query(
                 `INSERT INTO chi_tiet_dang_ky_thi (id_dang_ky_thi, chuong_so, so_cau) VALUES (?, ?, ?)`,
@@ -285,6 +280,249 @@ app.delete("/api/dang-ky-thi/:id", verifyToken, async (req, res) => {
     }
 });
 
+// 🧠 API: Lấy danh sách câu hỏi random theo id_dang_ky_thi
+// chưa kiểm tra số câu trong DB
+// app.get("/api/list-questions/by-dangkythi/:id_dang_ky_thi", verifyToken, async (req, res) => {
+//     const { id_dang_ky_thi } = req.params;
+//     const connection = db.promise();
+
+//     try {
+//         console.log("📘 Lấy đề thi cho id_dang_ky_thi:", id_dang_ky_thi);
+
+//         // 1️⃣ Lấy thông tin đăng ký thi (để biết môn học, trình độ)
+//         const [dkthi] = await connection.query(
+//             `SELECT id_dang_ky_thi, ma_mh, trinh_do 
+//              FROM dang_ky_thi 
+//              WHERE id_dang_ky_thi = ?`,
+//             [id_dang_ky_thi]
+//         );
+
+//         if (dkthi.length === 0) {
+//             return res.status(404).json({
+//                 success: false,
+//                 message: "Không tìm thấy thông tin đăng ký thi."
+//             });
+//         }
+
+//         const { ma_mh, trinh_do } = dkthi[0];
+
+//         // 2️⃣ Lấy danh sách chương và số câu hỏi cần random từ chi_tiet_dang_ky_thi
+//         const [chiTietDangKyThi] = await connection.query(
+//             `SELECT chuong_so, so_cau
+//              FROM chi_tiet_dang_ky_thi
+//              WHERE id_dang_ky_thi = ?`,
+//             [id_dang_ky_thi]
+//         );
+
+//         if (chiTietDangKyThi.length === 0) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: "Chưa có cấu hình số câu hỏi theo chương cho kỳ thi này."
+//             });
+//         }
+
+//         // 3️⃣ Random câu hỏi theo từng chương
+//         const allQuestions = [];
+
+//         for (const ct of chiTietDangKyThi) {
+//             const { chuong_so, so_cau } = ct;
+//             const limit = Number(so_cau);
+
+//             if (!Number.isInteger(limit) || limit <= 0) {
+//                 console.warn(`⚠️ Bỏ qua chương ${chuong_so} vì số câu không hợp lệ:`, so_cau);
+//                 continue;
+//             }
+
+//             console.log(`🧩 Lấy ${limit} câu random cho chương ${chuong_so}`);
+
+//             const [questions] = await connection.query(
+//                 `SELECT id_ch, loai, noi_dung, dap_an_dung, chuong_so, ma_mh
+//                  FROM cau_hoi
+//                  WHERE ma_mh = ? AND trinh_do = ? 
+//                        AND chuong_so = ? AND trang_thai_xoa = 'chua_xoa'
+//                  ORDER BY RAND()
+//                  LIMIT ${limit}`,
+//                 [ma_mh, trinh_do, chuong_so]
+//             );
+
+//             allQuestions.push(...questions);
+//         }
+
+//         // 4️⃣ Lấy danh sách lựa chọn cho các câu hỏi
+//         const chonLuaMap = {};
+//         if (allQuestions.length > 0) {
+//             const ids = allQuestions.map(q => q.id_ch);
+//             const [choices] = await connection.query(
+//                 `SELECT id_chon_lua, id_ch, noi_dung
+//                  FROM chon_lua
+//                  WHERE id_ch IN (${ids.map(() => '?').join(',')})`,
+//                 ids
+//             );
+
+//             for (const c of choices) {
+//                 if (!chonLuaMap[c.id_ch]) chonLuaMap[c.id_ch] = [];
+//                 chonLuaMap[c.id_ch].push({
+//                     id_chon_lua: c.id_chon_lua,
+//                     noi_dung: c.noi_dung
+//                 });
+//             }
+//         }
+
+//         // 5️⃣ Ghép lựa chọn vào câu hỏi
+//         const danhSachCauHoi = allQuestions.map(q => ({
+//             ...q,
+//             chon_lua: chonLuaMap[q.id_ch] || []
+//         }));
+
+//         // 6️⃣ Trả kết quả chi tiết đầy đủ
+//         res.json({
+//             success: true,
+//             message: "Lấy danh sách câu hỏi thành công!",
+//             data: {
+//                 id_dang_ky_thi,
+//                 ma_mh,
+//                 trinh_do,
+//                 chi_tiet_dang_ky_thi: chiTietDangKyThi, // chương & số câu
+//                 danh_sach_cau_hoi: danhSachCauHoi       // câu hỏi random
+//             }
+//         });
+
+//     } catch (error) {
+//         console.error("❌ Lỗi khi lấy đề thi:", error);
+//         res.status(500).json({
+//             success: false,
+//             message: "Lỗi server khi lấy đề thi",
+//             error: error.message
+//         });
+//     }
+// });
+
+// 🧠 API: Lấy danh sách câu hỏi random theo id_dang_ky_thi
+app.get("/api/list-questions/by-dangkythi/:id_dang_ky_thi", verifyToken, async (req, res) => {
+    const { id_dang_ky_thi } = req.params;
+    const connection = db.promise();
+
+    try {
+        console.log("📘 Lấy đề thi cho id_dang_ky_thi:", id_dang_ky_thi);
+
+        // 1️⃣ Lấy thông tin đăng ký thi
+        const [dkthi] = await connection.query(
+            `SELECT id_dang_ky_thi, ma_mh, trinh_do 
+             FROM dang_ky_thi 
+             WHERE id_dang_ky_thi = ?`,
+            [id_dang_ky_thi]
+        );
+
+        if (dkthi.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Không tìm thấy thông tin đăng ký thi."
+            });
+        }
+
+        const { ma_mh, trinh_do } = dkthi[0];
+
+        // 2️⃣ Lấy cấu hình chương và số câu
+        const [chiTietDangKyThi] = await connection.query(
+            `SELECT chuong_so, so_cau
+             FROM chi_tiet_dang_ky_thi
+             WHERE id_dang_ky_thi = ?`,
+            [id_dang_ky_thi]
+        );
+
+        if (chiTietDangKyThi.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Chưa có cấu hình số câu hỏi theo chương cho kỳ thi này."
+            });
+        }
+
+        // 3️⃣ Random câu hỏi
+        const allQuestions = [];
+        const warnings = []; // ⚠️ lưu cảnh báo thiếu câu
+
+        for (const ct of chiTietDangKyThi) {
+            const { chuong_so, so_cau } = ct;
+            const limit = Number(so_cau);
+
+            if (!Number.isInteger(limit) || limit <= 0) {
+                warnings.push(`Chương ${chuong_so} có số câu không hợp lệ (${so_cau})`);
+                continue;
+            }
+
+            console.log(`🧩 Lấy ${limit} câu random cho chương ${chuong_so}`);
+
+            const [questions] = await connection.query(
+                `SELECT id_ch, loai, noi_dung, dap_an_dung, chuong_so, ma_mh
+                 FROM cau_hoi
+                 WHERE ma_mh = ? AND trinh_do = ? 
+                       AND chuong_so = ? AND trang_thai_xoa = 'chua_xoa'
+                 ORDER BY RAND()
+                 LIMIT ${limit}`,
+                [ma_mh, trinh_do, chuong_so]
+            );
+
+            // ⚠️ Kiểm tra thiếu câu
+            if (questions.length < limit) {
+                const missing = limit - questions.length;
+                warnings.push(`Chương ${chuong_so} chỉ có ${questions.length}/${limit} câu hỏi (thiếu ${missing})`);
+            }
+
+            allQuestions.push(...questions);
+        }
+
+        // 4️⃣ Lấy danh sách lựa chọn
+        const chonLuaMap = {};
+        if (allQuestions.length > 0) {
+            const ids = allQuestions.map(q => q.id_ch);
+            const [choices] = await connection.query(
+                `SELECT id_chon_lua, id_ch, noi_dung
+                 FROM chon_lua
+                 WHERE id_ch IN (${ids.map(() => '?').join(',')})`,
+                ids
+            );
+
+            for (const c of choices) {
+                if (!chonLuaMap[c.id_ch]) chonLuaMap[c.id_ch] = [];
+                chonLuaMap[c.id_ch].push({
+                    id_chon_lua: c.id_chon_lua,
+                    noi_dung: c.noi_dung
+                });
+            }
+        }
+
+        // 5️⃣ Ghép lựa chọn vào câu hỏi
+        const danhSachCauHoi = allQuestions.map(q => ({
+            ...q,
+            chon_lua: chonLuaMap[q.id_ch] || []
+        }));
+
+        // 6️⃣ Trả kết quả kèm cảnh báo
+        res.json({
+            success: true,
+            message: warnings.length
+                ? "Lấy danh sách câu hỏi thành công, nhưng có cảnh báo."
+                : "Lấy danh sách câu hỏi thành công!",
+            warnings, // ⚠️ hiển thị chương bị thiếu
+            data: {
+                id_dang_ky_thi,
+                ma_mh,
+                trinh_do,
+                chi_tiet_dang_ky_thi: chiTietDangKyThi,
+                danh_sach_cau_hoi: danhSachCauHoi
+            }
+        });
+
+    } catch (error) {
+        console.error("❌ Lỗi khi lấy đề thi:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi server khi lấy đề thi",
+            error: error.message
+        });
+    }
+});
+
 
 // API: Thêm danh sách câu hỏi và lựa chọn
 app.post("/api/list-questions", verifyToken, async (req, res) => {
@@ -349,22 +587,23 @@ app.delete("/api/list-questions", verifyToken, async (req, res) => {
         if (!ma_mh || !trinh_do || !ma_gv) {
             return res.status(400).json({
                 success: false,
-                message: "Thiếu dữ liệu đầu vào (ma_mh, trinh_do, ma_gv)"
+                message: "Thiếu dữ liệu đầu vào (ma_mh, trinh_do, ma_gv)",
             });
         }
 
-        if (!['CĐ', 'VB2', 'ĐH'].includes(trinh_do)) {
+        if (!["CĐ", "VB2", "ĐH"].includes(trinh_do)) {
             return res.status(400).json({
                 success: false,
-                message: "Trình độ không hợp lệ"
+                message: "Trình độ không hợp lệ",
             });
         }
 
         await connection.beginTransaction();
 
-        // Lấy danh sách id_ch của các câu hỏi cần xóa
+        // Lấy danh sách câu hỏi của giáo viên và môn học
         const [questions] = await connection.execute(
-            `SELECT id_ch FROM cau_hoi WHERE ma_mh = ? AND trinh_do = ? AND ma_gv = ?`,
+            `SELECT id_ch, trang_thai_xoa FROM cau_hoi 
+             WHERE ma_mh = ? AND trinh_do = ? AND ma_gv = ?`,
             [ma_mh, trinh_do, ma_gv]
         );
 
@@ -372,51 +611,93 @@ app.delete("/api/list-questions", verifyToken, async (req, res) => {
             await connection.rollback();
             return res.json({
                 success: true,
-                message: "Không có câu hỏi nào để xóa"
+                message: "Không có câu hỏi nào để xử lý",
             });
         }
 
-        const ids = questions.map(q => q.id_ch);
+        const ids = questions.map((q) => q.id_ch);
 
-        // Xóa các lựa chọn tương ứng trong bảng chon_lua
-        await connection.execute(
-            `DELETE FROM chon_lua WHERE id_ch IN (${ids.map(() => '?').join(',')})`,
+        // Kiểm tra xem câu hỏi có đang được sử dụng ở bảng chi tiết bài thi không
+        const [usedQuestions] = await connection.execute(
+            `SELECT DISTINCT id_ch 
+             FROM chi_tiet_bai_thi 
+             WHERE id_ch IN (${ids.map(() => "?").join(",")})`,
             ids
         );
 
-        // Xóa các câu hỏi trong bảng cau_hoi
-        await connection.execute(
-            `DELETE FROM cau_hoi WHERE id_ch IN (${ids.map(() => '?').join(',')})`,
-            ids
-        );
+        const usedIds = usedQuestions.map((u) => u.id_ch);
+        const unusedIds = ids.filter((id) => !usedIds.includes(id));
+
+        // 1️⃣ Với những câu hỏi có khóa ngoại (đang được sử dụng)
+        if (usedIds.length > 0) {
+            // Kiểm tra xem có câu hỏi nào đã bị xóa rồi không
+            const [alreadyDeleted] = await connection.execute(
+                `SELECT COUNT(*) AS da_xoa_count 
+         FROM cau_hoi 
+         WHERE id_ch IN (${usedIds.map(() => "?").join(",")})
+         AND trang_thai_xoa = 'da_xoa'`,
+                usedIds
+            );
+
+            if (alreadyDeleted[0].da_xoa_count > 0) {
+                await connection.rollback();
+                return res.status(400).json({
+                    success: false,
+                    message: "Một số câu hỏi đã bị xóa trước đó, không thể xóa lại.",
+                });
+            }
+
+            // Chỉ cập nhật từ 'chua_xoa' sang 'da_xoa'
+            await connection.execute(
+                `UPDATE cau_hoi 
+         SET trang_thai_xoa = 'da_xoa'
+         WHERE id_ch IN (${usedIds.map(() => "?").join(",")})
+         AND trang_thai_xoa = 'chua_xoa'`,
+                usedIds
+            );
+        }
+
+
+        // 2️⃣ Với những câu hỏi không bị ràng buộc khóa ngoại → xóa vật lý
+        if (unusedIds.length > 0) {
+            await connection.execute(
+                `DELETE FROM chon_lua WHERE id_ch IN (${unusedIds.map(() => "?").join(",")})`,
+                unusedIds
+            );
+
+            await connection.execute(
+                `DELETE FROM cau_hoi WHERE id_ch IN (${unusedIds.map(() => "?").join(",")})`,
+                unusedIds
+            );
+        }
 
         await connection.commit();
+
         res.json({
             success: true,
-            message: `Đã xóa ${ids.length} câu hỏi và lựa chọn liên quan`
+            message: `Đã cập nhật trạng thái cho ${usedIds.length} câu hỏi và xóa ${unusedIds.length} câu hỏi.`,
         });
     } catch (error) {
         await connection.rollback();
         res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message,
         });
     }
 });
 
-// API: Cập nhật câu hỏi
+
+// API: Cập nhật danh sách câu hỏi
 app.put("/api/list-questions", verifyToken, async (req, res) => {
     const { ma_mh, trinh_do, ma_gv, questions } = req.body;
     const connection = db.promise();
-
     try {
         if (!ma_mh || !trinh_do || !ma_gv || !Array.isArray(questions)) {
             return res.status(400).json({ success: false, message: "Thiếu dữ liệu đầu vào" });
         }
-
         await connection.beginTransaction();
 
-        // ===== Lấy toàn bộ id_ch hiện có trong DB của GV, môn, trình độ =====
+        // ===== Lấy toàn bộ id_ch hiện có trong DB của GV, môn, trình độ ===== 
         const [oldQuestions] = await connection.execute(
             `SELECT id_ch FROM cau_hoi WHERE ma_mh = ? AND trinh_do = ? AND ma_gv = ?`,
             [ma_mh, trinh_do, ma_gv]
@@ -424,33 +705,31 @@ app.put("/api/list-questions", verifyToken, async (req, res) => {
         const oldIds = oldQuestions.map(q => q.id_ch);
         const newIds = questions.filter(q => q.id_ch).map(q => q.id_ch);
 
-        // ===== Xóa câu hỏi không còn trong danh sách mới =====
+        // ===== Xóa câu hỏi không còn trong danh sách mới ===== 
         const idsToDelete = oldIds.filter(id => !newIds.includes(id));
         if (idsToDelete.length > 0) {
-            // Xóa chon_lua trước
+            // Xóa chon_lua trước 
             await connection.query(`DELETE FROM chon_lua WHERE id_ch IN (?)`, [idsToDelete]);
-            // Xóa cau_hoi
+            // Xóa cau_hoi 
             await connection.query(`DELETE FROM cau_hoi WHERE id_ch IN (?)`, [idsToDelete]);
         }
 
-        // ===== Duyệt danh sách câu hỏi từ client =====
+        // ===== Duyệt danh sách câu hỏi từ client ===== 
         for (const q of questions) {
             const { id_ch, loai, noi_dung, dap_an_dung, chuong_so, chon_lua } = q;
             const safe_dap_an_dung = dap_an_dung || null;
             const safe_chuong_so = chuong_so || null;
 
-            // ===== Nếu có id_ch → Cập nhật =====
+            // ===== Nếu có id_ch → Cập nhật ===== 
             if (id_ch && oldIds.includes(id_ch)) {
                 await connection.execute(
-                    `UPDATE cau_hoi
-                     SET noi_dung=?, loai=?, dap_an_dung=?, chuong_so=?
-                     WHERE id_ch=? AND ma_gv=?`,
+                    `UPDATE cau_hoi SET noi_dung=?, loai=?, dap_an_dung=?, chuong_so=? WHERE id_ch=? AND ma_gv=?`,
                     [noi_dung, loai, safe_dap_an_dung, safe_chuong_so, id_ch, ma_gv]
                 );
 
-                // --- Xử lý chon_lua nếu là loại chọn 1 ---
+                // --- Xử lý chon_lua nếu là loại chọn 1 --- 
                 if (loai === "chon_1" && Array.isArray(chon_lua)) {
-                    // Lấy các lựa chọn cũ
+                    // Lấy các lựa chọn cũ 
                     const [oldChoices] = await connection.execute(
                         `SELECT id_chon_lua FROM chon_lua WHERE id_ch=?`,
                         [id_ch]
@@ -458,13 +737,13 @@ app.put("/api/list-questions", verifyToken, async (req, res) => {
                     const oldChoiceIds = oldChoices.map(c => c.id_chon_lua);
                     const newChoiceIds = chon_lua.filter(c => c.id_chon_lua).map(c => c.id_chon_lua);
 
-                    // Xóa lựa chọn không còn
+                    // Xóa lựa chọn không còn 
                     const clToDelete = oldChoiceIds.filter(id => !newChoiceIds.includes(id));
                     if (clToDelete.length > 0) {
                         await connection.query(`DELETE FROM chon_lua WHERE id_chon_lua IN (?)`, [clToDelete]);
                     }
 
-                    // Thêm hoặc cập nhật
+                    // Thêm hoặc cập nhật 
                     for (const choice of chon_lua) {
                         if (choice.id_chon_lua && oldChoiceIds.includes(choice.id_chon_lua)) {
                             await connection.execute(
@@ -479,21 +758,19 @@ app.put("/api/list-questions", verifyToken, async (req, res) => {
                         }
                     }
                 } else {
-                    // Không phải chọn 1 → Xóa hết chon_lua cũ
+                    // Không phải chọn 1 → Xóa hết chon_lua cũ 
                     await connection.query(`DELETE FROM chon_lua WHERE id_ch=?`, [id_ch]);
                 }
             }
-
-            // ===== Nếu chưa có id_ch → Thêm mới =====
+            // ===== Nếu chưa có id_ch → Thêm mới ===== 
             else {
                 const [result] = await connection.execute(
-                    `INSERT INTO cau_hoi (trinh_do, loai, noi_dung, dap_an_dung, chuong_so, ma_mh, ma_gv)
-                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                    `INSERT INTO cau_hoi (trinh_do, loai, noi_dung, dap_an_dung, chuong_so, ma_mh, ma_gv) VALUES (?, ?, ?, ?, ?, ?, ?)`,
                     [trinh_do, loai, noi_dung, safe_dap_an_dung, safe_chuong_so, ma_mh, ma_gv]
                 );
                 const newIdCh = result.insertId;
 
-                // Nếu là loại chọn 1 → thêm các lựa chọn
+                // Nếu là loại chọn 1 → thêm các lựa chọn 
                 if (loai === "chon_1" && Array.isArray(chon_lua)) {
                     for (const choice of chon_lua) {
                         await connection.execute(
@@ -513,6 +790,7 @@ app.put("/api/list-questions", verifyToken, async (req, res) => {
         res.status(500).json({ success: false, message: `Lỗi: ${error.message}` });
     }
 });
+
 
 
 

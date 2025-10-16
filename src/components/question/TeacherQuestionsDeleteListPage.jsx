@@ -37,7 +37,7 @@ const TeacherQuestionPage = () => {
         />
 
         {/* Danh sách môn học giảng viên đã soạn câu hỏi */}
-        <TeacherQuestionList status_question="chua_xoa" />
+        <TeacherQuestionList status_question="da_xoa" />
       </div>
     </>
   );

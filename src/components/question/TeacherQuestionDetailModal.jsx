@@ -31,6 +31,7 @@ const TeacherQuestionDetailModal = ({
   mode = "add",
   questionId,
   onCancel,
+  status_question = "chua_xoa", // 👈 THÊM DÒNG NÀY
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -192,6 +193,12 @@ const TeacherQuestionDetailModal = ({
       )
     );
   };
+  const handleRestoreQuestion = (qid) => {
+    // TODO: gọi API khôi phục câu hỏi, hoặc cập nhật trạng thái
+    console.log("Khôi phục câu hỏi", qid);
+    message.success("Khôi phục câu hỏi thành công!");
+    // Có thể cần reload lại danh sách câu hỏi
+  };
 
   const handleDeleteQuestion = (qid) => {
     setQuestions((prev) => prev.filter((q) => q.id_ch !== qid));
@@ -224,6 +231,13 @@ const TeacherQuestionDetailModal = ({
             newErrors[q.id_ch] = "Đáp án đúng không hợp lệ";
           } else if (q.chon_lua.some((c) => !c.noi_dung.trim())) {
             newErrors[q.id_ch] = "Có lựa chọn chưa nhập nội dung";
+          } else {
+            // ✅ Kiểm tra trùng nội dung các lựa chọn
+            const noiDungList = q.chon_lua.map((c) => c.noi_dung.trim());
+            const uniqueNoiDung = new Set(noiDungList);
+            if (uniqueNoiDung.size !== noiDungList.length) {
+              newErrors[q.id_ch] = "Các lựa chọn không được trùng nhau";
+            }
           }
         }
       });
@@ -346,7 +360,8 @@ const TeacherQuestionDetailModal = ({
               title={`Câu hỏi ${idx + 1}`}
               style={{ marginBottom: 12 }}
               extra={
-                mode !== "view" && (
+                mode !== "view" &&
+                (status_question === "chua_xoa" ? (
                   <Button
                     danger
                     size="small"
@@ -354,7 +369,15 @@ const TeacherQuestionDetailModal = ({
                   >
                     Xóa
                   </Button>
-                )
+                ) : (
+                  <Button
+                    type="primary"
+                    size="small"
+                    onClick={() => handleRestoreQuestion(q.id_ch)}
+                  >
+                    Khôi phục
+                  </Button>
+                ))
               }
             >
               <Form layout="vertical">

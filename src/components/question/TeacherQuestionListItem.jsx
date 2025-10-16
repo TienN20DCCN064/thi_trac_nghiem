@@ -23,7 +23,7 @@ function handleCheckPageParam() {
   return { page, pageSize };
 }
 
-const TeacherQuestionListItem = ({ data = [] }) => {
+const TeacherQuestionListItem = ({ data = [], status_question }) => {
   const dispatch = useDispatch();
   const [currentPage, setCurrentPage] = useState(handleCheckPageParam().page);
   const [pageSize, setPageSize] = useState(handleCheckPageParam().pageSize);
@@ -45,14 +45,14 @@ const TeacherQuestionListItem = ({ data = [] }) => {
     }
   }, [validCurrentPage, currentPage]);
   useEffect(() => {
-    console.log(getUserInfo().id_tai_khoan);
+    console.log(getUserInfo());
     const fetchData = async () => {
       const infoTeacher = await hamChiTiet.getUserInfoByAccountId(
         getUserInfo().id_tai_khoan
       );
       // setSelectedId(infoTeacher);
       setInfoTeacher(infoTeacher); // ✅ lưu vào state
-      console.log(infoTeacher.ma_gv);
+      console.log(infoTeacher);
     };
     fetchData();
   }, []);
@@ -70,7 +70,7 @@ const TeacherQuestionListItem = ({ data = [] }) => {
           () => reject(new Error("Kết nối máy chủ thất bại sau 10 giây!")),
           10000
         )
-      );  
+      );
 
       // Cho chạy song song request và timeout
       const res = await Promise.race([
@@ -139,76 +139,93 @@ const TeacherQuestionListItem = ({ data = [] }) => {
       key: "action",
       align: "right",
       width: 150,
-      render: (_, record) => (
-        <div>
-          <Button
-            size="small"
-            type="primary"
-            icon={<EyeOutlined />}
-            onClick={() => {
-              setSelectedId({
-                ma_gv: record.ma_gv,
-                ma_mh: record.ma_mh,
-                trinh_do: record.trinh_do,
-              });
-              setModalMode("view");
-              setModalVisible(true);
-            }}
-            style={{ marginLeft: 8 }}
-          />
-          <Button
-            size="small"
-            type="dashed"
-            icon={<EditOutlined />}
-            onClick={() => {
-              setSelectedId({
-                ma_gv: record.ma_gv,
-                ma_mh: record.ma_mh,
-                trinh_do: record.trinh_do,
-              });
-              setModalMode("edit");
-              setModalVisible(true);
-            }}
-            style={{ marginLeft: 8 }}
-          />
-          <Button
-            size="small"
-            danger
-            type="primary"
-            icon={<DeleteOutlined />}
-            onClick={() =>
-              Modal.confirm({
-                title: "Bạn có muốn xóa câu hỏi này không?",
-                okText: "Có",
-                okType: "danger",
-                cancelText: "Không",
-                onOk() {
-                  handleDelete(record);
-                },
-              })
-            }
-            style={{ marginLeft: 8 }}
-          />
-        </div>
-      ),
+      render: (_, record) => {
+        const user = getUserInfo(); // 👈 Lấy thông tin người dùng
+        return (
+          <div>
+            {/* Nút Xem — luôn hiển thị */}
+            <Button
+              size="small"
+              type="primary"
+              icon={<EyeOutlined />}
+              onClick={() => {
+                setSelectedId({
+                  ma_gv: record.ma_gv,
+                  ma_mh: record.ma_mh,
+                  trinh_do: record.trinh_do,
+                });
+                setModalMode("view");
+                setModalVisible(true);
+              }}
+              style={{ marginLeft: 8 }}
+            />
+
+            {/* 👇 Chỉ hiển thị nếu vai_tro === "GiaoVien" */}
+            <>
+              <Button
+                size="small"
+                type="dashed"
+                icon={<EditOutlined />}
+                disabled={user?.vai_tro !== "GiaoVien"} // ❗ Không phải GV thì bị vô hiệu hóa
+                onClick={() => {
+                  if (user?.vai_tro !== "GiaoVien") return; // Chặn click nếu không phải GV
+                  setSelectedId({
+                    ma_gv: record.ma_gv,
+                    ma_mh: record.ma_mh,
+                    trinh_do: record.trinh_do,
+                  });
+                  setModalMode("edit");
+                  setModalVisible(true);
+                }}
+                style={{ marginLeft: 8 }}
+              />
+              <Button
+                size="small"
+                danger
+                type="primary"
+                icon={<DeleteOutlined />}
+                disabled={user?.vai_tro !== "GiaoVien"} // ❗ Không phải GV thì bị vô hiệu hóa
+                onClick={() => {
+                  if (user?.vai_tro !== "GiaoVien") return; // Chặn click nếu không phải GV
+                  Modal.confirm({
+                    title: "Bạn có muốn xóa câu hỏi này không?",
+                    okText: "Có",
+                    okType: "danger",
+                    cancelText: "Không",
+                    onOk() {
+                      handleDelete(record);
+                    },
+                  });
+                }}
+                style={{ marginLeft: 8 }}
+              />
+            </>
+          </div>
+        );
+      },
     },
   ];
 
   return (
     <>
-      <div style={{ marginBottom: 10, textAlign: "right" }}>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => {
-            setSelectedId(null);
-            setModalMode("create");
-            setModalVisible(true);
-          }}
-        >
-          Thêm Câu Hỏi
-        </Button>
-      </div>
+      {status_question === "chua_xoa" &&
+      getUserInfo().vai_tro === "GiaoVien" ? (
+        <div style={{ marginBottom: 10, textAlign: "right" }}>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => {
+              setSelectedId(null);
+              setModalMode("create");
+              setModalVisible(true);
+            }}
+          >
+            Thêm Câu Hỏi
+          </Button>
+        </div>
+      ) : (
+        <div style={{ marginBottom: 10, textAlign: "right", marginTop: 60 }} />
+      )}
 
       <Table
         rowKey={(record) =>
@@ -248,6 +265,7 @@ const TeacherQuestionListItem = ({ data = [] }) => {
         trinhDo={selectedId?.trinh_do || "ĐH"}
         mode={modalMode}
         onCancel={() => setModalVisible(false)}
+        status_question={status_question} // 👈 THÊM DÒNG NÀY
       />
     </>
   );

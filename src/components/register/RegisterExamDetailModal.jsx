@@ -200,11 +200,31 @@ const RegisterExamDetailModal = ({
           so_cau: Number(c.so_cau),
         })),
       };
-
+      // Nếu là trạng thái "Từ chối", khi gửi lại thì đổi thành "Chờ phê duyệt"
       console.log("🚀 Payload cập nhật đăng ký thi:", payload);
-
-      // Gọi API updateExam
       await hamChung.updateExam(id_dang_ky_thi, payload);
+
+      if (editExamDetails.trang_thai === "Tu_choi") {
+        // xóa bỏ thuộc tính chi_tiet_dang_ky_thi
+        const { chi_tiet_dang_ky_thi, ...rest } = payload;
+        const update_payload = rest;
+        update_payload.id_dang_ky_thi = id_dang_ky_thi;
+        update_payload.trang_thai = "Cho_phe_duyet";
+        update_payload.created_at = moment().format("YYYY-MM-DD HH:mm:ss");
+        update_payload.updated_at = moment().format("YYYY-MM-DD HH:mm:ss");
+        update_payload.nguoi_phe_duyet = null;
+        console.log(
+          "🚀 Payload cập nhật trạng thái đăng ký thi:",
+          update_payload
+        );
+        const result = await hamChung.update(
+          "dang_ky_thi",
+          id_dang_ky_thi,
+          update_payload
+        );
+        console.log("🚀 Kết quả cập nhật trạng thái đăng ký thi:", result);
+      }
+
       message.success("Cập nhật thành công!");
       setExamDetails(editExamDetails);
       setChapterDetails(editChapterDetails);
@@ -308,16 +328,36 @@ const RegisterExamDetailModal = ({
         <Button key="cancel" onClick={handleCancel}>
           Hủy
         </Button>,
-        mode === "edit" && (
-          <Button
-            key="save"
-            type="primary"
-            onClick={handleSave}
-            loading={loading}
-          >
-            Lưu
-          </Button>
-        ),
+
+        mode === "edit" &&
+          (editExamDetails?.trang_thai === "Tu_choi" ? (
+            <Button
+              key="resubmit"
+              type="primary"
+              onClick={() => {
+                Modal.confirm({
+                  title: "Xác nhận gửi lại yêu cầu",
+                  content:
+                    "Bạn có chắc muốn gửi lại yêu cầu phê duyệt đăng ký thi này không?",
+                  okText: "Gửi lại",
+                  cancelText: "Hủy",
+                  onOk: () => handleSave(),
+                });
+              }}
+              loading={loading}
+            >
+              Gửi lại yêu cầu
+            </Button>
+          ) : (
+            <Button
+              key="save"
+              type="primary"
+              onClick={handleSave}
+              loading={loading}
+            >
+              Lưu
+            </Button>
+          )),
       ]}
       width={900}
     >

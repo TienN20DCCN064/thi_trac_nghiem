@@ -16,9 +16,12 @@ import AccoutPage from "./components/accouts/AccoutPage.jsx";
 import StudentAccoutPage from "./components/accouts/StudentAccoutPage.jsx";
 import TeacherAccountPage from "./components/accouts/TeacherAccoutPage.jsx";
 
+import StudentExamPage from "./components/studenExam/StudentExamPage.jsx";
+
 import HeaderUserInfo from "./components/common/HeaderUserInfo.jsx";
 import RegisterExamPage from "./components/register/RegisterExamPage.jsx";
 import TeacherQuestionPage from "./components/question/TeacherQuestionPage.jsx";
+import TeacherListQuestionsDelete from "./components/question/TeacherQuestionsDeleteListPage.jsx";
 import LoadingOverlay from "./components/common/LoadingOverlay.jsx";
 import LoginPage from "./components/auth/LoginPage.jsx";
 import PrimaryKeys from "./globals/databaseKey.js"; // 👈 import PrimaryKeys
@@ -79,8 +82,8 @@ function App() {
                 element={<TeacherQuestionPage />}
               />
               <Route
-                path="/question/add-question"
-                element={<h2>Welcome /question/add-question 🚀</h2>}
+                path="/question/list-question-deleted"
+                element={<TeacherListQuestionsDelete />}
               />
 
               {/* dành cho giáo viên */}
@@ -92,6 +95,16 @@ function App() {
               <Route
                 path="/register/register-exam-test"
                 element={<h2>Welcome /register/register-exam-test 🚀</h2>}
+              />
+
+                {/* dành cho sinh viên */}
+              <Route
+                path="/exam"
+                element={<StudentExamPage />}
+              />
+              <Route
+                path="/exam-list"
+                element={<StudentExamPage />}
               />
             </Routes>
           </Content>

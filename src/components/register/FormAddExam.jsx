@@ -127,6 +127,13 @@ const FormAddExam = ({ visible, onCancel }) => {
     newChapters[index].questionCount = value || 1;
     setChapters(newChapters);
   };
+  // kiểm tra ma_lop và ma_mon đã có trong database chưa, nếu có rồi thì không cho submit
+  const checkExistsInDatabase = async (ma_lop, ma_mon) => {
+    const dataDangKyThi = await hamChung.getAll("dang_ky_thi");
+    return dataDangKyThi.some(
+      (item) => item.ma_lop === ma_lop && item.ma_mh === ma_mon
+    );
+  };
 
   const handleOk = async () => {
     try {
@@ -156,6 +163,14 @@ const FormAddExam = ({ visible, onCancel }) => {
         })),
       };
       console.log("🚀 Payload đăng ký thi:", payload);
+      const exists = await checkExistsInDatabase(values.ma_lop, values.ma_mh);
+
+      if (exists) {
+        message.error(
+          `Mã lớp ${values.ma_lop} đã đăng ký thi môn ${values.ma_mh}. Vui lòng chọn mã lớp hoặc môn học khác.`
+        );
+        return;
+      }
 
       const result = await hamChung.registerExam(payload);
 
