@@ -1,6 +1,6 @@
 
 const PrimaryKeys = {
-  "tai_khoan": ["id_tai_khoan"],                          // Tài khoản
+  "tai_khoan": ["id_tai_khoan"],                       // Tài khoản
   "khoa": ["ma_khoa"],                                 // Khoa
   "mon_hoc": ["ma_mh"],                                // Môn học
   "giao_vien": ["ma_gv"],                              // Giáo viên
@@ -16,12 +16,12 @@ const PrimaryKeys = {
   "dang_ky_thi": ["id_dang_ky_thi"],                   // Đăng ký thi
   "chi_tiet_dang_ky_thi": ["id_dang_ky_thi", "chuong_so"], // Chi tiết đăng ký thi (Composite PK)
 
-  "thi": ["id_thi"],                                   // Bài thi
-  "chi_tiet_bai_thi": ["id"],                          // Chi tiết bài thi
+  "thi": ["id_dang_ky_thi", "ma_sv"],                                   // Bài thi
+  "chi_tiet_thi": ["id_dang_ky_thi", "ma_sv", "id_ch"],                    // Chi tiết bài thi
 };
 
 const PrimaryKeys_not_token = {
-  "tai_khoan": ["id_tai_khoan"],                          // Tài khoản
+  "tai_khoan": ["id_tai_khoan"],                       // Tài khoản
   "khoa": ["ma_khoa"],                                 // Khoa
   "mon_hoc": ["ma_mh"],                                // Môn học
   "giao_vien": ["ma_gv"],                              // Giáo viên
@@ -37,8 +37,8 @@ const PrimaryKeys_not_token = {
   "dang_ky_thi": ["id_dang_ky_thi"],                   // Đăng ký thi
   "chi_tiet_dang_ky_thi": ["id_dang_ky_thi", "chuong_so"], // Chi tiết đăng ký thi (Composite PK)
 
-  "thi": ["id_thi"],                                   // Bài thi
-  "chi_tiet_bai_thi": ["id"],                          // Chi tiết bài thi
+  "thi": ["id_dang_ky_thi", "ma_sv"],                                   // Bài thi
+  "chi_tiet_thi": ["id_dang_ky_thi", "ma_sv", "id_ch"],                    // Chi tiết bài thi
 };
 
 
