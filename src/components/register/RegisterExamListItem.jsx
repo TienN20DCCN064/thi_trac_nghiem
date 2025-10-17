@@ -235,98 +235,100 @@ const RegisterExamListItem = ({
       key: "action",
       align: "right",
       width: 150,
-    render: (_, record) => {
-  const isEditable = record.trang_thai === "Cho_phe_duyet";
-  const isRejected = record.trang_thai === "Tu_choi";
-  const userRole = getUserInfo().vai_tro;
+      render: (_, record) => {
+        const isEditable = record.trang_thai === "Cho_phe_duyet";
+        const isRejected = record.trang_thai === "Tu_choi";
+        const userRole = getUserInfo().vai_tro;
 
-  return (
-    <div>
-      {/* Nút Xem luôn mở */}
-      <Button
-        size="small"
-        type="primary"
-        icon={<EyeOutlined />}
-        onClick={() =>
-          handleViewDetailClick("view", record.id_dang_ky_thi)
-        }
-        style={{ marginLeft: 8 }}
-      />
+        return (
+          <div>
+            {/* Nút Xem luôn mở */}
+            <Button
+              size="small"
+              type="primary"
+              icon={<EyeOutlined />}
+              onClick={() =>
+                handleViewDetailClick("view", record.id_dang_ky_thi)
+              }
+              style={{ marginLeft: 8 }}
+            />
 
-      {userRole === "GiaoVu" && (
-        <>
-          {/* Nút Sửa cho GiaoVu khi Chờ Duyệt */}
-          <Button
-            size="small"
-            type="dashed"
-            icon={<EditOutlined />}
-            onClick={() =>
-              handleViewDetailClick("edit", record.id_dang_ky_thi)
-            }
-            disabled={!isEditable}
-            style={{ marginLeft: 8 }}
-          />
+            {userRole === "GiaoVu" && (
+              <>
+                {/* Nút Sửa cho GiaoVu khi Chờ Duyệt */}
+                <Button
+                  size="small"
+                  type="dashed"
+                  icon={<EditOutlined />}
+                  onClick={() =>
+                    handleViewDetailClick("edit", record.id_dang_ky_thi)
+                  }
+                  disabled={!isEditable}
+                  style={{ marginLeft: 8 }}
+                />
 
-          {/* Nút Xóa cho GiaoVu khi Chờ Duyệt */}
-          <Button
-            size="small"
-            danger
-            type="primary"
-            icon={<DeleteOutlined />}
-            onClick={() =>
-              Modal.confirm({
-                title: "Xác nhận xóa",
-                content: "Bạn có chắc chắn muốn xóa đăng ký thi này không?",
-                okText: "Xóa",
-                okType: "danger",
-                cancelText: "Hủy",
-                onOk: () => handleDelete(record),
-              })
-            }
-            disabled={!isEditable}
-            style={{ marginLeft: 8 }}
-          />
-        </>
-      )}
+                {/* Nút Xóa cho GiaoVu khi Chờ Duyệt */}
+                <Button
+                  size="small"
+                  danger
+                  type="primary"
+                  icon={<DeleteOutlined />}
+                  onClick={() =>
+                    Modal.confirm({
+                      title: "Xác nhận xóa",
+                      content:
+                        "Bạn có chắc chắn muốn xóa đăng ký thi này không?",
+                      okText: "Xóa",
+                      okType: "danger",
+                      cancelText: "Hủy",
+                      onOk: () => handleDelete(record),
+                    })
+                  }
+                  disabled={!isEditable}
+                  style={{ marginLeft: 8 }}
+                />
+              </>
+            )}
 
-      {userRole === "GiaoVien" && (
-        <>
-          {/* Nút Sửa cho GiaoVien khi Chờ Duyệt hoặc Từ Chối */}
-          <Button
-            size="small"
-            type="dashed"
-            icon={<EditOutlined />}
-            onClick={() =>
-              handleViewDetailClick("edit", record.id_dang_ky_thi)
-            }
-            disabled={!(isEditable || isRejected)}
-            style={{ marginLeft: 8 }}
-          />
+            {userRole === "GiaoVien" && (
+              <>
+                {/* Nút Sửa cho GiaoVien khi Chờ Duyệt hoặc Từ Chối */}
+                <Button
+                  size="small"
+                  type="dashed"
+                  icon={<EditOutlined />}
+                  onClick={() =>
+                    handleViewDetailClick("edit", record.id_dang_ky_thi)
+                  }
+                  disabled={!(isEditable || isRejected)}
+                  style={{ marginLeft: 8 }}
+                />
 
-          {/* Nút Xóa cho GiaoVien khi Chờ Duyệt */}
-          <Button
-            size="small"
-            danger
-            type="primary"
-            icon={<DeleteOutlined />}
-            onClick={() =>
-              Modal.confirm({
-                title: "Xác nhận xóa",
-                content: "Bạn có chắc chắn muốn xóa đăng ký thi này không?",
-                okText: "Xóa",
-                okType: "danger",
-                cancelText: "Hủy",
-                onOk: () => handleDelete(record),
-              })
-            }
-            disabled={!isEditable}
-            style={{ marginLeft: 8 }}
-          />
-        </>
-      )}
-    </div>
-  );
-}
+                {/* Nút Xóa cho GiaoVien khi Chờ Duyệt */}
+                <Button
+                  size="small"
+                  danger
+                  type="primary"
+                  icon={<DeleteOutlined />}
+                  onClick={() =>
+                    Modal.confirm({
+                      title: "Xác nhận xóa",
+                      content:
+                        "Bạn có chắc chắn muốn xóa đăng ký thi này không?",
+                      okText: "Xóa",
+                      okType: "danger",
+                      cancelText: "Hủy",
+                      onOk: () => handleDelete(record),
+                    })
+                  }
+                  disabled={!isEditable}
+                  style={{ marginLeft: 8 }}
+                />
+              </>
+            )}
+          </div>
+        );
+      },
     },
   ];
 

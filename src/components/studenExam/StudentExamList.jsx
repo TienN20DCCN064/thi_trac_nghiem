@@ -1,42 +1,61 @@
 import React, { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { Spin, message } from "antd";
 import StudentExamListItem from "./StudentExamListItem.jsx";
-import hamChung from "../../services/service.hamChung.js";
+import { createActions } from "../../redux/actions/factoryActions.js";
 import hamChiTiet from "../../services/service.hamChiTiet.js";
+import hamChung from "../../services/service.hamChung.js";
 import { getUserInfo } from "../../globals/globals.js";
 
-const StudentExamList = ({ statusFilter = "chua_lam" }) => {
-  const [loading, setLoading] = useState(false);
-  const [registrations, setRegistrations] = useState([]);
+const dangKyThiActions = createActions("dang_ky_thi");
+const thiActions = createActions("thi");
 
+const StudentExamList = ({ statusFilter = "chua_lam" }) => {
+  const dispatch = useDispatch();
+  const { data: dangKyThiList, loading: loadingDangKy, error } = useSelector(
+    (state) => state.dang_ky_thi || { data: [], loading: false, error: null }
+  );
+  const { data: thiList, loading: loadingThi } = useSelector(
+    (state) => state.thi || { data: [], loading: false }
+  );
+
+  const [filteredData, setFilteredData] = useState([]);
+
+  // Fetch dữ liệu Redux khi mount
   useEffect(() => {
-    const fetch = async () => {
-      setLoading(true);
+    dispatch(dangKyThiActions.creators.fetchAllRequest());
+    dispatch(thiActions.creators.fetchAllRequest());
+  }, [dispatch]);
+
+  // Hiển thị lỗi nếu có
+  useEffect(() => {
+    if (error) message.error(`Lỗi khi tải dữ liệu đăng ký thi: ${error}`);
+  }, [error]);
+
+  // Xử lý enrich + lọc trạng thái sinh viên
+  useEffect(() => {
+    const buildData = async () => {
       try {
-        // Lấy thông tin sinh viên từ tài khoản hiện tại
         const accountId = getUserInfo()?.id_tai_khoan;
+        if (!accountId) return;
+
         const userInfo = await hamChiTiet.getUserInfoByAccountId(accountId);
         if (!userInfo?.ma_sv) {
-          setRegistrations([]);
-          setLoading(false);
+          setFilteredData([]);
           return;
         }
 
-        // Lấy danh sách đăng ký thi đã duyệt (hoặc tất cả tuỳ nhu cầu)
-        const allDangKy = await hamChung.getAll("dang_ky_thi");
-        const eligible = (allDangKy || []).filter(
-          (d) =>
-            d.trang_thai === "Da_phe_duyet" &&
-            d.ma_lop === userInfo.ma_lop // chỉ các kỳ thi liên quan lớp SV
+        // Lọc đăng ký thi liên quan lớp sinh viên và đã duyệt
+        const eligible = (dangKyThiList || []).filter(
+          (d) => d.trang_thai === "Da_phe_duyet" && d.ma_lop === userInfo.ma_lop
         );
-
-        // Lấy bảng thi (bản ghi thi đã làm) để kiểm tra trạng thái cá nhân
-        const allThi = await hamChung.getAll("thi");
 
         // Map -> thêm trạng thái 'da_lam' / 'chua_lam'
         const merged = eligible.map((d) => {
-          const thiForThis = (allThi || []).find(
-            (t) => String(t.id_dang_ky_thi) === String(d.id_dang_ky_thi) && t.ma_sv === userInfo.ma_sv
+          const thiForThis = (thiList || []).find(
+            (t) =>
+              String(t.id_dang_ky_thi) === String(d.id_dang_ky_thi) &&
+              t.ma_sv === userInfo.ma_sv
           );
           return {
             ...d,
@@ -45,27 +64,26 @@ const StudentExamList = ({ statusFilter = "chua_lam" }) => {
           };
         });
 
-        // Apply filter
+        // Apply filter theo props
         const filtered =
           statusFilter === "tat_ca"
             ? merged
             : merged.filter((m) => m.status_student === statusFilter);
 
-        setRegistrations(filtered);
-      } catch (e) {
-        console.error(e);
-        message.error("Lỗi khi tải danh sách đăng ký thi");
-      } finally {
-        setLoading(false);
+        setFilteredData(filtered);
+      } catch (err) {
+        console.error(err);
+        message.error("Lỗi khi xử lý dữ liệu đăng ký thi");
       }
     };
 
-    fetch();
-  }, [statusFilter]);
+    buildData();
+  }, [dangKyThiList, thiList, statusFilter]);
 
-  if (loading) return <Spin style={{ margin: 20 }} />;
+  if (loadingDangKy || loadingThi) return <Spin style={{ margin: 20 }} />;
+  if (!filteredData || filteredData.length === 0) return <div>Không có dữ liệu</div>;
 
-  return <StudentExamListItem data={registrations} />;
+  return <StudentExamListItem data={filteredData} />;
 };
 
 export default StudentExamList;

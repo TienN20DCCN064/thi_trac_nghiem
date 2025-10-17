@@ -16,7 +16,9 @@ import AccoutPage from "./components/accouts/AccoutPage.jsx";
 import StudentAccoutPage from "./components/accouts/StudentAccoutPage.jsx";
 import TeacherAccountPage from "./components/accouts/TeacherAccoutPage.jsx";
 
-import StudentExamPage from "./components/studenExam/StudentExamPage.jsx";
+import StudentExamViewPage from "./components/studenExam/StudentExamViewPage.jsx";
+import StudentExamTakingPage from "./components/studenExam/StudentExamTakingPage.jsx";
+
 
 import HeaderUserInfo from "./components/common/HeaderUserInfo.jsx";
 import RegisterExamPage from "./components/register/RegisterExamPage.jsx";
@@ -99,12 +101,12 @@ function App() {
 
                 {/* dành cho sinh viên */}
               <Route
-                path="/exam"
-                element={<StudentExamPage />}
+                path="/exam-taking"
+                element={<StudentExamTakingPage />}
               />
               <Route
                 path="/exam-list"
-                element={<StudentExamPage />}
+                element={<StudentExamViewPage />}
               />
             </Routes>
           </Content>

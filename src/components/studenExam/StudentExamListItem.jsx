@@ -1,26 +1,55 @@
-import React, { useState } from "react";
-import { Table, Button, Modal, message } from "antd";
-import { EyeOutlined, PlayCircleOutlined, StopOutlined } from "@ant-design/icons";
-import CancelExamModal from "./CancelExamModal.jsx";
-import StudentExamDetailModal from "./StudentExamDetailModal.jsx";
+import React, { useState, useEffect } from "react";
+import { Table, Button, message } from "antd";
+import {
+  EyeOutlined,
+} from "@ant-design/icons";
+import ViewExamModal from "./examsDetail/ViewExamModal.jsx";
+import StudentExamDetailModal from "./examsDetail/StudentExamDetailModal.jsx";
 import CellDisplay from "../common/CellDisplay.jsx";
 import hamChung from "../../services/service.hamChung.js";
 import { createActions } from "../../redux/actions/factoryActions.js";
 import { useDispatch } from "react-redux";
 
 const actions = createActions("dang_ky_thi");
+
+// ✅ Lấy page và pageSize từ URL
+function handleCheckPageParam() {
+  const query = new URLSearchParams(window.location.search);
+  let page = Number(query.get("page")) || 1;
+  let pageSize = Number(query.get("pageSize")) || 10;
+  return { page, pageSize };
+}
+
 const StudentExamListItem = ({ data = [] }) => {
   const dispatch = useDispatch();
-  const [cancelModalVisible, setCancelModalVisible] = useState(false);
+  const [viewExamVisible, setViewExamVisible] = useState(false); // renamed from cancelModalVisible
   const [selected, setSelected] = useState(null);
-
-  // new: detail modal state
+  
+  // detail modal state
   const [detailVisible, setDetailVisible] = useState(false);
   const [detailRecord, setDetailRecord] = useState(null);
 
-  const openCancel = (record) => {
+  // pagination state
+  const [currentPage, setCurrentPage] = useState(handleCheckPageParam().page);
+  const [pageSize, setPageSize] = useState(handleCheckPageParam().pageSize);
+
+  const total = Array.isArray(data) ? data.length : 0;
+  const maxPage = Math.ceil(total / pageSize) || 1;
+  const validCurrentPage = Math.min(Math.max(1, currentPage), maxPage);
+
+  useEffect(() => {
+    if (validCurrentPage !== currentPage) {
+      setCurrentPage(validCurrentPage);
+    }
+  }, [validCurrentPage, currentPage]);
+
+  const paginatedData = Array.isArray(data)
+    ? data.slice((validCurrentPage - 1) * pageSize, validCurrentPage * pageSize)
+    : [];
+
+  const openViewExam = (record) => {
     setSelected(record);
-    setCancelModalVisible(true);
+    setViewExamVisible(true);
   };
 
   const openDetail = (record) => {
@@ -28,15 +57,13 @@ const StudentExamListItem = ({ data = [] }) => {
     setDetailVisible(true);
   };
 
-  const handleTakeExam = (record) => {
-    // chuyển hướng vào trang làm bài (tùy app route)
-    // ví dụ: /student/exam/take?id_dang_ky=...
-    window.location.href = `/student/exam/take?id=${record.id_dang_ky_thi}`;
-  };
-
   const columns = [
-    { title: "#", key: "idx", render: (_, __, i) => i + 1 },
-     {
+    {
+      title: "#",
+      key: "idx",
+      render: (_, __, i) => i + 1 + (validCurrentPage - 1) * pageSize,
+    },
+    {
       title: "Mã môn",
       dataIndex: "ma_mh",
     },
@@ -45,7 +72,12 @@ const StudentExamListItem = ({ data = [] }) => {
       dataIndex: "ma_mh",
       render: (v) => <CellDisplay table="mon_hoc" id={v} fieldName="ten_mh" />,
     },
-    { title: "Ngày thi", dataIndex: "ngay_thi" },
+    // chỉ render ngày tháng năm
+    { title: "Ngày thi", dataIndex: "ngay_thi",  key: "ngay_thi",
+      // width: 100,
+      render: (value) =>
+        value ? new Date(value).toLocaleDateString("vi-VN") : "-",
+    },
     { title: "Thời gian (phút)", dataIndex: "thoi_gian", align: "center" },
     {
       title: "Trạng thái",
@@ -56,7 +88,7 @@ const StudentExamListItem = ({ data = [] }) => {
     {
       title: "Hành động",
       key: "action",
-      align: "right",
+      align: "right", 
       render: (_, record) => (
         <div>
           <Button
@@ -64,38 +96,23 @@ const StudentExamListItem = ({ data = [] }) => {
             icon={<EyeOutlined />}
             onClick={() => openDetail(record)}
             style={{ marginLeft: 8 }}
-          />
-          {record.status_student === "chua_lam" && (
-            <Button
-              size="small"
-              type="primary"
-              icon={<PlayCircleOutlined />}
-              onClick={() => handleTakeExam(record)}
-              style={{ marginLeft: 8 }}
-            >
-              Làm bài
-            </Button>
-          )}
-          {record.status_student === "chua_lam" && (
-            <Button
-              size="small"
-              danger
-              icon={<StopOutlined />}
-              onClick={() =>
-                Modal.confirm({
-                  title: "Bạn có muốn bỏ thi đăng ký này không?",
-                  okText: "Có",
-                  cancelText: "Không",
-                  onOk() {
-                    openCancel(record);
-                  },
-                })
+          >
+            {/* Xem chi tiết */}
+          </Button>
+
+          <Button
+            size="small"
+            type="primary"
+            disabled={record.status_student !== "da_lam"}
+            onClick={() => {
+              if (record.status_student === "da_lam") {
+                openViewExam(record);
               }
-              style={{ marginLeft: 8 }}
-            >
-              Bỏ thi
-            </Button>
-          )}
+            }}
+            style={{ marginLeft: 8 }}
+          >
+            Xem lại bài
+          </Button>
         </div>
       ),
     },
@@ -106,19 +123,33 @@ const StudentExamListItem = ({ data = [] }) => {
       <Table
         rowKey={(r) => r.id_dang_ky_thi}
         columns={columns}
-        dataSource={data}
-        pagination={{ pageSize: 10 }}
+        dataSource={paginatedData}
+        pagination={{
+          current: validCurrentPage,
+          pageSize,
+          total,
+          showSizeChanger: true,
+          pageSizeOptions: ["10", "15", "20", "50"],
+          onChange: (page, newPageSize) => {
+            setCurrentPage(page);
+            setPageSize(newPageSize);
+            const query = new URLSearchParams(window.location.search);
+            query.set("page", page);
+            query.set("pageSize", newPageSize);
+            window.history.pushState(
+              null,
+              "",
+              `${window.location.pathname}?${query.toString()}`
+            );
+          },
+        }}
+        locale={{ emptyText: "Không có dữ liệu" }}
       />
 
-      <CancelExamModal
-        visible={cancelModalVisible}
+      <ViewExamModal
+        visible={viewExamVisible}
         record={selected}
-        onCancel={() => setCancelModalVisible(false)}
-        onSuccess={() => {
-          setCancelModalVisible(false);
-          dispatch(actions.creators.fetchAllRequest && actions.creators.fetchAllRequest());
-          message.success("Bỏ thi thành công");
-        }}
+        onCancel={() => setViewExamVisible(false)}
       />
 
       <StudentExamDetailModal

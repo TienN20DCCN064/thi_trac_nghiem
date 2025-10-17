@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Modal, Descriptions, Spin, Table, message } from "antd";
-import hamChung from "../../services/service.hamChung.js";
+import hamChung from "../../../services/service.hamChung.js";
 
 /**
  * Hiển thị chi tiết đăng ký thi (join các bảng liên quan)
