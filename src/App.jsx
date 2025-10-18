@@ -18,7 +18,7 @@ import TeacherAccountPage from "./components/accouts/TeacherAccoutPage.jsx";
 
 import StudentExamViewPage from "./components/studenExam/StudentExamViewPage.jsx";
 import StudentExamTakingPage from "./components/studenExam/StudentExamTakingPage.jsx";
-
+import AdminStudentExamPage from "./components/studenExamList/AdminStudentExamPage.jsx";
 
 import HeaderUserInfo from "./components/common/HeaderUserInfo.jsx";
 import RegisterExamPage from "./components/register/RegisterExamPage.jsx";
@@ -99,15 +99,10 @@ function App() {
                 element={<h2>Welcome /register/register-exam-test 🚀</h2>}
               />
 
-                {/* dành cho sinh viên */}
-              <Route
-                path="/exam-taking"
-                element={<StudentExamTakingPage />}
-              />
-              <Route
-                path="/exam-list"
-                element={<StudentExamViewPage />}
-              />
+              {/* dành cho sinh viên */}
+              <Route path="/exam-taking" element={<StudentExamTakingPage />} />
+              <Route path="/exam-list" element={<StudentExamViewPage />} />
+              <Route path="/watch-exam/list-exam" element={<AdminStudentExamPage />} />
             </Routes>
           </Content>
         </Layout>

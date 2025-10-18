@@ -118,9 +118,10 @@ const RegistrarSidebar = () => {
           {
             key: "register",
             icon: <SettingOutlined />,
-            label: "Quản lý đăng ký",
+            label: "Kỳ thi và câu hỏi",
             children: [
-              { key: "register/register-exam", label: "Đăng Ký Thi" },
+              { key: "register/register-exam", label: "Danh sách đăng Ký Thi" },
+              { key: "watch-exam/list-exam", label: "Danh sách bài thi SV" },
               { key: "question/list-question", label: "Danh sách câu hỏi" },
             ],
           },

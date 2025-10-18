@@ -4,7 +4,6 @@ import { Spin, message } from "antd";
 import StudentExamListItem from "./StudentExamListItem.jsx";
 import { createActions } from "../../redux/actions/factoryActions.js";
 import hamChiTiet from "../../services/service.hamChiTiet.js";
-import hamChung from "../../services/service.hamChung.js";
 import { getUserInfo } from "../../globals/globals.js";
 
 const dangKyThiActions = createActions("dang_ky_thi");

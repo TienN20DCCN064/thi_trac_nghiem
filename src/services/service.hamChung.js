@@ -34,6 +34,9 @@ const hamChung = {
   async getListQuestionsByDangKyThi(id_dang_ky_thi) {
     return getListQuestionsByDangKyThi(id_dang_ky_thi);
   },
+  async getOneExamForSV(id_dang_ky_thi, ma_sv) {
+    return getOneExamForSV(id_dang_ky_thi, ma_sv);
+  },
 
 
   async getAll(tableName) {
@@ -245,6 +248,38 @@ async function getListQuestionsByDangKyThi(id_dang_ky_thi) {
     return data; // { success, message, data: { id_dang_ky_thi, ma_mh, trinh_do, ... } }
   } catch (err) {
     console.error("❌ Lỗi getListQuestionsByDangKyThi:", err);
+    throw err;
+  }
+}
+
+// ...existing code...
+
+// Add this function inside hamChung object
+async function getOneExamForSV(id_dang_ky_thi, ma_sv) {
+  try {
+    const token = getToken();
+    const res = await fetch(
+      `${API_BASE}/get-one-exam-forSV/${id_dang_ky_thi}/${ma_sv}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok || !data?.success) {
+      throw new Error(
+        data?.message || 
+        `Lỗi API lấy bài thi (${res.status})`
+      );
+    }
+
+    return data;
+  } catch (err) {
+    console.error("❌ Lỗi getOneExamForSV:", err);
     throw err;
   }
 }

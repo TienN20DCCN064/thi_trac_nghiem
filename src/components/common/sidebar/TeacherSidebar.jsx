@@ -47,35 +47,24 @@ const TeacherSidebar = () => {
         onClick={({ key }) => navigate("/" + key)}
         items={[
           {
-            key: "user",
-            icon: <UserOutlined />,
-            label: "Quản lý người dùng",
-            children: [
-              { key: "users/users-list", label: "Người dùng" },
-              { key: "users/user-groups", label: "Nhóm tài khoản" },
-            ],
-          },
-          {
-            key: "course",
-            icon: <BookOutlined />,
-            label: "Quản lý môn học",
-          },
-          {
             key: "question",
             icon: <SettingOutlined />,
             label: "Câu hỏi",
             children: [
               { key: "question/list-question", label: "Danh sách câu hỏi" },
-              { key: "question/list-question-deleted", label: "Danh sách câu hỏi đã xóa" },
+              {
+                key: "question/list-question-deleted",
+                label: "Danh sách câu hỏi đã xóa",
+              },
             ],
           },
           {
             key: "register",
             icon: <SettingOutlined />,
-            label: "Quản lý đăng ký",
+            label: "Kỳ thi sinh viên",
             children: [
               { key: "register/register-exam", label: "Danh sách đăng ký" },
-              { key: "register/add-register", label: "Thêm đăng ký" },
+              { key: "watch-exam/list-exam", label: "Danh sách bài thi SV" },
             ],
           },
         ]}

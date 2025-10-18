@@ -57,7 +57,7 @@ const StudentSidebar = () => {
             children: [
               { key: "exam-taking", label: "Kỳ thi hôm nay" },
               { key: "exam-list", label: "Danh sách kỳ thi" },
-              { key: "exam-history", label: "Lịch sử thi" },
+              // { key: "exam-history", label: "Lịch sử thi" },
             ],
           },
         ]}

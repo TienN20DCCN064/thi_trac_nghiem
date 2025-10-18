@@ -281,123 +281,6 @@ app.delete("/api/dang-ky-thi/:id", verifyToken, async (req, res) => {
 });
 
 // 🧠 API: Lấy danh sách câu hỏi random theo id_dang_ky_thi
-// chưa kiểm tra số câu trong DB
-// app.get("/api/list-questions/by-dangkythi/:id_dang_ky_thi", verifyToken, async (req, res) => {
-//     const { id_dang_ky_thi } = req.params;
-//     const connection = db.promise();
-
-//     try {
-//         console.log("📘 Lấy đề thi cho id_dang_ky_thi:", id_dang_ky_thi);
-
-//         // 1️⃣ Lấy thông tin đăng ký thi (để biết môn học, trình độ)
-//         const [dkthi] = await connection.query(
-//             `SELECT id_dang_ky_thi, ma_mh, trinh_do 
-//              FROM dang_ky_thi 
-//              WHERE id_dang_ky_thi = ?`,
-//             [id_dang_ky_thi]
-//         );
-
-//         if (dkthi.length === 0) {
-//             return res.status(404).json({
-//                 success: false,
-//                 message: "Không tìm thấy thông tin đăng ký thi."
-//             });
-//         }
-
-//         const { ma_mh, trinh_do } = dkthi[0];
-
-//         // 2️⃣ Lấy danh sách chương và số câu hỏi cần random từ chi_tiet_dang_ky_thi
-//         const [chiTietDangKyThi] = await connection.query(
-//             `SELECT chuong_so, so_cau
-//              FROM chi_tiet_dang_ky_thi
-//              WHERE id_dang_ky_thi = ?`,
-//             [id_dang_ky_thi]
-//         );
-
-//         if (chiTietDangKyThi.length === 0) {
-//             return res.status(400).json({
-//                 success: false,
-//                 message: "Chưa có cấu hình số câu hỏi theo chương cho kỳ thi này."
-//             });
-//         }
-
-//         // 3️⃣ Random câu hỏi theo từng chương
-//         const allQuestions = [];
-
-//         for (const ct of chiTietDangKyThi) {
-//             const { chuong_so, so_cau } = ct;
-//             const limit = Number(so_cau);
-
-//             if (!Number.isInteger(limit) || limit <= 0) {
-//                 console.warn(`⚠️ Bỏ qua chương ${chuong_so} vì số câu không hợp lệ:`, so_cau);
-//                 continue;
-//             }
-
-//             console.log(`🧩 Lấy ${limit} câu random cho chương ${chuong_so}`);
-
-//             const [questions] = await connection.query(
-//                 `SELECT id_ch, loai, noi_dung, dap_an_dung, chuong_so, ma_mh
-//                  FROM cau_hoi
-//                  WHERE ma_mh = ? AND trinh_do = ? 
-//                        AND chuong_so = ? AND trang_thai_xoa = 'chua_xoa'
-//                  ORDER BY RAND()
-//                  LIMIT ${limit}`,
-//                 [ma_mh, trinh_do, chuong_so]
-//             );
-
-//             allQuestions.push(...questions);
-//         }
-
-//         // 4️⃣ Lấy danh sách lựa chọn cho các câu hỏi
-//         const chonLuaMap = {};
-//         if (allQuestions.length > 0) {
-//             const ids = allQuestions.map(q => q.id_ch);
-//             const [choices] = await connection.query(
-//                 `SELECT id_chon_lua, id_ch, noi_dung
-//                  FROM chon_lua
-//                  WHERE id_ch IN (${ids.map(() => '?').join(',')})`,
-//                 ids
-//             );
-
-//             for (const c of choices) {
-//                 if (!chonLuaMap[c.id_ch]) chonLuaMap[c.id_ch] = [];
-//                 chonLuaMap[c.id_ch].push({
-//                     id_chon_lua: c.id_chon_lua,
-//                     noi_dung: c.noi_dung
-//                 });
-//             }
-//         }
-
-//         // 5️⃣ Ghép lựa chọn vào câu hỏi
-//         const danhSachCauHoi = allQuestions.map(q => ({
-//             ...q,
-//             chon_lua: chonLuaMap[q.id_ch] || []
-//         }));
-
-//         // 6️⃣ Trả kết quả chi tiết đầy đủ
-//         res.json({
-//             success: true,
-//             message: "Lấy danh sách câu hỏi thành công!",
-//             data: {
-//                 id_dang_ky_thi,
-//                 ma_mh,
-//                 trinh_do,
-//                 chi_tiet_dang_ky_thi: chiTietDangKyThi, // chương & số câu
-//                 danh_sach_cau_hoi: danhSachCauHoi       // câu hỏi random
-//             }
-//         });
-
-//     } catch (error) {
-//         console.error("❌ Lỗi khi lấy đề thi:", error);
-//         res.status(500).json({
-//             success: false,
-//             message: "Lỗi server khi lấy đề thi",
-//             error: error.message
-//         });
-//     }
-// });
-
-// 🧠 API: Lấy danh sách câu hỏi random theo id_dang_ky_thi
 app.get("/api/list-questions/by-dangkythi/:id_dang_ky_thi", verifyToken, async (req, res) => {
     const { id_dang_ky_thi } = req.params;
     const connection = db.promise();
@@ -522,6 +405,79 @@ app.get("/api/list-questions/by-dangkythi/:id_dang_ky_thi", verifyToken, async (
         });
     }
 });
+
+// Lấy thông tin kỳ thi và chi tiết bài làm của một sinh viên
+// Get one exam of a student (simplified)
+// Get one exam of a student including choices for "chon_1" questions
+app.get("/api/get-one-exam-forSV/:id_dang_ky_thi/:ma_sv", verifyToken, async (req, res) => {
+    const { id_dang_ky_thi, ma_sv } = req.params;
+    const connection = db.promise();
+
+    try {
+        // 1️⃣ Lấy thông tin kỳ thi (chỉ lấy các trường cần thiết)
+        const [thiRows] = await connection.query(
+            `SELECT id_dang_ky_thi, ma_sv, thoi_gian_bat_dau, thoi_gian_ket_thuc, diem, trang_thai
+            FROM thi
+            WHERE id_dang_ky_thi = ? AND ma_sv = ?`,
+            [id_dang_ky_thi, ma_sv]
+        );
+
+        if (thiRows.length === 0) {
+            return res.status(404).json({ success: false, message: "Không tìm thấy bài thi" });
+        }
+
+        const thiInfo = thiRows[0];
+
+        // 2️⃣ Lấy chi tiết bài làm của sinh viên
+        const [chiTietRows] = await connection.query(
+            `SELECT ct.id_ch, ct.cau_tra_loi, ch.noi_dung, ch.loai, ch.dap_an_dung, ch.chuong_so, mh.ten_mh
+            FROM chi_tiet_thi ct
+            JOIN cau_hoi ch ON ct.id_ch = ch.id_ch
+            JOIN mon_hoc mh ON ch.ma_mh = mh.ma_mh
+            WHERE ct.id_dang_ky_thi = ? AND ct.ma_sv = ?`,
+            [id_dang_ky_thi, ma_sv]
+        );
+
+        // 3️⃣ Lấy chon_lua cho các câu hỏi loại "chon_1"
+        const chonLuaMap = {};
+        const chon1QuestionIds = chiTietRows.filter(q => q.loai === 'chon_1').map(q => q.id_ch);
+
+        if (chon1QuestionIds.length > 0) {
+            const [choices] = await connection.query(
+                `SELECT id_chon_lua, id_ch, noi_dung
+                 FROM chon_lua
+                 WHERE id_ch IN (${chon1QuestionIds.map(() => '?').join(',')})`,
+                chon1QuestionIds
+            );
+
+            for (const c of choices) {
+                if (!chonLuaMap[c.id_ch]) chonLuaMap[c.id_ch] = [];
+                chonLuaMap[c.id_ch].push({
+                    id_chon_lua: c.id_chon_lua,
+                    noi_dung: c.noi_dung
+                });
+            }
+        }
+
+        // 4️⃣ Ghép chon_lua vào chi_tiet_thi
+        const chi_tiet_thi = chiTietRows.map(q => ({
+            ...q,
+            chon_lua: chonLuaMap[q.id_ch] || []
+        }));
+
+        // 5️⃣ Trả kết quả
+        res.json({
+            success: true,
+            thi: thiInfo,
+            chi_tiet_thi
+        });
+    } catch (e) {
+        console.error("❌ Lỗi lấy thông tin thi:", e);
+        res.status(500).json({ success: false, message: "Lỗi server", error: e.message });
+    }
+});
+
+
 
 
 // API: Thêm danh sách câu hỏi và lựa chọn
