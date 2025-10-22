@@ -374,9 +374,11 @@ app.get("/api/list-questions/by-dangkythi/:id_dang_ky_thi", verifyToken, async (
             }
         }
 
-        // 5️⃣ Ghép lựa chọn vào câu hỏi
-        const danhSachCauHoi = allQuestions.map(q => ({
+        // 5️⃣ Random lại câu hỏi đã lấy và thêm số thứ tự
+        const shuffledQuestions = allQuestions.sort(() => Math.random() - 0.5);  // Random lại danh sách câu hỏi
+        const danhSachCauHoi = shuffledQuestions.map((q, index) => ({
             ...q,
+            stt: index + 1, // Thêm số thứ tự cho câu hỏi
             chon_lua: chonLuaMap[q.id_ch] || []
         }));
 
@@ -406,6 +408,7 @@ app.get("/api/list-questions/by-dangkythi/:id_dang_ky_thi", verifyToken, async (
     }
 });
 
+
 // Lấy thông tin kỳ thi và chi tiết bài làm của một sinh viên
 // Get one exam of a student (simplified)
 // Get one exam of a student including choices for "chon_1" questions
@@ -414,39 +417,53 @@ app.get("/api/get-one-exam-forSV/:id_dang_ky_thi/:ma_sv", verifyToken, async (re
     const connection = db.promise();
 
     try {
-        // 1️⃣ Lấy thông tin kỳ thi (chỉ lấy các trường cần thiết)
+        // 1️⃣ Lấy thông tin kỳ thi
         const [thiRows] = await connection.query(
             `SELECT id_dang_ky_thi, ma_sv, thoi_gian_bat_dau, thoi_gian_ket_thuc, diem, trang_thai
-            FROM thi
-            WHERE id_dang_ky_thi = ? AND ma_sv = ?`,
+             FROM thi
+             WHERE id_dang_ky_thi = ? AND ma_sv = ?`,
             [id_dang_ky_thi, ma_sv]
         );
 
         if (thiRows.length === 0) {
-            return res.status(404).json({ success: false, message: "Không tìm thấy bài thi" });
+            return res.status(404).json({
+                success: false,
+                message: "Không tìm thấy bài thi"
+            });
         }
 
         const thiInfo = thiRows[0];
 
-        // 2️⃣ Lấy chi tiết bài làm của sinh viên
+        // 2️⃣ Lấy chi tiết bài làm của sinh viên — CÓ THỨ TỰ STT
         const [chiTietRows] = await connection.query(
-            `SELECT ct.id_ch, ct.cau_tra_loi, ch.noi_dung, ch.loai, ch.dap_an_dung, ch.chuong_so, mh.ten_mh
-            FROM chi_tiet_thi ct
-            JOIN cau_hoi ch ON ct.id_ch = ch.id_ch
-            JOIN mon_hoc mh ON ch.ma_mh = mh.ma_mh
-            WHERE ct.id_dang_ky_thi = ? AND ct.ma_sv = ?`,
+            `SELECT 
+                 ct.stt, 
+                 ct.id_ch, 
+                 ct.cau_tra_loi, 
+                 ch.noi_dung, 
+                 ch.loai, 
+                 ch.dap_an_dung, 
+                 ch.chuong_so, 
+                 mh.ten_mh
+             FROM chi_tiet_thi ct
+             JOIN cau_hoi ch ON ct.id_ch = ch.id_ch
+             JOIN mon_hoc mh ON ch.ma_mh = mh.ma_mh
+             WHERE ct.id_dang_ky_thi = ? AND ct.ma_sv = ?
+            ORDER BY ct.stt ASC`,  // 🔥 Sắp xếp theo số thứ tự tăng dần
             [id_dang_ky_thi, ma_sv]
         );
 
-        // 3️⃣ Lấy chon_lua cho các câu hỏi loại "chon_1"
+        // 3️⃣ Lấy danh sách chon_lua cho các câu hỏi loại "chon_1"
         const chonLuaMap = {};
-        const chon1QuestionIds = chiTietRows.filter(q => q.loai === 'chon_1').map(q => q.id_ch);
+        const chon1QuestionIds = chiTietRows
+            .filter(q => q.loai === "chon_1")
+            .map(q => q.id_ch);
 
         if (chon1QuestionIds.length > 0) {
             const [choices] = await connection.query(
                 `SELECT id_chon_lua, id_ch, noi_dung
                  FROM chon_lua
-                 WHERE id_ch IN (${chon1QuestionIds.map(() => '?').join(',')})`,
+                 WHERE id_ch IN (${chon1QuestionIds.map(() => "?").join(",")})`,
                 chon1QuestionIds
             );
 
@@ -459,23 +476,29 @@ app.get("/api/get-one-exam-forSV/:id_dang_ky_thi/:ma_sv", verifyToken, async (re
             }
         }
 
-        // 4️⃣ Ghép chon_lua vào chi_tiet_thi
+        // 4️⃣ Ghép danh sách chon_lua vào từng câu hỏi
         const chi_tiet_thi = chiTietRows.map(q => ({
             ...q,
             chon_lua: chonLuaMap[q.id_ch] || []
         }));
 
-        // 5️⃣ Trả kết quả
+        // 5️⃣ Trả về kết quả cuối
         res.json({
             success: true,
+            message: "Lấy bài thi thành công!",
             thi: thiInfo,
             chi_tiet_thi
         });
     } catch (e) {
         console.error("❌ Lỗi lấy thông tin thi:", e);
-        res.status(500).json({ success: false, message: "Lỗi server", error: e.message });
+        res.status(500).json({
+            success: false,
+            message: "Lỗi server",
+            error: e.message
+        });
     }
 });
+
 
 
 

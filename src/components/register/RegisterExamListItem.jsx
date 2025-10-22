@@ -25,12 +25,7 @@ function handleCheckPageParam() {
   return { page, pageSize };
 }
 
-const RegisterExamListItem = ({
-  data = [],
-  //onDeleteClick,
-  // onEditClick,
-  // onViewDetailClick,
-}) => {
+const RegisterExamListItem = ({ data = [] }) => {
   console.log("Render RegisterExamListItem with data:", data);
   const dispatch = useDispatch();
   const [currentPage, setCurrentPage] = useState(handleCheckPageParam().page);
@@ -40,6 +35,7 @@ const RegisterExamListItem = ({
   // Thêm state cho mode
   const [mode, setMode] = useState("view");
   const [soCauThiMap, setSoCauThiMap] = useState({});
+  const [selectedStatus, setSelectedStatus] = useState(null); // <-- thêm
 
   const total = Array.isArray(data) ? data.length : 0;
 
@@ -91,12 +87,13 @@ const RegisterExamListItem = ({
   }, [data]);
   // Xử lý khi click "Xem chi tiết"
   // Trong RegisterExamListItem.jsx
-  const handleViewDetailClick = (status, id) => {
+  const handleViewDetailClick = (status, id, statusRecord) => {
     console.log("Xem chi tiết đăng ký thi ID:", id);
-    console.log("Trạng thái đăng ký thi:", status);
+    console.log("Trạng thái đăng ký thi:", statusRecord);
     setSelectedId(id);
     setDetailModalVisible(true);
     setMode(status); // Thêm state để lưu mode
+    setSelectedStatus(statusRecord); // <-- lưu trạng thái bản ghi
   };
 
   // Xử lý xóa
@@ -230,106 +227,79 @@ const RegisterExamListItem = ({
     //   key: "nguoi_phe_duyet",
     //   render: (value) => value || "-",
     // },
+    // ...existing code...
+
     {
       title: "Hành Động",
       key: "action",
       align: "right",
       width: 150,
       render: (_, record) => {
-        const isEditable = record.trang_thai === "Cho_phe_duyet";
-        const isRejected = record.trang_thai === "Tu_choi";
         const userRole = getUserInfo().vai_tro;
+        const isGiaoVu = userRole === "GiaoVu";
+        const isGiaoVien = userRole === "GiaoVien";
+        const isChoPhe = record.trang_thai === "Cho_phe_duyet";
+        const isDaDuyet = record.trang_thai === "Da_phe_duyet";
+        const isTuChoi = record.trang_thai === "Tu_choi";
+
+        const canEdit =
+          (isGiaoVu && (isChoPhe || isDaDuyet)) || // Giáo vụ có thể sửa khi chờ duyệt hoặc đã duyệt
+          (isGiaoVien && (isChoPhe || isTuChoi)); // Giáo viên chỉ sửa được khi chờ duyệt hoặc từ chối
+
+        const canDelete =
+          (isGiaoVu && isChoPhe) || // Giáo vụ chỉ xóa được khi chờ duyệt
+          (isGiaoVien && isChoPhe); // Giáo viên chỉ xóa được khi chờ duyệt
 
         return (
           <div>
-            {/* Nút Xem luôn mở */}
+            {/* Nút Xem luôn bật */}
             <Button
               size="small"
               type="primary"
               icon={<EyeOutlined />}
               onClick={() =>
-                handleViewDetailClick("view", record.id_dang_ky_thi)
+                handleViewDetailClick("view", record.id_dang_ky_thi, record.trang_thai)
               }
               style={{ marginLeft: 8 }}
             />
 
-            {userRole === "GiaoVu" && (
-              <>
-                {/* Nút Sửa cho GiaoVu khi Chờ Duyệt */}
-                <Button
-                  size="small"
-                  type="dashed"
-                  icon={<EditOutlined />}
-                  onClick={() =>
-                    handleViewDetailClick("edit", record.id_dang_ky_thi)
-                  }
-                  disabled={!isEditable}
-                  style={{ marginLeft: 8 }}
-                />
+            {/* Nút Sửa luôn hiển thị nhưng disabled tùy điều kiện */}
+            <Button
+              size="small"
+              type="dashed"
+              icon={<EditOutlined />}
+              onClick={() =>
+                handleViewDetailClick("edit", record.id_dang_ky_thi, record.trang_thai)
+              }
+              disabled={!canEdit}
+              style={{ marginLeft: 8 }}
+            />
 
-                {/* Nút Xóa cho GiaoVu khi Chờ Duyệt */}
-                <Button
-                  size="small"
-                  danger
-                  type="primary"
-                  icon={<DeleteOutlined />}
-                  onClick={() =>
-                    Modal.confirm({
-                      title: "Xác nhận xóa",
-                      content:
-                        "Bạn có chắc chắn muốn xóa đăng ký thi này không?",
-                      okText: "Xóa",
-                      okType: "danger",
-                      cancelText: "Hủy",
-                      onOk: () => handleDelete(record),
-                    })
-                  }
-                  disabled={!isEditable}
-                  style={{ marginLeft: 8 }}
-                />
-              </>
-            )}
-
-            {userRole === "GiaoVien" && (
-              <>
-                {/* Nút Sửa cho GiaoVien khi Chờ Duyệt hoặc Từ Chối */}
-                <Button
-                  size="small"
-                  type="dashed"
-                  icon={<EditOutlined />}
-                  onClick={() =>
-                    handleViewDetailClick("edit", record.id_dang_ky_thi)
-                  }
-                  disabled={!(isEditable || isRejected)}
-                  style={{ marginLeft: 8 }}
-                />
-
-                {/* Nút Xóa cho GiaoVien khi Chờ Duyệt */}
-                <Button
-                  size="small"
-                  danger
-                  type="primary"
-                  icon={<DeleteOutlined />}
-                  onClick={() =>
-                    Modal.confirm({
-                      title: "Xác nhận xóa",
-                      content:
-                        "Bạn có chắc chắn muốn xóa đăng ký thi này không?",
-                      okText: "Xóa",
-                      okType: "danger",
-                      cancelText: "Hủy",
-                      onOk: () => handleDelete(record),
-                    })
-                  }
-                  disabled={!isEditable}
-                  style={{ marginLeft: 8 }}
-                />
-              </>
-            )}
+            {/* Nút Xóa luôn hiển thị nhưng disabled tùy điều kiện */}
+            <Button
+              size="small"
+              danger
+              type="primary"
+              icon={<DeleteOutlined />}
+              onClick={() =>
+                Modal.confirm({
+                  title: "Xác nhận xóa",
+                  content: "Bạn có chắc chắn muốn xóa đăng ký thi này không?",
+                  okText: "Xóa",
+                  okType: "danger",
+                  cancelText: "Hủy",
+                  onOk: () => handleDelete(record),
+                })
+              }
+              disabled={!canDelete}
+              style={{ marginLeft: 8 }}
+            />
           </div>
         );
       },
     },
+
+    // ...existing code...
   ];
 
   return (
@@ -362,18 +332,20 @@ const RegisterExamListItem = ({
         style={{ width: "100%" }}
         tableLayout="fixed"
       />
-      {/* Hiển thị modal phù hợp */}
-      {getUserInfo().vai_tro === "GiaoVu" && mode === "edit" ? (
+      {/* Hiển thị modal phù hợp */ }
+      {getUserInfo().vai_tro === "GiaoVu" && mode === "edit" && selectedStatus === "Cho_phe_duyet" ? (
         <RegisterExamApproveModal
           visible={detailModalVisible}
           id_dang_ky_thi={selectedId}
           onCancel={() => {
             setDetailModalVisible(false);
             setMode("view");
+            setSelectedStatus(null);
           }}
           onSuccess={() => {
             setDetailModalVisible(false);
             setMode("view");
+            setSelectedStatus(null);
             // Có thể reload lại danh sách nếu cần
           }}
         />
@@ -385,6 +357,7 @@ const RegisterExamListItem = ({
           onCancel={() => {
             setDetailModalVisible(false);
             setMode("view");
+            setSelectedStatus(null);
           }}
         />
       )}

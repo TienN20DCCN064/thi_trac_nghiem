@@ -26,8 +26,7 @@ const StudentExamDetailModal = ({ visible, record, onCancel }) => {
     try {
       // try single-get first
       let dk =
-        (hamChung.get && (await hamChung.get("dang_ky_thi", id))) ||
-        null;
+        (hamChung.get && (await hamChung.get("dang_ky_thi", id))) || null;
       // fallback: read all and find
       if (!dk && hamChung.getAll) {
         const all = await hamChung.getAll("dang_ky_thi");
@@ -117,7 +116,9 @@ const StudentExamDetailModal = ({ visible, record, onCancel }) => {
               {detail.lop?.ten_lop || detail.ma_lop}
             </Descriptions.Item>
             <Descriptions.Item label="Giảng viên">
-              {detail.giaoVien ? `${detail.giaoVien.ho} ${detail.giaoVien.ten}` : detail.ma_gv}
+              {detail.giaoVien
+                ? `${detail.giaoVien.ho} ${detail.giaoVien.ten}`
+                : detail.ma_gv}
             </Descriptions.Item>
             <Descriptions.Item label="Trình độ / Thời gian / Ngày thi">
               {detail.trinh_do} / {detail.thoi_gian} phút / {detail.ngay_thi}

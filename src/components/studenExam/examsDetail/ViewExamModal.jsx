@@ -18,6 +18,7 @@ const ViewExamModal = ({ visible, record, onCancel }) => {
             record.id_dang_ky_thi,
             record.thi_record.ma_sv
           );
+          console.log("Dữ liệu bài thi nhận được:", response);
           setExamData(response);
         } catch (error) {
           console.error("Lỗi khi lấy dữ liệu bài thi:", error);

@@ -19,6 +19,7 @@ import moment from "moment";
 import { useDispatch } from "react-redux";
 import { createActions } from "../../redux/actions/factoryActions.js";
 import CellDisplay from "../../components/common/CellDisplay.jsx";
+import { getUserInfo } from "../../globals/globals.js"; // <-- thêm import
 
 const dangKyThiActions = createActions("dang_ky_thi");
 
@@ -180,6 +181,35 @@ const RegisterExamDetailModal = ({
     return !errMsg; // trả về true nếu không có lỗi
   };
 
+  // Thêm hàm từ chối (dùng khi GiaoVu muốn set Tu_choi)
+  const handleReject = async () => {
+    if (!id_dang_ky_thi) return;
+    setLoading(true);
+    try {
+      let payLoad = await hamChung.getOne("dang_ky_thi", id_dang_ky_thi);
+      const dataOneAccoutGv = await hamChung.getOne(
+        "tai_khoan_giao_vien",
+        getUserInfo().id_tai_khoan
+      );
+      payLoad.trang_thai = "Tu_choi";
+      payLoad.nguoi_phe_duyet = dataOneAccoutGv?.ma_gv || null;
+      payLoad.updated_at = new Date().toISOString();
+      const res = await hamChung.update("dang_ky_thi", id_dang_ky_thi, payLoad);
+      if (res?.success) {
+        dispatch(dangKyThiActions.creators.fetchAllRequest());
+        message.success("Cập nhật trạng thái: Từ Chối");
+        onCancel();
+      } else {
+        message.error(res?.message || "Cập nhật thất bại");
+      }
+    } catch (err) {
+      console.error(err);
+      message.error("Lỗi khi cập nhật trạng thái");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!validateChapters()) return;
     setLoading(true);
@@ -204,8 +234,8 @@ const RegisterExamDetailModal = ({
       console.log("🚀 Payload cập nhật đăng ký thi:", payload);
       await hamChung.updateExam(id_dang_ky_thi, payload);
 
+      // Nếu bản ghi đang là "Tu_choi" -> gửi lại "Cho_phe_duyet" (đã có)
       if (editExamDetails.trang_thai === "Tu_choi") {
-        // xóa bỏ thuộc tính chi_tiet_dang_ky_thi
         const { chi_tiet_dang_ky_thi, ...rest } = payload;
         const update_payload = rest;
         update_payload.id_dang_ky_thi = id_dang_ky_thi;
@@ -215,6 +245,31 @@ const RegisterExamDetailModal = ({
         update_payload.nguoi_phe_duyet = null;
         console.log(
           "🚀 Payload cập nhật trạng thái đăng ký thi:",
+          update_payload
+        );
+        const result = await hamChung.update(
+          "dang_ky_thi",
+          id_dang_ky_thi,
+          update_payload
+        );
+        console.log("🚀 Kết quả cập nhật trạng thái đăng ký thi:", result);
+      }
+
+      // MỚI: Nếu bản ghi đang là "Da_phe_duyet" và người thao tác là GiaoVu,
+      // khi lưu sẽ chuyển về "Cho_phe_duyet" (gửi lại để duyệt)
+      if (
+        editExamDetails.trang_thai === "Da_phe_duyet" &&
+        getUserInfo().vai_tro === "GiaoVu"
+      ) {
+        const { chi_tiet_dang_ky_thi, ...rest } = payload;
+        const update_payload = rest;
+        update_payload.id_dang_ky_thi = id_dang_ky_thi;
+        update_payload.trang_thai = "Cho_phe_duyet";
+        update_payload.created_at = moment().format("YYYY-MM-DD HH:mm:ss");
+        update_payload.updated_at = moment().format("YYYY-MM-DD HH:mm:ss");
+        update_payload.nguoi_phe_duyet = null;
+        console.log(
+          "🚀 Payload chuyển Da_phe_duyet -> Cho_phe_duyet:",
           update_payload
         );
         const result = await hamChung.update(
@@ -328,6 +383,30 @@ const RegisterExamDetailModal = ({
         <Button key="cancel" onClick={handleCancel}>
           Hủy
         </Button>,
+
+        // Nếu đang chỉnh sửa và là GiaoVu trên bản ghi Da_phe_duyet -> hiển thị nút Từ Chối
+        mode === "edit" &&
+          editExamDetails?.trang_thai === "Da_phe_duyet" &&
+          getUserInfo().vai_tro === "GiaoVu" && (
+            <Button
+              key="reject"
+              danger
+              onClick={() =>
+                Modal.confirm({
+                  title: "Xác nhận từ chối",
+                  content:
+                    "Bạn có chắc chắn muốn chuyển trạng thái thành Từ Chối cho đăng ký thi này không?",
+                  okText: "Từ Chối",
+                  okType: "danger",
+                  cancelText: "Hủy",
+                  onOk: () => handleReject(),
+                })
+              }
+              loading={loading}
+            >
+              Từ Chối
+            </Button>
+          ),
 
         mode === "edit" &&
           (editExamDetails?.trang_thai === "Tu_choi" ? (

@@ -59,7 +59,7 @@ const AdminStudentExamList = () => {
             (d) => d.trang_thai === "Da_phe_duyet" && d.ma_gv === userInfo.ma_gv
           );
         }
-      
+
         // 3. Gộp danh sách đăng ký thi và danh sách thi
         const merged = eligible
           .map((d) => {
@@ -74,7 +74,7 @@ const AdminStudentExamList = () => {
             }));
           })
           .flat();
-            console.log("Eligible Data: ", eligible);
+        console.log("Eligible Data: ", eligible);
         console.log("Merged Data: ", merged);
 
         setFilteredData(merged);
