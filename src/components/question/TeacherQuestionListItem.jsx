@@ -8,6 +8,7 @@ import {
 } from "@ant-design/icons";
 import CellDisplay from "../common/CellDisplay.jsx";
 import TeacherQuestionDetailModal from "./TeacherQuestionDetailModal.jsx";
+import ImportExportExcel from "./import_export_excel/ImportExportExcel.jsx";
 import hamChiTiet from "../../services/service.hamChiTiet.js";
 import { getUserInfo } from "../../globals/globals.js";
 import { useDispatch } from "react-redux";
@@ -32,8 +33,8 @@ const TeacherQuestionListItem = ({ data = [], status_question }) => {
   const [selectedId, setSelectedId] = useState(null);
   const [modalMode, setModalMode] = useState("view");
 
-  // ✅ thêm state để lưu infoTeacher
   const [infoTeacher, setInfoTeacher] = useState(null);
+  const [showImportExport, setShowImportExport] = useState(false);
 
   const total = Array.isArray(data) ? data.length : 0;
   const maxPage = Math.ceil(total / pageSize) || 1;
@@ -44,41 +45,34 @@ const TeacherQuestionListItem = ({ data = [], status_question }) => {
       setCurrentPage(validCurrentPage);
     }
   }, [validCurrentPage, currentPage]);
+
   useEffect(() => {
-    console.log(getUserInfo());
     const fetchData = async () => {
-      const infoTeacher = await hamChiTiet.getUserInfoByAccountId(
+      const info = await hamChiTiet.getUserInfoByAccountId(
         getUserInfo().id_tai_khoan
       );
-      // setSelectedId(infoTeacher);
-      setInfoTeacher(infoTeacher); // ✅ lưu vào state
-      console.log(infoTeacher);
+      setInfoTeacher(info);
     };
     fetchData();
   }, []);
+
   const paginatedData = Array.isArray(data)
     ? data.slice((validCurrentPage - 1) * pageSize, validCurrentPage * pageSize)
     : [];
-  // Delete
-  const handleDelete = async (record) => {
-    console.log(record);
 
+  // Xử lý xóa
+  const handleDelete = async (record) => {
     try {
-      // Giới hạn thời gian 10 giây
       const timeout = new Promise((_, reject) =>
         setTimeout(
           () => reject(new Error("Kết nối máy chủ thất bại sau 10 giây!")),
           10000
         )
       );
-
-      // Cho chạy song song request và timeout
       const res = await Promise.race([
         hamChung.deleteListQuestions(record),
         timeout,
       ]);
-
-      console.log(res);
 
       if (res.success) {
         message.success(res.message || "Xóa câu hỏi thành công!");
@@ -87,7 +81,6 @@ const TeacherQuestionListItem = ({ data = [], status_question }) => {
         message.error(res.message || "Xóa câu hỏi thất bại!");
       }
     } catch (error) {
-      console.error(error);
       message.error(error.message || "Không thể kết nối máy chủ!");
     }
   };
@@ -140,10 +133,9 @@ const TeacherQuestionListItem = ({ data = [], status_question }) => {
       align: "right",
       width: 150,
       render: (_, record) => {
-        const user = getUserInfo(); // 👈 Lấy thông tin người dùng
+        const user = getUserInfo();
         return (
           <div>
-            {/* Nút Xem — luôn hiển thị */}
             <Button
               size="small"
               type="primary"
@@ -159,47 +151,43 @@ const TeacherQuestionListItem = ({ data = [], status_question }) => {
               }}
               style={{ marginLeft: 8 }}
             />
-
-            {/* 👇 Chỉ hiển thị nếu vai_tro === "GiaoVien" */}
-            <>
-              <Button
-                size="small"
-                type="dashed"
-                icon={<EditOutlined />}
-                disabled={user?.vai_tro !== "GiaoVien"} // ❗ Không phải GV thì bị vô hiệu hóa
-                onClick={() => {
-                  if (user?.vai_tro !== "GiaoVien") return; // Chặn click nếu không phải GV
-                  setSelectedId({
-                    ma_gv: record.ma_gv,
-                    ma_mh: record.ma_mh,
-                    trinh_do: record.trinh_do,
-                  });
-                  setModalMode("edit");
-                  setModalVisible(true);
-                }}
-                style={{ marginLeft: 8 }}
-              />
-              <Button
-                size="small"
-                danger
-                type="primary"
-                icon={<DeleteOutlined />}
-                disabled={user?.vai_tro !== "GiaoVien"} // ❗ Không phải GV thì bị vô hiệu hóa
-                onClick={() => {
-                  if (user?.vai_tro !== "GiaoVien") return; // Chặn click nếu không phải GV
-                  Modal.confirm({
-                    title: "Bạn có muốn xóa câu hỏi này không?",
-                    okText: "Có",
-                    okType: "danger",
-                    cancelText: "Không",
-                    onOk() {
-                      handleDelete(record);
-                    },
-                  });
-                }}
-                style={{ marginLeft: 8 }}
-              />
-            </>
+            <Button
+              size="small"
+              type="dashed"
+              icon={<EditOutlined />}
+              disabled={user?.vai_tro !== "GiaoVien"}
+              onClick={() => {
+                if (user?.vai_tro !== "GiaoVien") return;
+                setSelectedId({
+                  ma_gv: record.ma_gv,
+                  ma_mh: record.ma_mh,
+                  trinh_do: record.trinh_do,
+                });
+                setModalMode("edit");
+                setModalVisible(true);
+              }}
+              style={{ marginLeft: 8 }}
+            />
+            <Button
+              size="small"
+              danger
+              type="primary"
+              icon={<DeleteOutlined />}
+              disabled={user?.vai_tro !== "GiaoVien"}
+              onClick={() => {
+                if (user?.vai_tro !== "GiaoVien") return;
+                Modal.confirm({
+                  title: "Bạn có muốn xóa câu hỏi này không?",
+                  okText: "Có",
+                  okType: "danger",
+                  cancelText: "Không",
+                  onOk() {
+                    handleDelete(record);
+                  },
+                });
+              }}
+              style={{ marginLeft: 8 }}
+            />
           </div>
         );
       },
@@ -211,6 +199,15 @@ const TeacherQuestionListItem = ({ data = [], status_question }) => {
       {status_question === "chua_xoa" &&
       getUserInfo().vai_tro === "GiaoVien" ? (
         <div style={{ marginBottom: 10, textAlign: "right" }}>
+          {/* ✅ Nút mở modal Import/Export */}
+          <Button
+            type="default"
+            onClick={() => setShowImportExport(true)}
+            style={{ marginRight: 8 }}
+          >
+            Import/Export
+          </Button>
+
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -226,6 +223,19 @@ const TeacherQuestionListItem = ({ data = [], status_question }) => {
       ) : (
         <div style={{ marginBottom: 10, textAlign: "right", marginTop: 60 }} />
       )}
+
+      {/* ❌ Xóa đoạn showImportExport cũ */}
+      {/* ✅ Thêm Modal hiển thị Import/Export */}
+      <Modal
+        open={showImportExport}
+        title="📂 Import / Export Question"
+        footer={null}
+        centered
+        destroyOnClose
+        onCancel={() => setShowImportExport(false)}
+      >
+        <ImportExportExcel/>
+      </Modal>
 
       <Table
         rowKey={(record) =>
@@ -260,12 +270,12 @@ const TeacherQuestionListItem = ({ data = [], status_question }) => {
 
       <TeacherQuestionDetailModal
         visible={modalVisible}
-        maGV={selectedId?.ma_gv || infoTeacher?.ma_gv} // 👈 nếu null/undefined thì gán mặc định GV005
+        maGV={selectedId?.ma_gv || infoTeacher?.ma_gv}
         maMH={selectedId?.ma_mh}
         trinhDo={selectedId?.trinh_do || "ĐH"}
         mode={modalMode}
         onCancel={() => setModalVisible(false)}
-        status_question={status_question} // 👈 THÊM DÒNG NÀY
+        status_question={status_question}
       />
     </>
   );
