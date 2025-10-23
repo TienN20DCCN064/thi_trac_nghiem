@@ -37,7 +37,9 @@ const hamChung = {
   async getOneExamForSV(id_dang_ky_thi, ma_sv) {
     return getOneExamForSV(id_dang_ky_thi, ma_sv);
   },
-
+  async submitOneExamForSV(payload) {
+    return submitOneExamForSV(payload);
+  },
 
   async getAll(tableName) {
     return getAll(tableName);
@@ -241,7 +243,7 @@ async function getListQuestionsByDangKyThi(id_dang_ky_thi) {
     if (!res.ok || !data?.success) {
       throw new Error(
         data?.message ||
-          `Lỗi API lấy danh sách câu hỏi cho id_dang_ky_thi=${id_dang_ky_thi}`
+        `Lỗi API lấy danh sách câu hỏi cho id_dang_ky_thi=${id_dang_ky_thi}`
       );
     }
 
@@ -272,7 +274,7 @@ async function getOneExamForSV(id_dang_ky_thi, ma_sv) {
 
     if (!res.ok || !data?.success) {
       throw new Error(
-        data?.message || 
+        data?.message ||
         `Lỗi API lấy bài thi (${res.status})`
       );
     }
@@ -283,6 +285,41 @@ async function getOneExamForSV(id_dang_ky_thi, ma_sv) {
     throw err;
   }
 }
+// ✅ GỬI BÀI THI CỦA SINH VIÊN (THÊM MỚI)
+async function submitOneExamForSV(payload) {
+  try {
+    const token = getToken();
+
+    const res = await fetch(`${API_BASE}/submit-one-exam-forSV`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok || !data?.success) {
+      throw new Error(
+        data?.message || `Lỗi API nộp bài thi (HTTP ${res.status})`
+      );
+    }
+
+    // ✅ Trả về dữ liệu chuẩn
+    return {
+      success: true,
+      message: data.message,
+      id_dang_ky_thi: data.id_dang_ky_thi,
+      ma_sv: data.ma_sv,
+    };
+  } catch (err) {
+    console.error("❌ Lỗi submitOneExamForSV:", err);
+    throw err;
+  }
+}
+
 
 
 // LẤY TOÀN BỘ (GET ALL)

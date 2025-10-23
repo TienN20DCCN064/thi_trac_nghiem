@@ -154,15 +154,11 @@ const ExamFullScreen = ({ visible, exam, student, onClose }) => {
     const formatDateTime = (timestamp) => {
       const date = new Date(timestamp);
       const pad = (n) => n.toString().padStart(2, "0");
-
-      const year = date.getFullYear();
-      const month = pad(date.getMonth() + 1);
-      const day = pad(date.getDate());
-      const hours = pad(date.getHours());
-      const minutes = pad(date.getMinutes());
-      const seconds = pad(date.getSeconds());
-
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+        date.getDate()
+      )} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(
+        date.getSeconds()
+      )}`;
     };
 
     const timeNow = Date.now();
@@ -172,68 +168,73 @@ const ExamFullScreen = ({ visible, exam, student, onClose }) => {
       ? timeNow - (exam.thoi_gian * 60 - timeLeft) * 1000
       : timeNow;
 
-    // 🧩 Xóa các trường không cần trong từng câu hỏi + thêm chonLua_sv
-  const listQuestions = (questionsData?.danh_sach_cau_hoi || []).map((q) => {
-    // Tạo bản sao để không làm thay đổi dữ liệu gốc
-    const cleaned = { ...q };
+    // 🧩 Làm sạch dữ liệu câu hỏi + thêm đáp án sinh viên
+    const listQuestions = (questionsData?.danh_sach_cau_hoi || []).map((q) => {
+      const cleaned = { ...q };
 
-    // Xóa các trường không cần
-    delete cleaned.loai;
-    delete cleaned.noi_dung;
-    delete cleaned.dap_an_dung;
-    delete cleaned.ma_mh;
-    delete cleaned.chon_lua;
-    delete cleaned.chuong_so;
+      // Loại bỏ các trường không cần thiết
+      delete cleaned.loai;
+      delete cleaned.noi_dung;
+      delete cleaned.dap_an_dung;
+      delete cleaned.ma_mh;
+      delete cleaned.chon_lua;
+      delete cleaned.chuong_so;
 
-    // Thêm đáp án sinh viên
-    cleaned.cau_tra_loi = answersData[q.id_ch] ?? "";
+      // Ghi nhận đáp án sinh viên (nếu không có thì để rỗng)
+      cleaned.cau_tra_loi = answersData[q.id_ch] ?? "";
 
-    return cleaned;
-  });
-    
+      return cleaned;
+    });
 
-    // 📦 Payload gửi lên CSDL
+    // 📦 Tạo payload gửi lên CSDL
     const payload = {
       id_dang_ky_thi: exam.id_dang_ky_thi,
       ma_sv: student.ma_sv,
       thoi_gian_bat_dau: formatDateTime(startTime),
       thoi_gian_ket_thuc: formatDateTime(timeNow),
       diem: computedScore,
-      chi_tiet_thi: listQuestions, // ✅ thay chi_tiet_thi = listQuestions có chonLua_sv
+      chi_tiet_thi: listQuestions,
     };
 
-    console.log("Đề thi tải về:", questionsData);
-    console.log("Dữ liệu câu hỏi gửi lên CSDL:", listQuestions);
-    console.log("Dữ liệu gửi lên CSDL:", payload);
+    console.log("📘 Đề thi tải về:", questionsData);
+    console.log("📦 Dữ liệu gửi lên CSDL:", payload);
 
-    // gán payload vào listQuestions theo id_ch
+    try {
+      // ⏳ Gửi kết quả thi lên API
+      const res = await hamChung.submitOneExamForSV(payload);
+      message.success(res.message || "✅ Nộp bài thi thành công!");
+      console.log("📨 Kết quả API:", res);
+    } catch (err) {
+      message.error("❌ Lỗi khi nộp bài thi!");
+      console.error(err);
+    }
 
-    // 🧭 Refresh danh sách đăng ký thi (nếu có)
-    dispatch(dangKyThiActions.creators.fetchAllRequest());
-
-    // 🧩 Cập nhật query string để hiển thị kết quả
+    // 🧩 Cập nhật query string để hiển thị kết quả (score, correct, total)
     try {
       const q = new URLSearchParams(window.location.search);
       q.set("score", String(computedScore));
       q.set("correct", String(correctCount));
       q.set("total", String(total));
 
-      const newQs = q.toString();
-      const newUrl = newQs
-        ? `${window.location.pathname}?${newQs}`
-        : window.location.pathname;
-
+      const newUrl = `${window.location.pathname}?${q.toString()}`;
       window.history.pushState(null, "", newUrl);
 
-      // Phát sự kiện thông báo URL thay đổi
+      // Phát sự kiện để component khác (ExamResult) có thể lắng nghe
       try {
         window.dispatchEvent(new PopStateEvent("popstate"));
-      } catch (e) {
+      } catch {
         window.dispatchEvent(new Event("urlchange"));
       }
     } catch (e) {
-      console.error("Lỗi khi cập nhật URL:", e);
+      console.error("⚠️ Lỗi khi cập nhật URL:", e);
     }
+    dispatch(dangKyThiActions.creators.fetchAllRequest());
+    // ✅ Không ẩn bài thi tại đây — chỉ trả về dữ liệu kết quả
+    return {
+      score: computedScore,
+      correct: correctCount,
+      total,
+    };
   };
 
   const handleSubmitExam = (isAuto = false) => {

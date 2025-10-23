@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { useLocation } from "react-router-dom";
 import { Spin, message } from "antd";
 import StudentExamListItem from "./StudentExamListItem.jsx";
 import { createActions } from "../../redux/actions/factoryActions.js";
@@ -11,6 +12,8 @@ const thiActions = createActions("thi");
 
 const StudentExamList = ({ statusFilter = "chua_lam" }) => {
   const dispatch = useDispatch();
+  const location = useLocation(); // 👈 lấy URL hiện tại
+
   const { data: dangKyThiList, loading: loadingDangKy, error } = useSelector(
     (state) => state.dang_ky_thi || { data: [], loading: false, error: null }
   );
@@ -20,11 +23,11 @@ const StudentExamList = ({ statusFilter = "chua_lam" }) => {
 
   const [filteredData, setFilteredData] = useState([]);
 
-  // Fetch dữ liệu Redux khi mount
+  // 🔁 Gọi lại API mỗi khi URL thay đổi
   useEffect(() => {
     dispatch(dangKyThiActions.creators.fetchAllRequest());
     dispatch(thiActions.creators.fetchAllRequest());
-  }, [dispatch]);
+  }, [dispatch, location.search]); // 👈 lắng nghe location.search (query params)
 
   // Hiển thị lỗi nếu có
   useEffect(() => {
@@ -44,12 +47,10 @@ const StudentExamList = ({ statusFilter = "chua_lam" }) => {
           return;
         }
 
-        // Lọc đăng ký thi liên quan lớp sinh viên và đã duyệt
         const eligible = (dangKyThiList || []).filter(
           (d) => d.trang_thai === "Da_phe_duyet" && d.ma_lop === userInfo.ma_lop
         );
 
-        // Map -> thêm trạng thái 'da_lam' / 'chua_lam'
         const merged = eligible.map((d) => {
           const thiForThis = (thiList || []).find(
             (t) =>
@@ -63,7 +64,6 @@ const StudentExamList = ({ statusFilter = "chua_lam" }) => {
           };
         });
 
-        // Apply filter theo props
         const filtered =
           statusFilter === "tat_ca"
             ? merged

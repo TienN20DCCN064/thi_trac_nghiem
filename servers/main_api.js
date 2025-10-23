@@ -408,7 +408,6 @@ app.get("/api/list-questions/by-dangkythi/:id_dang_ky_thi", verifyToken, async (
     }
 });
 
-
 // Lấy thông tin kỳ thi và chi tiết bài làm của một sinh viên
 // Get one exam of a student (simplified)
 // Get one exam of a student including choices for "chon_1" questions
@@ -498,7 +497,94 @@ app.get("/api/get-one-exam-forSV/:id_dang_ky_thi/:ma_sv", verifyToken, async (re
         });
     }
 });
+// ✅ API: Sinh viên nộp bài thi
+// ✅ API: Sinh viên nộp bài thi (THÊM MỚI)
+app.post("/api/submit-one-exam-forSV", verifyToken, async (req, res) => {
+  const connection = db.promise();
 
+  try {
+    const {
+      id_dang_ky_thi,
+      ma_sv,
+      thoi_gian_bat_dau,
+      thoi_gian_ket_thuc,
+      diem,
+      chi_tiet_thi
+    } = req.body;
+
+    // ✅ Kiểm tra dữ liệu đầu vào
+    if (
+      !id_dang_ky_thi ||
+      !ma_sv ||
+      !thoi_gian_bat_dau ||
+      !thoi_gian_ket_thuc ||
+      diem === undefined ||
+      !Array.isArray(chi_tiet_thi)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Thiếu dữ liệu đầu vào!"
+      });
+    }
+
+    await connection.beginTransaction();
+
+    // 1️⃣ Thêm bài thi vào bảng `thi`
+    // Nếu sinh viên này đã có bài thi thì có thể chọn UPDATE hoặc IGNORE tùy logic
+    await connection.query(
+      `INSERT INTO thi (id_dang_ky_thi, ma_sv, thoi_gian_bat_dau, thoi_gian_ket_thuc, diem, trang_thai)
+       VALUES (?, ?, ?, ?, ?, 'Hoan_thanh')
+       ON DUPLICATE KEY UPDATE 
+          thoi_gian_bat_dau = VALUES(thoi_gian_bat_dau),
+          thoi_gian_ket_thuc = VALUES(thoi_gian_ket_thuc),
+          diem = VALUES(diem),
+          trang_thai = 'Hoan_thanh'`,
+      [id_dang_ky_thi, ma_sv, thoi_gian_bat_dau, thoi_gian_ket_thuc, diem]
+    );
+
+    // 2️⃣ Xóa chi tiết cũ (nếu có) để tránh trùng khóa
+    await connection.query(
+      `DELETE FROM chi_tiet_thi WHERE id_dang_ky_thi = ? AND ma_sv = ?`,
+      [id_dang_ky_thi, ma_sv]
+    );
+
+    // 3️⃣ Thêm từng chi tiết câu hỏi vào `chi_tiet_thi`
+    for (const q of chi_tiet_thi) {
+      const { stt, id_ch, cau_tra_loi } = q;
+
+      if (!stt || !id_ch) {
+        await connection.rollback();
+        return res.status(400).json({
+          success: false,
+          message: "Thiếu stt hoặc id_ch trong chi_tiet_thi!"
+        });
+      }
+
+      await connection.query(
+        `INSERT INTO chi_tiet_thi (id_dang_ky_thi, ma_sv, stt, id_ch, cau_tra_loi)
+         VALUES (?, ?, ?, ?, ?)`,
+        [id_dang_ky_thi, ma_sv, stt, id_ch, cau_tra_loi ?? ""]
+      );
+    }
+
+    await connection.commit();
+
+    res.json({
+      success: true,
+      message: "✅ Nộp bài thi thành công!",
+      id_dang_ky_thi,
+      ma_sv
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error("❌ Lỗi nộp bài thi:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server khi nộp bài thi!",
+      error: error.message
+    });
+  }
+});
 
 
 
