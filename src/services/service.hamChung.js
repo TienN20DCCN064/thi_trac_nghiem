@@ -25,6 +25,9 @@ const hamChung = {
   async createListQuestions(payload) {
     return createListQuestions(payload);
   },
+  async createMultiGroupListQuestionGroups(groupsPayload) {
+    return createMultiGroupListQuestionGroups(groupsPayload);
+  },
   async updateListQuestions(payload) {
     return updateListQuestions(payload);
   },
@@ -170,6 +173,32 @@ async function createListQuestions(payload) {
     throw err;
   }
 }
+// ✅ Tạo nhiều nhóm câu hỏi cùng lúc
+async function createMultiGroupListQuestionGroups(groupsPayload) {
+  try {
+    const token = getToken();
+    const res = await fetch(`${API_BASE}/multi-group-list-questions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ groups: groupsPayload }), // ⬅️ Gói nhóm vào "groups"
+    });
+
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok || !data?.success) {
+      throw new Error(data?.message || `Lỗi API thêm nhiều nhóm câu hỏi (${res.status})`);
+    }
+
+    return data; // { success, message }
+  } catch (err) {
+    console.error("❌ Lỗi createMultipleQuestionGroups:", err);
+    throw err;
+  }
+}
+
 
 // Cập nhật danh sách câu hỏi
 async function updateListQuestions(payload) {

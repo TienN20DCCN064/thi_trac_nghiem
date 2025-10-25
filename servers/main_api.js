@@ -641,6 +641,69 @@ app.post("/api/list-questions", verifyToken, async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 });
+app.post("/api/multi-group-list-questions", verifyToken, async (req, res) => {
+  const { groups } = req.body; // ⬅️ Dữ liệu đầu vào là mảng các nhóm
+  const connection = db.promise();
+
+  if (!groups || !Array.isArray(groups) || groups.length === 0) {
+    return res.status(400).json({ success: false, message: "Thiếu dữ liệu nhóm câu hỏi" });
+  }
+
+  try {
+    await connection.beginTransaction();
+
+    for (const group of groups) {
+      const { ma_mh, trinh_do, ma_gv, questions } = group;
+
+      if (!ma_mh || !trinh_do || !ma_gv || !questions || !Array.isArray(questions)) {
+        await connection.rollback();
+        return res.status(400).json({ success: false, message: "Thiếu hoặc sai dữ liệu nhóm câu hỏi" });
+      }
+
+      if (!["CĐ", "VB2", "ĐH"].includes(trinh_do)) {
+        await connection.rollback();
+        return res.status(400).json({ success: false, message: `Trình độ không hợp lệ (${trinh_do})` });
+      }
+
+      // Lặp từng câu hỏi trong nhóm
+      for (const question of questions) {
+        const { chuong_so, noi_dung, loai, dap_an_dung, chon_lua } = question;
+
+        if (!noi_dung || !loai || !["chon_1", "dien_khuyet", "yes_no"].includes(loai)) {
+          await connection.rollback();
+          return res.status(400).json({ success: false, message: "Thiếu hoặc sai thông tin câu hỏi" });
+        }
+
+        const safe_dap_an_dung = dap_an_dung ? dap_an_dung : null;
+        const safe_chuong_so = chuong_so ? chuong_so : null;
+
+        const [result] = await connection.execute(
+          `INSERT INTO cau_hoi (trinh_do, loai, noi_dung, dap_an_dung, chuong_so, ma_mh, ma_gv)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [trinh_do, loai, noi_dung, safe_dap_an_dung, safe_chuong_so, ma_mh, ma_gv]
+        );
+
+        const id_ch = result.insertId;
+
+        if (loai === "chon_1" && Array.isArray(chon_lua)) {
+          for (const choice of chon_lua) {
+            await connection.execute(
+              `INSERT INTO chon_lua (noi_dung, id_ch) VALUES (?, ?)`,
+              [choice.noi_dung, id_ch]
+            );
+          }
+        }
+      }
+    }
+
+    await connection.commit();
+    res.json({ success: true, message: "✅ Thêm nhiều nhóm câu hỏi thành công" });
+  } catch (error) {
+    await connection.rollback();
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 
 // API: Xóa câu hỏi
 // API: Xóa danh sách câu hỏi và lựa chọn theo giảng viên, môn học và trình độ
