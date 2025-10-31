@@ -11,6 +11,7 @@ import CellDisplay from "../../common/CellDisplay";
 
 const { Title, Text, Paragraph } = Typography;
 
+// Hiển thị thông tin kỳ thi trong modal trước khi bắt đầu làm bài
 const ExamInfo = ({ visible, onClose, exam }) => {
   return (
     <Modal

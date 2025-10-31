@@ -500,92 +500,124 @@ app.get("/api/get-one-exam-forSV/:id_dang_ky_thi/:ma_sv", verifyToken, async (re
 // ✅ API: Sinh viên nộp bài thi
 // ✅ API: Sinh viên nộp bài thi (THÊM MỚI)
 app.post("/api/submit-one-exam-forSV", verifyToken, async (req, res) => {
-  const connection = db.promise();
+    const connection = db.promise();
 
-  try {
-    const {
-      id_dang_ky_thi,
-      ma_sv,
-      thoi_gian_bat_dau,
-      thoi_gian_ket_thuc,
-      diem,
-      chi_tiet_thi
-    } = req.body;
+    try {
+        const {
+            id_dang_ky_thi,
+            ma_sv,
+            thoi_gian_bat_dau,
+            thoi_gian_ket_thuc,
+            diem,
+            chi_tiet_thi
+        } = req.body;
 
-    // ✅ Kiểm tra dữ liệu đầu vào
-    if (
-      !id_dang_ky_thi ||
-      !ma_sv ||
-      !thoi_gian_bat_dau ||
-      !thoi_gian_ket_thuc ||
-      diem === undefined ||
-      !Array.isArray(chi_tiet_thi)
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Thiếu dữ liệu đầu vào!"
-      });
-    }
+        // ✅ Kiểm tra dữ liệu đầu vào
+        if (
+            !id_dang_ky_thi ||
+            !ma_sv ||
+            !thoi_gian_bat_dau ||
+            !thoi_gian_ket_thuc ||
+            diem === undefined ||
+            !Array.isArray(chi_tiet_thi)
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Thiếu dữ liệu đầu vào!"
+            });
+        }
 
-    await connection.beginTransaction();
+        await connection.beginTransaction();
 
-    // 1️⃣ Thêm bài thi vào bảng `thi`
-    // Nếu sinh viên này đã có bài thi thì có thể chọn UPDATE hoặc IGNORE tùy logic
-    await connection.query(
-      `INSERT INTO thi (id_dang_ky_thi, ma_sv, thoi_gian_bat_dau, thoi_gian_ket_thuc, diem, trang_thai)
+        // 1️⃣ Thêm bài thi vào bảng `thi`
+        // Nếu sinh viên này đã có bài thi thì có thể chọn UPDATE hoặc IGNORE tùy logic
+        await connection.query(
+            `INSERT INTO thi (id_dang_ky_thi, ma_sv, thoi_gian_bat_dau, thoi_gian_ket_thuc, diem, trang_thai)
        VALUES (?, ?, ?, ?, ?, 'Hoan_thanh')
        ON DUPLICATE KEY UPDATE 
           thoi_gian_bat_dau = VALUES(thoi_gian_bat_dau),
           thoi_gian_ket_thuc = VALUES(thoi_gian_ket_thuc),
           diem = VALUES(diem),
           trang_thai = 'Hoan_thanh'`,
-      [id_dang_ky_thi, ma_sv, thoi_gian_bat_dau, thoi_gian_ket_thuc, diem]
-    );
+            [id_dang_ky_thi, ma_sv, thoi_gian_bat_dau, thoi_gian_ket_thuc, diem]
+        );
 
-    // 2️⃣ Xóa chi tiết cũ (nếu có) để tránh trùng khóa
-    await connection.query(
-      `DELETE FROM chi_tiet_thi WHERE id_dang_ky_thi = ? AND ma_sv = ?`,
-      [id_dang_ky_thi, ma_sv]
-    );
+        // 2️⃣ Xóa chi tiết cũ (nếu có) để tránh trùng khóa
+        await connection.query(
+            `DELETE FROM chi_tiet_thi WHERE id_dang_ky_thi = ? AND ma_sv = ?`,
+            [id_dang_ky_thi, ma_sv]
+        );
 
-    // 3️⃣ Thêm từng chi tiết câu hỏi vào `chi_tiet_thi`
-    for (const q of chi_tiet_thi) {
-      const { stt, id_ch, cau_tra_loi } = q;
+        // 3️⃣ Thêm từng chi tiết câu hỏi vào `chi_tiet_thi`
+        for (const q of chi_tiet_thi) {
+            const { stt, id_ch, cau_tra_loi } = q;
 
-      if (!stt || !id_ch) {
-        await connection.rollback();
-        return res.status(400).json({
-          success: false,
-          message: "Thiếu stt hoặc id_ch trong chi_tiet_thi!"
-        });
-      }
+            if (!stt || !id_ch) {
+                await connection.rollback();
+                return res.status(400).json({
+                    success: false,
+                    message: "Thiếu stt hoặc id_ch trong chi_tiet_thi!"
+                });
+            }
 
-      await connection.query(
-        `INSERT INTO chi_tiet_thi (id_dang_ky_thi, ma_sv, stt, id_ch, cau_tra_loi)
+            await connection.query(
+                `INSERT INTO chi_tiet_thi (id_dang_ky_thi, ma_sv, stt, id_ch, cau_tra_loi)
          VALUES (?, ?, ?, ?, ?)`,
-        [id_dang_ky_thi, ma_sv, stt, id_ch, cau_tra_loi ?? ""]
-      );
-    }
+                [id_dang_ky_thi, ma_sv, stt, id_ch, cau_tra_loi ?? ""]
+            );
+        }
 
-    await connection.commit();
+        await connection.commit();
+
+        res.json({
+            success: true,
+            message: "✅ Nộp bài thi thành công!",
+            id_dang_ky_thi,
+            ma_sv
+        });
+    } catch (error) {
+        await connection.rollback();
+        console.error("❌ Lỗi nộp bài thi:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi server khi nộp bài thi!",
+            error: error.message
+        });
+    }
+});
+
+// 🧠 Lấy danh sách bài thi theo id_dang_ky_thi (đơn giản)
+app.get("/api/list-exams/by-dangkythi/:id_dang_ky_thi", verifyToken, async (req, res) => {
+  const { id_dang_ky_thi } = req.params;
+  const connection = db.promise();
+
+  try {
+    const [rows] = await connection.query(
+      `SELECT * FROM thi WHERE id_dang_ky_thi = ?`,
+      [id_dang_ky_thi]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Không có bài thi nào trong kỳ thi này.",
+      });
+    }
 
     res.json({
       success: true,
-      message: "✅ Nộp bài thi thành công!",
-      id_dang_ky_thi,
-      ma_sv
+      message: "Lấy danh sách bài thi thành công!",
+      data: rows,
     });
   } catch (error) {
-    await connection.rollback();
-    console.error("❌ Lỗi nộp bài thi:", error);
+    console.error("❌ Lỗi lấy danh sách bài thi:", error);
     res.status(500).json({
       success: false,
-      message: "Lỗi server khi nộp bài thi!",
-      error: error.message
+      message: "Lỗi server khi lấy danh sách bài thi.",
+      error: error.message,
     });
   }
 });
-
 
 
 
@@ -641,67 +673,177 @@ app.post("/api/list-questions", verifyToken, async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 });
-app.post("/api/multi-group-list-questions", verifyToken, async (req, res) => {
-  const { groups } = req.body; // ⬅️ Dữ liệu đầu vào là mảng các nhóm
-  const connection = db.promise();
+// 🧠 API: Kiểm tra trùng danh sách câu hỏi (Excel import)
+app.post("/api/check-duplicate-group-questions", verifyToken, async (req, res) => {
+    const { groups } = req.body;
+    const connection = db.promise();
 
-  if (!groups || !Array.isArray(groups) || groups.length === 0) {
-    return res.status(400).json({ success: false, message: "Thiếu dữ liệu nhóm câu hỏi" });
-  }
-
-  try {
-    await connection.beginTransaction();
-
-    for (const group of groups) {
-      const { ma_mh, trinh_do, ma_gv, questions } = group;
-
-      if (!ma_mh || !trinh_do || !ma_gv || !questions || !Array.isArray(questions)) {
-        await connection.rollback();
-        return res.status(400).json({ success: false, message: "Thiếu hoặc sai dữ liệu nhóm câu hỏi" });
-      }
-
-      if (!["CĐ", "VB2", "ĐH"].includes(trinh_do)) {
-        await connection.rollback();
-        return res.status(400).json({ success: false, message: `Trình độ không hợp lệ (${trinh_do})` });
-      }
-
-      // Lặp từng câu hỏi trong nhóm
-      for (const question of questions) {
-        const { chuong_so, noi_dung, loai, dap_an_dung, chon_lua } = question;
-
-        if (!noi_dung || !loai || !["chon_1", "dien_khuyet", "yes_no"].includes(loai)) {
-          await connection.rollback();
-          return res.status(400).json({ success: false, message: "Thiếu hoặc sai thông tin câu hỏi" });
-        }
-
-        const safe_dap_an_dung = dap_an_dung ? dap_an_dung : null;
-        const safe_chuong_so = chuong_so ? chuong_so : null;
-
-        const [result] = await connection.execute(
-          `INSERT INTO cau_hoi (trinh_do, loai, noi_dung, dap_an_dung, chuong_so, ma_mh, ma_gv)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [trinh_do, loai, noi_dung, safe_dap_an_dung, safe_chuong_so, ma_mh, ma_gv]
-        );
-
-        const id_ch = result.insertId;
-
-        if (loai === "chon_1" && Array.isArray(chon_lua)) {
-          for (const choice of chon_lua) {
-            await connection.execute(
-              `INSERT INTO chon_lua (noi_dung, id_ch) VALUES (?, ?)`,
-              [choice.noi_dung, id_ch]
-            );
-          }
-        }
-      }
+    if (!groups || !Array.isArray(groups) || groups.length === 0) {
+        return res.status(400).json({ success: false, message: "Thiếu dữ liệu nhóm câu hỏi" });
     }
 
-    await connection.commit();
-    res.json({ success: true, message: "✅ Thêm nhiều nhóm câu hỏi thành công" });
-  } catch (error) {
-    await connection.rollback();
-    res.status(500).json({ success: false, message: error.message });
-  }
+    try {
+        // 🧩 1. Lấy toàn bộ câu hỏi và lựa chọn trong DB
+        const [allQuestions] = await connection.query(`
+      SELECT id_ch, loai, noi_dung, dap_an_dung
+      FROM cau_hoi
+      WHERE trang_thai_xoa = 'chua_xoa'
+    `);
+
+        const [allChoices] = await connection.query(`
+      SELECT id_ch, noi_dung FROM chon_lua
+    `);
+
+        // Map câu hỏi -> danh sách lựa chọn
+        const choiceMap = {};
+        for (const c of allChoices) {
+            if (!choiceMap[c.id_ch]) choiceMap[c.id_ch] = [];
+            choiceMap[c.id_ch].push(c.noi_dung.trim());
+        }
+
+        const duplicatedRows = [];
+
+        // 🧠 2. Lặp qua từng nhóm và câu hỏi
+        for (const group of groups) {
+            const { questions } = group;
+            if (!Array.isArray(questions)) continue;
+
+            for (const q of questions) {
+                const noi_dung = q.noi_dung?.trim();
+                const dap_an_dung = q.dap_an_dung?.trim();
+                const loai = q.loai?.trim();
+                const so_dong = q.so_dong_trong_file_import; // ⬅️ Dòng trong file Excel
+                const chon_lua_excel = (q.chon_lua || []).map(c => c.noi_dung?.trim()).filter(Boolean);
+
+                if (!noi_dung || !dap_an_dung || !loai) continue;
+
+                // 🔍 Tìm câu hỏi trùng noi_dung + dap_an_dung
+                const matched = allQuestions.find(
+                    dbQ =>
+                        dbQ.noi_dung.trim() === noi_dung &&
+                        dbQ.dap_an_dung?.trim() === dap_an_dung
+                );
+
+                if (matched) {
+                    let isDuplicate = true;
+
+                    // ⚙️ Nếu là chon_1 → so sánh thêm chon_lua
+                    if (loai === "chon_1") {
+                        const dbChoices = choiceMap[matched.id_ch] || [];
+                        // dùng set để so sánh không phụ thuộc thứ tự
+                        // nếu độ dài khác nhau chắc chắn không trùng
+                        // nếu độ dài bằng nhau thì kiểm tra từng phần tử
+                        const excelSet = new Set(chon_lua_excel);
+                        const dbSet = new Set(dbChoices);
+
+                        if (excelSet.size !== dbSet.size) {
+                            isDuplicate = false;
+                        } else {
+                            for (const opt of excelSet) {
+                                if (!dbSet.has(opt)) {
+                                    isDuplicate = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    // ✅ Nếu thực sự trùng → lưu lại dòng Excel
+                    if (isDuplicate && so_dong) {
+                        duplicatedRows.push(so_dong);
+                    }
+                }
+            }
+        }
+
+        // 🧾 3. Trả kết quả
+        // 🧾 3. Trả kết quả
+        if (duplicatedRows.length > 0) {
+            const uniqueDuplicatedRows = [...new Set(duplicatedRows)].sort((a, b) => a - b);
+            return res.json({
+                success: false,
+                message: `Phát hiện ${uniqueDuplicatedRows.length} dòng bị trùng.`,
+                duplicatedRows: uniqueDuplicatedRows
+            });
+        } else {
+            return res.json({
+                success: true,
+                message: "Không có câu hỏi nào bị trùng."
+            });
+        }
+
+    } catch (error) {
+        console.error("❌ Lỗi kiểm tra trùng:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi server khi kiểm tra trùng câu hỏi!",
+            error: error.message
+        });
+    }
+});
+
+
+app.post("/api/multi-group-list-questions", verifyToken, async (req, res) => {
+    const { groups } = req.body; // ⬅️ Dữ liệu đầu vào là mảng các nhóm
+    const connection = db.promise();
+
+    if (!groups || !Array.isArray(groups) || groups.length === 0) {
+        return res.status(400).json({ success: false, message: "Thiếu dữ liệu nhóm câu hỏi" });
+    }
+
+    try {
+        await connection.beginTransaction();
+
+        for (const group of groups) {
+            const { ma_mh, trinh_do, ma_gv, questions } = group;
+
+            if (!ma_mh || !trinh_do || !ma_gv || !questions || !Array.isArray(questions)) {
+                await connection.rollback();
+                return res.status(400).json({ success: false, message: "Thiếu hoặc sai dữ liệu nhóm câu hỏi" });
+            }
+
+            if (!["CĐ", "VB2", "ĐH"].includes(trinh_do)) {
+                await connection.rollback();
+                return res.status(400).json({ success: false, message: `Trình độ không hợp lệ (${trinh_do})` });
+            }
+
+            // Lặp từng câu hỏi trong nhóm
+            for (const question of questions) {
+                const { chuong_so, noi_dung, loai, dap_an_dung, chon_lua } = question;
+
+                if (!noi_dung || !loai || !["chon_1", "dien_khuyet", "yes_no"].includes(loai)) {
+                    await connection.rollback();
+                    return res.status(400).json({ success: false, message: "Thiếu hoặc sai thông tin câu hỏi" });
+                }
+
+                const safe_dap_an_dung = dap_an_dung ? dap_an_dung : null;
+                const safe_chuong_so = chuong_so ? chuong_so : null;
+
+                const [result] = await connection.execute(
+                    `INSERT INTO cau_hoi (trinh_do, loai, noi_dung, dap_an_dung, chuong_so, ma_mh, ma_gv)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                    [trinh_do, loai, noi_dung, safe_dap_an_dung, safe_chuong_so, ma_mh, ma_gv]
+                );
+
+                const id_ch = result.insertId;
+
+                if (loai === "chon_1" && Array.isArray(chon_lua)) {
+                    for (const choice of chon_lua) {
+                        await connection.execute(
+                            `INSERT INTO chon_lua (noi_dung, id_ch) VALUES (?, ?)`,
+                            [choice.noi_dung, id_ch]
+                        );
+                    }
+                }
+            }
+        }
+
+        await connection.commit();
+        res.json({ success: true, message: "✅ Thêm nhiều nhóm câu hỏi thành công" });
+    } catch (error) {
+        await connection.rollback();
+        res.status(500).json({ success: false, message: error.message });
+    }
 });
 
 
@@ -748,7 +890,7 @@ app.delete("/api/list-questions", verifyToken, async (req, res) => {
         // Kiểm tra xem câu hỏi có đang được sử dụng ở bảng chi tiết bài thi không
         const [usedQuestions] = await connection.execute(
             `SELECT DISTINCT id_ch 
-             FROM chi_tiet_bai_thi 
+             FROM chi_tiet_thi 
              WHERE id_ch IN (${ids.map(() => "?").join(",")})`,
             ids
         );

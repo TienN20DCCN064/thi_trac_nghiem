@@ -23,6 +23,7 @@ const dangKyThiActions = createActions("dang_ky_thi");
 const { confirm } = Modal;
 const { Title, Text } = Typography;
 
+// Hiển thị giao diện thi trắc nghiệm
 const ExamFullScreen = ({ visible, exam, student, onClose }) => {
   const dispatch = useDispatch();
   const [timeLeft, setTimeLeft] = useState(
@@ -144,7 +145,8 @@ const ExamFullScreen = ({ visible, exam, student, onClose }) => {
     });
 
     const total = questions.length || 0;
-    const score = total === 0 ? 0 : ((correct / total) * 10).toFixed(2);
+    let rawScore = (correct / total) * 10;
+    const score = total === 0 ? 0 : (Math.round(rawScore * 2) / 2).toFixed(1);
 
     return { score, total, correctCount: correct };
   }, [questions, answers]);

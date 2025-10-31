@@ -43,61 +43,64 @@ const KhoaListItem = ({ data = [], onDataChange }) => {
     ? data.slice((validCurrentPage - 1) * pageSize, validCurrentPage * pageSize)
     : [];
 
- // Xử lý khi submit form
-const handleSubmit = () => {
-  if (!formData.ma_khoa || !formData.ten_khoa) {
-    message.error("Vui lòng nhập đầy đủ mã khoa và tên khoa!");
-    return;
-  }
+  // Xử lý khi submit form
+  const handleSubmit = () => {
+    if (!formData.ma_khoa || !formData.ten_khoa) {
+      message.error("Vui lòng nhập đầy đủ mã khoa và tên khoa!");
+      return;
+    }
 
-  const payload = {
-    ma_khoa: formData.ma_khoa,
-    ten_khoa: formData.ten_khoa,
+    const payload = {
+      ma_khoa: formData.ma_khoa,
+      ten_khoa: formData.ten_khoa,
+    };
+
+    if (modalMode === "create") {
+      dispatch(
+        khoaSubjectActions.creators.createRequest(payload, (res) => {
+          if (res.success) {
+            message.success(res.message || "Thêm khoa thành công!");
+            setModalVisible(false);
+            setFormData({ ma_khoa: "", ten_khoa: "" });
+            onDataChange(); // tải lại dữ liệu sau khi tạo thành công
+          } else {
+            message.error(res.message || "Thêm khoa thất bại!");
+          }
+        })
+      );
+    } else if (modalMode === "edit") {
+      dispatch(
+        khoaSubjectActions.creators.updateRequest(
+          formData.ma_khoa,
+          payload,
+          (res) => {
+            if (res.success) {
+              message.success(res.message || "Cập nhật khoa thành công!");
+              setModalVisible(false);
+              setFormData({ ma_khoa: "", ten_khoa: "" });
+              onDataChange(); // tải lại dữ liệu sau khi cập nhật thành công
+            } else {
+              message.error(res.message || "Cập nhật khoa thất bại!");
+            }
+          }
+        )
+      );
+    }
   };
 
-  if (modalMode === "create") {
+  // Xử lý xóa
+  const handleDelete = (record) => {
     dispatch(
-      khoaSubjectActions.creators.createRequest(payload, (res) => {
+      khoaSubjectActions.creators.deleteRequest(record.ma_khoa, (res) => {
         if (res.success) {
-          message.success(res.message || "Thêm khoa thành công!");
-          setModalVisible(false);
-          setFormData({ ma_khoa: "", ten_khoa: "" });
-          onDataChange(); // tải lại dữ liệu sau khi tạo thành công
+          message.success(res.message || "Xóa khoa thành công!");
+          onDataChange(); // tải lại dữ liệu sau khi xóa thành công
         } else {
-          message.error(res.message || "Thêm khoa thất bại!");
+          message.error(res.message || "Xóa khoa thất bại!");
         }
       })
     );
-  } else if (modalMode === "edit") {
-    dispatch(
-      khoaSubjectActions.creators.updateRequest(formData.ma_khoa, payload, (res) => {
-        if (res.success) {
-          message.success(res.message || "Cập nhật khoa thành công!");
-          setModalVisible(false);
-          setFormData({ ma_khoa: "", ten_khoa: "" });
-          onDataChange(); // tải lại dữ liệu sau khi cập nhật thành công
-        } else {
-          message.error(res.message || "Cập nhật khoa thất bại!");
-        }
-      })
-    );
-  }
-};
-
-// Xử lý xóa
-const handleDelete = (record) => {
-  dispatch(
-    khoaSubjectActions.creators.deleteRequest(record.ma_khoa, (res) => {
-      if (res.success) {
-        message.success(res.message || "Xóa khoa thành công!");
-        onDataChange(); // tải lại dữ liệu sau khi xóa thành công
-      } else {
-        message.error(res.message || "Xóa khoa thất bại!");
-      }
-    })
-  );
-};
-
+  };
 
   const columns = [
     {

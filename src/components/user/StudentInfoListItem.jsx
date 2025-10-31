@@ -14,6 +14,7 @@ import moment from "moment";
 const studentSubjectActions = createActions("sinh_vien");
 
 const StudentInfoListItem = ({ data = [], onDataChange }) => {
+  console.log("StudentInfoListItem data:", data);
   const dispatch = useDispatch();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);

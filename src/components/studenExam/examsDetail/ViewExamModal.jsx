@@ -5,6 +5,7 @@ import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 
 const { Text, Title } = Typography;
 
+// Hiển thị chi tiết bài thi của sinh viên
 const ViewExamModal = ({ visible, record, onCancel }) => {
   const [examData, setExamData] = useState(null);
   const [loading, setLoading] = useState(false);

@@ -25,6 +25,9 @@ const hamChung = {
   async createListQuestions(payload) {
     return createListQuestions(payload);
   },
+  async checkDuplicateGroupQuestions(groupsPayload) {
+    return checkDuplicateGroupQuestions(groupsPayload);
+  },
   async createMultiGroupListQuestionGroups(groupsPayload) {
     return createMultiGroupListQuestionGroups(groupsPayload);
   },
@@ -43,12 +46,18 @@ const hamChung = {
   async submitOneExamForSV(payload) {
     return submitOneExamForSV(payload);
   },
+  async getListExamsByDangKyThi(id_dang_ky_thi) {
+    return getListExamsByDangKyThi(id_dang_ky_thi);
+  },
 
   async getAll(tableName) {
     return getAll(tableName);
   },
   async getOne(tableName, id) {
     return getOne(tableName, id);
+  },
+  async getOneByTwoIds(tableName, id1, id2) {
+    return getOneByTwoIds(tableName, id1, id2);
   },
   async create(tableName, data) {
     return create(tableName, data);
@@ -173,6 +182,32 @@ async function createListQuestions(payload) {
     throw err;
   }
 }
+// ✅ KIỂM TRA TRÙNG CÂU HỎI NHÓM (CHECK DUPLICATE GROUP QUESTIONS)
+async function checkDuplicateGroupQuestions(groupsPayload) {
+  try {
+    const token = getToken(); // 👈 Lấy token người dùng hiện tại
+    const res = await fetch(`${API_BASE}/check-duplicate-group-questions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // gửi token xác thực
+      },
+      body: JSON.stringify({ groups: groupsPayload }), // API yêu cầu body có key "groups"
+    });
+
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok || !data) {
+      throw new Error(data?.message || `Lỗi API kiểm tra trùng (${res.status})`);
+    }
+
+    return data; // { success: true/false, message, duplicatedRows? }
+  } catch (err) {
+    console.error("❌ Lỗi checkDuplicateGroupQuestions:", err);
+    throw err;
+  }
+}
+
 // ✅ Tạo nhiều nhóm câu hỏi cùng lúc
 async function createMultiGroupListQuestionGroups(groupsPayload) {
   try {
@@ -348,6 +383,37 @@ async function submitOneExamForSV(payload) {
     throw err;
   }
 }
+// ✅ LẤY DANH SÁCH BÀI THI THEO id_dang_ky_thi
+async function getListExamsByDangKyThi(id_dang_ky_thi) {
+  try {
+    const token = getToken(); // 🔐 Lấy token người dùng hiện tại
+
+    const res = await fetch(
+      `${API_BASE}/list-exams/by-dangkythi/${id_dang_ky_thi}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok || !data?.success) {
+      throw new Error(
+        data?.message ||
+        `Lỗi API lấy danh sách bài thi cho id_dang_ky_thi=${id_dang_ky_thi}`
+      );
+    }
+
+    return data; // { success, message, data: [ ...danh sách bài thi... ] }
+  } catch (err) {
+    console.error("❌ Lỗi getListExamsByDangKyThi:", err);
+    throw err;
+  }
+}
 
 
 
@@ -389,6 +455,27 @@ async function getOne(tableName, id) {
     throw error;
   }
 }
+async function getOneByTwoIds(tableName, id1, id2) {
+  try {
+    const token = getToken();
+    const response = await fetch(`${API_BASE}/${tableName}/${id1}/${id2}`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) throw new Error(`Không tìm thấy dữ liệu tại ${url}`);
+    return await response.json();
+  } catch (error) {
+    console.error(`Lỗi getOneByTwoIds tại ${tableName}/${id1}/${id2}:`, error);
+    throw error;
+  }
+}
+
+
+
+
+
 // =============================
 // 🟢 TẠO MỚI (CREATE)
 // =============================

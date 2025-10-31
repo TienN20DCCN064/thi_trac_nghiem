@@ -14,7 +14,11 @@ const StudentExamList = ({ statusFilter = "chua_lam" }) => {
   const dispatch = useDispatch();
   const location = useLocation(); // 👈 lấy URL hiện tại
 
-  const { data: dangKyThiList, loading: loadingDangKy, error } = useSelector(
+  const {
+    data: dangKyThiList,
+    loading: loadingDangKy,
+    error,
+  } = useSelector(
     (state) => state.dang_ky_thi || { data: [], loading: false, error: null }
   );
   const { data: thiList, loading: loadingThi } = useSelector(
@@ -68,7 +72,7 @@ const StudentExamList = ({ statusFilter = "chua_lam" }) => {
           statusFilter === "tat_ca"
             ? merged
             : merged.filter((m) => m.status_student === statusFilter);
-
+        console.log("Filtered Data:", filtered);
         setFilteredData(filtered);
       } catch (err) {
         console.error(err);
@@ -80,7 +84,8 @@ const StudentExamList = ({ statusFilter = "chua_lam" }) => {
   }, [dangKyThiList, thiList, statusFilter]);
 
   if (loadingDangKy || loadingThi) return <Spin style={{ margin: 20 }} />;
-  if (!filteredData || filteredData.length === 0) return <div>Không có dữ liệu</div>;
+  if (!filteredData || filteredData.length === 0)
+    return <div>Không có dữ liệu</div>;
 
   return <StudentExamListItem data={filteredData} />;
 };

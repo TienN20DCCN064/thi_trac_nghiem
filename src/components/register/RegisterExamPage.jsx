@@ -17,7 +17,7 @@ const RegisterExamPage = () => {
         items={[
           { label: "Trang Chủ" },
           { label: "Đăng Ký" },
-          { label: "Đăng Ký Thi", isCurrent: true },
+          { label: "Danh Sách Đăng Ký Thi", isCurrent: true },
         ]}
       />
       <div className="custom-card">

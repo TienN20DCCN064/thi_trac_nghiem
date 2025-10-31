@@ -12,7 +12,6 @@ const ImportExportGuide = ({ open, onClose }) => {
       const header = [
         [
           "ma_mh",
-          "ma_gv",
           "trinh_do",
           "loai",
           "chuong_so",
@@ -122,12 +121,12 @@ const ImportExportGuide = ({ open, onClose }) => {
             <span style={{ color: "#555" }}>)</span>
           </li>
 
-          <li>
+          {/* <li>
             <b style={{ color: "#1677ff" }}>ma_gv</b> — Mã giáo viên ra đề
             <span style={{ color: "#555" }}> (ví dụ: </span>
             <i>GV001</i>
             <span style={{ color: "#555" }}>)</span>
-          </li>
+          </li> */}
 
           <li>
             <b style={{ color: "#1677ff" }}>loai</b> — Loại câu hỏi
@@ -178,7 +177,7 @@ const ImportExportGuide = ({ open, onClose }) => {
               <b style={{ color: "#d46b08" }}>Lưu ý quan trọng:</b>
               <ul style={{ marginTop: 6, paddingLeft: 22 }}>
                 <li>
-                  <b>ma_mh</b>, <b>ma_gv</b> phải tồn tại trong hệ thống.
+                  <b>ma_mh</b>: phải tồn tại trong hệ thống.
                 </li>
                 <li>
                   <b>loai</b>: <i>chon_1</i>, <i>yes_no</i>, <i>dien_khuyet</i>

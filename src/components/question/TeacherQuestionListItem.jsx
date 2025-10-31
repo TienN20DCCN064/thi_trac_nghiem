@@ -8,7 +8,7 @@ import {
 } from "@ant-design/icons";
 import CellDisplay from "../common/CellDisplay.jsx";
 import TeacherQuestionDetailModal from "./TeacherQuestionDetailModal.jsx";
-import ImportExportExcel from "./import_export_excel/ImportExportExcel.jsx";
+import ImportFileExcel from "./import_file_excel/ImportFileExcel.jsx";
 import hamChiTiet from "../../services/service.hamChiTiet.js";
 import { getUserInfo } from "../../globals/globals.js";
 import { useDispatch } from "react-redux";
@@ -23,7 +23,7 @@ function handleCheckPageParam() {
   let pageSize = Number(query.get("pageSize")) || 10;
   return { page, pageSize };
 }
-
+// component danh sách câu hỏi của giáo viên
 const TeacherQuestionListItem = ({ data = [], status_question }) => {
   const dispatch = useDispatch();
   const [currentPage, setCurrentPage] = useState(handleCheckPageParam().page);
@@ -205,7 +205,7 @@ const TeacherQuestionListItem = ({ data = [], status_question }) => {
             onClick={() => setShowImportExport(true)}
             style={{ marginRight: 8 }}
           >
-            Import/Export
+            Import Excel
           </Button>
 
           <Button
@@ -228,13 +228,13 @@ const TeacherQuestionListItem = ({ data = [], status_question }) => {
       {/* ✅ Thêm Modal hiển thị Import/Export */}
       <Modal
         open={showImportExport}
-        title="📂 Import / Export Question"
+        title="📂 Import Question"
         footer={null}
         centered
         destroyOnClose
         onCancel={() => setShowImportExport(false)}
       >
-        <ImportExportExcel/>
+        <ImportFileExcel/>
       </Modal>
 
       <Table
