@@ -5,6 +5,7 @@ import { Routes, Route } from "react-router-dom";
 import Sidebar from "./components/common/Sidebar.jsx";
 
 import HomePage from "./components/common/HomePage.jsx";
+import UserInfo from "./components/auth/UserInfo.jsx";
 
 import KhoaPage from "./components/khoa/KhoaPage.jsx";
 import ClassPage from "./components/classHoc/ClassPage.jsx";
@@ -55,6 +56,7 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/home" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/profile" element={<UserInfo />} />
 
               {/* dành cho giáo vụ */}
               <Route

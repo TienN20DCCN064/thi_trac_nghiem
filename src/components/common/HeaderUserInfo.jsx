@@ -54,6 +54,11 @@ const HeaderUserInfo = () => {
       label: "Đăng xuất",
       onClick: handleLogout,
     },
+    {
+      key: "profile",
+      label: "Hồ sơ cá nhân",
+      onClick: () => navigate("/profile"),
+    }
   ];
 
   return (

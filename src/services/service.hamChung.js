@@ -1,6 +1,7 @@
-import { getToken, getUserInfo, getLinkCongAPI } from "../globals/globals.js";  // 👈 nhớ import hàm getToken
+import { getToken, getUserInfo, getLinkCongAPI, getLinkCongApi_image } from "../globals/globals.js";  // 👈 nhớ import hàm getToken
 
 const API_BASE = getLinkCongAPI();
+const API_IMAGE = getLinkCongApi_image();
 // const API_BASE = "http://localhost:4002/api_not_token";
 
 const hamChung = {

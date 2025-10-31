@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Form, Input, Button, Typography, Card, message } from "antd";
 import {
-  getUserInfo,
   setUserInfo,
   clearUserInfo,
   getLinkCongAPI,
@@ -21,7 +20,7 @@ const LoginPage = () => {
 
   const onFinish = async (values) => {
     setLoading(true);
-    console.log("Received values of form: ", getUserInfo());
+
     try {
       const res = await axios.post(getLinkCongAPI() + "/dang-nhap", {
         ten_dang_nhap: values.ma_nguoi_dung,
@@ -30,7 +29,6 @@ const LoginPage = () => {
 
       const { token, user } = res.data;
       setUserInfo({ ...user, token }); // Lưu cả token và user info vào localStorage
-      console.log("getUserInfo", getUserInfo());
 
       messageApi.success(`Đăng nhập thành công! Vai trò: ${user.vai_tro}`);
       console.log("User info:", user);
@@ -60,7 +58,7 @@ const LoginPage = () => {
         minHeight: "100vh",
         display: "grid",
         placeItems: "center",
-        background: "#f0f2f5",
+        background: "#f5f5f5",
       }}
     >
       {contextHolder}
@@ -71,6 +69,7 @@ const LoginPage = () => {
           textAlign: "center",
           borderRadius: "8px",
           boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          marginLeft: "370px", // 👈 Dịch sang phải 100px
         }}
       >
         <Title
