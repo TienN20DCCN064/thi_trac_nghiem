@@ -10,6 +10,8 @@ import { useDispatch } from "react-redux";
 import CellDisplay from "../../components/common/CellDisplay.jsx";
 import { createActions } from "../../redux/actions/factoryActions.js";
 import hamChung from "../../services/service.hamChung.js";
+import UserImage from "../common/UserImage.jsx";
+import moment from "moment";
 
 const teacherSubjectActions = createActions("giao_vien");
 
@@ -26,8 +28,10 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
     ten: "",
     hoc_vi: "",
     ma_khoa: "",
-    hinh_anh: "",
+    hinh_anh: "", // publicId hoặc URL cũ
+    file: null, // file local khi chọn mới
     ghi_chu: "",
+    email: "",
   });
   const [khoaList, setKhoaList] = useState([]);
 
@@ -68,7 +72,7 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
     : [];
 
   // Xử lý khi submit form
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (
       !formData.ma_gv ||
       !formData.ho ||
@@ -80,15 +84,25 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
       return;
     }
 
+    let hinhAnhId = formData.hinh_anh;
+
+    // Nếu có file mới
+    if (formData.file) {
+      try {
+        const res = await hamChung.uploadFile(formData.file);
+        hinhAnhId = res.publicId;
+      } catch (err) {
+        message.error("Upload hình ảnh thất bại!");
+        return;
+      }
+    }
+
     const payload = {
-      ma_gv: formData.ma_gv,
-      ho: formData.ho,
-      ten: formData.ten,
-      hoc_vi: formData.hoc_vi,
-      ma_khoa: formData.ma_khoa,
-      hinh_anh: formData.hinh_anh || null,
-      ghi_chu: formData.ghi_chu || null,
+      ...formData,
+      hinh_anh: hinhAnhId,
     };
+    // Xóa trường 'file' trước khi gửi payload
+    delete payload.file;
 
     if (modalMode === "create") {
       dispatch(
@@ -170,12 +184,7 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
       title: "Hình ảnh",
       dataIndex: "hinh_anh",
       key: "hinh_anh",
-      render: (value) =>
-        value ? (
-          <img src={value} alt="Hình ảnh" style={{ maxWidth: 60 }} />
-        ) : (
-          "N/A"
-        ),
+      render: (value, record) => <UserImage publicId={record.hinh_anh} />,
     },
     {
       title: "Họ và Tên",
@@ -248,6 +257,7 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
                 ma_khoa: record.ma_khoa,
                 hinh_anh: record.hinh_anh || "",
                 ghi_chu: record.ghi_chu || "",
+                email: record.email || "", // 👈 thêm dòng này
               });
               setModalMode("edit");
               setModalVisible(true);
@@ -276,6 +286,28 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
       ),
     },
   ];
+
+  // Thêm useEffect để fetch hình ảnh
+  useEffect(() => {
+    const fetchImage = async () => {
+      if (
+        (modalMode === "edit" || modalMode === "view") &&
+        selectedRecord?.hinh_anh
+      ) {
+        try {
+          const res = await hamChung.getImageUrl(selectedRecord.hinh_anh);
+          if (res?.imageUrl) {
+            setFormData((prev) => ({ ...prev, hinh_anh: res.imageUrl }));
+          }
+        } catch (err) {
+          console.error("Lỗi lấy hình ảnh:", err);
+          message.error("Không thể tải hình ảnh giảng viên!");
+        }
+      }
+    };
+
+    fetchImage();
+  }, [modalMode, selectedRecord]);
 
   return (
     <>
@@ -403,6 +435,9 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
                 : "N/A"}
             </p>
             <p>
+              <b>Email:</b> {selectedRecord?.email || "Chưa có"}
+            </p>
+            <p>
               <b>Khoa:</b> {selectedRecord?.ma_khoa} -{" "}
               <CellDisplay
                 table="khoa"
@@ -412,9 +447,11 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
             </p>
             <p>
               <b>Hình ảnh:</b>{" "}
-              {selectedRecord?.hinh_anh ? (
+            </p>
+            <p>
+              {formData.hinh_anh ? (
                 <img
-                  src={selectedRecord.hinh_anh}
+                  src={formData.hinh_anh}
                   alt="Hình ảnh"
                   style={{ maxWidth: 100 }}
                 />
@@ -451,7 +488,6 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
                   setFormData({ ...formData, ho: e.target.value })
                 }
                 placeholder="Nhập họ"
-                maxLength={50}
               />
             </div>
             <div style={{ marginBottom: 16 }}>
@@ -462,7 +498,6 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
                   setFormData({ ...formData, ten: e.target.value })
                 }
                 placeholder="Nhập tên"
-                maxLength={10}
               />
             </div>
             <div style={{ marginBottom: 16 }}>
@@ -500,16 +535,45 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
               </Select>
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", marginBottom: 8 }}>
-                Hình ảnh (URL)
-              </label>
+              <label style={{ display: "block", marginBottom: 8 }}>Email</label>
               <Input
-                value={formData.hinh_anh}
+                type="email"
+                value={formData.email}
                 onChange={(e) =>
-                  setFormData({ ...formData, hinh_anh: e.target.value })
+                  setFormData({ ...formData, email: e.target.value })
                 }
-                placeholder="Nhập đường dẫn hình ảnh"
-                maxLength={255}
+                placeholder="Nhập email giảng viên"
+              />
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", marginBottom: 8 }}>
+                Hình ảnh
+              </label>
+
+              {/* Preview ảnh */}
+              {(formData.file || formData.hinh_anh) && (
+                <div style={{ marginBottom: 8 }}>
+                  <img
+                    src={
+                      formData.file
+                        ? URL.createObjectURL(formData.file)
+                        : formData.hinh_anh
+                    }
+                    alt="Preview"
+                    style={{ maxWidth: 120, borderRadius: 4 }}
+                  />
+                </div>
+              )}
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    setFormData({ ...formData, file: e.target.files[0] });
+                  }
+                }}
               />
             </div>
             <div style={{ marginBottom: 16 }}>

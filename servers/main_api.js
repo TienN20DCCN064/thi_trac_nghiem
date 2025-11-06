@@ -131,6 +131,193 @@ app.post("/api/dang-nhap", (req, res) => {
         });
     });
 });
+// app.post("/api/kiem-tra-email", async (req, res) => {
+//     const { email } = req.body;
+
+//     if (!email) {
+//         return res.status(400).json({ success: false, message: "Thiếu email!" });
+//     }
+
+//     const connection = db.promise();
+
+//     try {
+//         // Kiểm tra email trong bảng giao_vien
+//         const [gvRows] = await connection.query(
+//             "SELECT ma_gv AS ma, ten, email FROM giao_vien WHERE email = ?",
+//             [email]
+//         );
+
+//         if (gvRows.length > 0) {
+//             return res.json({
+//                 success: true,
+//                 message: "Email tồn tại trong bảng giao_vien",
+//                 data: gvRows[0],
+//                 table: "giao_vien"
+//             });
+//         }
+
+//         // Kiểm tra email trong bảng sinh_vien
+//         const [svRows] = await connection.query(
+//             "SELECT ma_sv AS ma, ten, email FROM sinh_vien WHERE email = ?",
+//             [email]
+//         );
+
+//         if (svRows.length > 0) {
+//             return res.json({
+//                 success: true,
+//                 message: "Email tồn tại trong bảng sinh_vien",
+//                 data: svRows[0],
+//                 table: "sinh_vien"
+//             });
+//         }
+
+//         // Nếu không tìm thấy ở đâu cả
+//         res.json({
+//             success: false,
+//             message: "Email không tồn tại trong hệ thống!"
+//         });
+
+//     } catch (error) {
+//         console.error("❌ Lỗi khi kiểm tra email:", error);
+//         res.status(500).json({
+//             success: false,
+//             message: "Lỗi server khi kiểm tra email",
+//             error: error.message
+//         });
+//     }
+// });
+app.post("/api/lay-tai-khoan-theo-email", async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ success: false, message: "Thiếu email!" });
+    }
+
+    const connection = db.promise();
+
+    try {
+        // 1️⃣ Kiểm tra email trong bảng giao_vien
+        const [gvRows] = await connection.query(
+            "SELECT ma_gv FROM giao_vien WHERE email = ?",
+            [email]
+        );
+
+        if (gvRows.length > 0) {
+            const ma_gv = gvRows[0].ma_gv;
+
+            // Lấy id_tai_khoan từ bảng tai_khoan_giao_vien
+            const [tk_gv] = await connection.query(
+                "SELECT id_tai_khoan FROM tai_khoan_giao_vien WHERE ma_gv = ?",
+                [ma_gv]
+            );
+
+            if (tk_gv.length > 0) {
+                const id_tai_khoan = tk_gv[0].id_tai_khoan;
+
+                // ✅ Sửa đúng cột id_tai_khoan
+                const [tk] = await connection.query(
+                    "SELECT * FROM tai_khoan WHERE id_tai_khoan = ?",
+                    [id_tai_khoan]
+                );
+
+                if (tk.length > 0) {
+                    return res.json({
+                        success: true,
+                        message: "Lấy thông tin tài khoản thành công (giao_vien)",
+                        data: tk[0],
+                        vai_tro: "GiaoVien",
+                    });
+                }
+            }
+        }
+
+        // 2️⃣ Kiểm tra email trong bảng sinh_vien
+        const [svRows] = await connection.query(
+            "SELECT ma_sv FROM sinh_vien WHERE email = ?",
+            [email]
+        );
+
+        if (svRows.length > 0) {
+            const ma_sv = svRows[0].ma_sv;
+
+            // Lấy id_tai_khoan từ bảng tai_khoan_sinh_vien
+            const [tk_sv] = await connection.query(
+                "SELECT id_tai_khoan FROM tai_khoan_sinh_vien WHERE ma_sv = ?",
+                [ma_sv]
+            );
+
+            if (tk_sv.length > 0) {
+                const id_tai_khoan = tk_sv[0].id_tai_khoan;
+
+                // ✅ Sửa đúng cột id_tai_khoan ở đây
+                const [tk] = await connection.query(
+                    "SELECT * FROM tai_khoan WHERE id_tai_khoan = ?",
+                    [id_tai_khoan]
+                );
+
+                if (tk.length > 0) {
+                    return res.json({
+                        success: true,
+                        message: "Lấy thông tin tài khoản thành công (sinh_vien)",
+                        data: tk[0],
+                        vai_tro: "SinhVien",
+                    });
+                }
+            }
+        }
+
+        // 3️⃣ Không tìm thấy
+        res.json({
+            success: false,
+            message: "Không tìm thấy tài khoản tương ứng với email này!",
+        });
+    } catch (error) {
+        console.error("❌ Lỗi khi lấy tài khoản theo email:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi server khi lấy tài khoản theo email",
+            error: error.message,
+        });
+    }
+});
+
+app.post("/api/doi-mat-khau", async (req, res) => {
+    const { id_tai_khoan, new_password } = req.body;
+
+    if (!id_tai_khoan || !new_password) {
+        return res.status(400).json({
+            success: false,
+            message: "Thiếu thông tin id_tai_khoan hoặc mật khẩu mới!",
+        });
+    }
+
+    const connection = db.promise();
+
+    try {
+        // ✅ Hash mật khẩu trước khi lưu
+        const hashedPassword = await bcrypt.hash(new_password, 10);
+
+        // ✅ Cập nhật mật khẩu mới (đã mã hóa)
+        await connection.query(
+            "UPDATE tai_khoan SET mat_khau = ? WHERE id_tai_khoan = ?",
+            [hashedPassword, id_tai_khoan]
+        );
+
+        res.json({
+            success: true,
+            message: "Đổi mật khẩu thành công!",
+        });
+    } catch (error) {
+        console.error("❌ Lỗi khi đổi mật khẩu:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi server khi đổi mật khẩu!",
+            error: error.message,
+        });
+    }
+});
+
+
 // =============== API Đăng ký thi ===============
 app.post("/api/dang-ky-thi", verifyToken, async (req, res) => {
     const { ma_gv, ma_lop, ma_mh, trinh_do, ngay_thi, thoi_gian, chi_tiet_dang_ky_thi } = req.body;
@@ -588,35 +775,35 @@ app.post("/api/submit-one-exam-forSV", verifyToken, async (req, res) => {
 
 // 🧠 Lấy danh sách bài thi theo id_dang_ky_thi (đơn giản)
 app.get("/api/list-exams/by-dangkythi/:id_dang_ky_thi", verifyToken, async (req, res) => {
-  const { id_dang_ky_thi } = req.params;
-  const connection = db.promise();
+    const { id_dang_ky_thi } = req.params;
+    const connection = db.promise();
 
-  try {
-    const [rows] = await connection.query(
-      `SELECT * FROM thi WHERE id_dang_ky_thi = ?`,
-      [id_dang_ky_thi]
-    );
+    try {
+        const [rows] = await connection.query(
+            `SELECT * FROM thi WHERE id_dang_ky_thi = ?`,
+            [id_dang_ky_thi]
+        );
 
-    if (rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "Không có bài thi nào trong kỳ thi này.",
-      });
+        if (rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Không có bài thi nào trong kỳ thi này.",
+            });
+        }
+
+        res.json({
+            success: true,
+            message: "Lấy danh sách bài thi thành công!",
+            data: rows,
+        });
+    } catch (error) {
+        console.error("❌ Lỗi lấy danh sách bài thi:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi server khi lấy danh sách bài thi.",
+            error: error.message,
+        });
     }
-
-    res.json({
-      success: true,
-      message: "Lấy danh sách bài thi thành công!",
-      data: rows,
-    });
-  } catch (error) {
-    console.error("❌ Lỗi lấy danh sách bài thi:", error);
-    res.status(500).json({
-      success: false,
-      message: "Lỗi server khi lấy danh sách bài thi.",
-      error: error.message,
-    });
-  }
 });
 
 
@@ -870,12 +1057,14 @@ app.delete("/api/list-questions", verifyToken, async (req, res) => {
 
         await connection.beginTransaction();
 
-        // Lấy danh sách câu hỏi của giáo viên và môn học
+        // Lấy danh sách câu hỏi của giáo viên và môn học và chưa xóa á
         const [questions] = await connection.execute(
             `SELECT id_ch, trang_thai_xoa FROM cau_hoi 
-             WHERE ma_mh = ? AND trinh_do = ? AND ma_gv = ?`,
+                WHERE ma_mh = ? AND trinh_do = ? AND ma_gv = ? 
+                AND trang_thai_xoa = 'chua_xoa'`,
             [ma_mh, trinh_do, ma_gv]
         );
+
 
         if (questions.length === 0) {
             await connection.rollback();
@@ -903,9 +1092,9 @@ app.delete("/api/list-questions", verifyToken, async (req, res) => {
             // Kiểm tra xem có câu hỏi nào đã bị xóa rồi không
             const [alreadyDeleted] = await connection.execute(
                 `SELECT COUNT(*) AS da_xoa_count 
-         FROM cau_hoi 
-         WHERE id_ch IN (${usedIds.map(() => "?").join(",")})
-         AND trang_thai_xoa = 'da_xoa'`,
+                    FROM cau_hoi 
+                    WHERE id_ch IN (${usedIds.map(() => "?").join(",")})
+                    AND trang_thai_xoa = 'da_xoa'`,
                 usedIds
             );
 
@@ -920,9 +1109,9 @@ app.delete("/api/list-questions", verifyToken, async (req, res) => {
             // Chỉ cập nhật từ 'chua_xoa' sang 'da_xoa'
             await connection.execute(
                 `UPDATE cau_hoi 
-         SET trang_thai_xoa = 'da_xoa'
-         WHERE id_ch IN (${usedIds.map(() => "?").join(",")})
-         AND trang_thai_xoa = 'chua_xoa'`,
+                    SET trang_thai_xoa = 'da_xoa'
+                    WHERE id_ch IN (${usedIds.map(() => "?").join(",")})
+                    AND trang_thai_xoa = 'chua_xoa'`,
                 usedIds
             );
         }

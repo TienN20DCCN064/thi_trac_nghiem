@@ -12,6 +12,7 @@ import {
 } from "@ant-design/icons";
 import { getUserInfo } from "../../globals/globals.js";
 import hamChiTiet from "../../services/service.hamChiTiet.js";
+import UserImage from "../common/UserImage.jsx";
 
 const { Title, Text } = Typography;
 
@@ -92,7 +93,7 @@ const UserInfo = () => {
             <TeamOutlined style={{ color: "#52c41a", marginRight: 8 }} />
             <strong>Lớp:</strong> {userDetail.ma_lop}
           </Text>
-          {userDetail.hinh_anh && (
+          {/* {userDetail.hinh_anh && (
             <div style={{ textAlign: "center", marginTop: 10 }}>
               <img
                 src={userDetail.hinh_anh}
@@ -105,7 +106,7 @@ const UserInfo = () => {
                 }}
               />
             </div>
-          )}
+          )} */}
         </Space>
       );
     } else {
@@ -134,27 +135,26 @@ const UserInfo = () => {
   // Cột phải: thông tin chung tài khoản
   const renderRightColumn = () => (
     <Space
-  direction="vertical"
-  size="middle"
-  style={{
-    flex: 1.2,       // tăng tỉ lệ rộng của cột phải
-    minWidth: 250,   // đảm bảo cột không quá hẹp
-  }}
->
-  <Text>
-    <IdcardOutlined style={{ color: "#1890ff", marginRight: 8 }} />
-    <strong>Tên đăng nhập:</strong> {user.ten_dang_nhap}
-  </Text>
-  <Text>
-    <UserOutlined style={{ color: "#52c41a", marginRight: 8 }} />
-    <strong>Vai trò:</strong> {user.vai_tro}
-  </Text>
-  <Text>
-    <MailOutlined style={{ color: "#faad14", marginRight: 8 }} />
-    <strong>Email:</strong> {userDetail?.email || "Chưa có"}
-  </Text>
-</Space>
-
+      direction="vertical"
+      size="middle"
+      style={{
+        flex: 1.2, // tăng tỉ lệ rộng của cột phải
+        minWidth: 250, // đảm bảo cột không quá hẹp
+      }}
+    >
+      <Text>
+        <IdcardOutlined style={{ color: "#1890ff", marginRight: 8 }} />
+        <strong>Tên đăng nhập:</strong> {user.ten_dang_nhap}
+      </Text>
+      <Text>
+        <UserOutlined style={{ color: "#52c41a", marginRight: 8 }} />
+        <strong>Vai trò:</strong> {user.vai_tro}
+      </Text>
+      <Text>
+        <MailOutlined style={{ color: "#faad14", marginRight: 8 }} />
+        <strong>Email:</strong> {userDetail?.email || "Chưa có"}
+      </Text>
+    </Space>
   );
 
   return (
@@ -183,11 +183,47 @@ const UserInfo = () => {
           size="large"
           style={{ width: "100%" }}
         >
-          <Avatar
-            size={90}
-            icon={<UserOutlined />}
-            style={{ backgroundColor: "#1890ff" }}
-          />
+          <div
+            style={{
+              width: 120,
+              height: 120,
+              borderRadius: "50%",
+              overflow: "hidden", // quan trọng để crop tròn
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            {userDetail?.hinh_anh ? (
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  overflow: "hidden",
+                  display: "flex",
+                  justifyContent: "center", // crop chính giữa
+                  alignItems: "center",
+                }}
+              >
+                <UserImage
+                  publicId={userDetail.hinh_anh}
+                  maxWidth={180} // ảnh lớn hơn khung để crop đẹp
+                  style={{
+                    display: "block",
+                    width: "auto", // để width auto, cao full
+                    height: "100%", // chiều cao bằng khung
+                  }}
+                />
+              </div>
+            ) : (
+              <Avatar
+                size={120}
+                icon={<UserOutlined />}
+                style={{ backgroundColor: "#1890ff" }}
+              />
+            )}
+          </div>
+
           <div>
             <Title level={3} style={{ marginBottom: 4 }}>
               Thông tin người dùng

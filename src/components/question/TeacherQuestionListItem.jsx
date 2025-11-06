@@ -69,6 +69,7 @@ const TeacherQuestionListItem = ({ data = [], status_question }) => {
           10000
         )
       );
+      console.log("Deleting record:", record);
       const res = await Promise.race([
         hamChung.deleteListQuestions(record),
         timeout,
@@ -173,9 +174,15 @@ const TeacherQuestionListItem = ({ data = [], status_question }) => {
               danger
               type="primary"
               icon={<DeleteOutlined />}
-              disabled={user?.vai_tro !== "GiaoVien"}
+              disabled={
+                user?.vai_tro !== "GiaoVien" || status_question === "da_xoa"
+              }
               onClick={() => {
-                if (user?.vai_tro !== "GiaoVien") return;
+                if (
+                  user?.vai_tro !== "GiaoVien" ||
+                  status_question === "da_xoa"
+                )
+                  return;
                 Modal.confirm({
                   title: "Bạn có muốn xóa câu hỏi này không?",
                   okText: "Có",
@@ -234,7 +241,7 @@ const TeacherQuestionListItem = ({ data = [], status_question }) => {
         destroyOnClose
         onCancel={() => setShowImportExport(false)}
       >
-        <ImportFileExcel/>
+        <ImportFileExcel />
       </Modal>
 
       <Table

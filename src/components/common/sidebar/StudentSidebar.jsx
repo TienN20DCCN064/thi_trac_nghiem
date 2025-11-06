@@ -45,11 +45,11 @@ const StudentSidebar = () => {
         mode="inline"
         onClick={({ key }) => navigate("/" + key)}
         items={[
-          {
-            key: "my-course",
-            icon: <BookOutlined />,
-            label: "Bảng Điểm",
-          },
+          // {
+          //   key: "my-course",
+          //   icon: <BookOutlined />,
+          //   label: "Bảng Điểm",
+          // },
           {
             key: "exam",
             icon: <SettingOutlined />,

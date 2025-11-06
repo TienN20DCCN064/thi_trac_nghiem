@@ -5,6 +5,7 @@ import cloudinary.uploader
 import os
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
+import datetime
 
 load_dotenv()
 
@@ -20,6 +21,7 @@ cloudinary.config(
 )
 
 @app.route('/api/image', methods=['POST'])
+
 def upload_image():
     if 'image' not in request.files:
         return jsonify({"error": "Không tìm thấy file ảnh"}), 400
@@ -30,13 +32,17 @@ def upload_image():
 
     try:
         filename = secure_filename(file.filename)
-        name_only = os.path.splitext(filename)[0]  # ronaldo.jpg → ronaldo
+        name_only, ext = os.path.splitext(filename)  # ronaldo.jpg → ('ronaldo', '.jpg')
 
-        # ⚡ Upload trực tiếp từ bộ nhớ (file stream)
+        # ⚡ Thêm timestamp vào tên file
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        unique_name = f"{timestamp}_{name_only}"
+
+        # Upload trực tiếp từ bộ nhớ (file stream)
         result = cloudinary.uploader.upload(
-            file,                   # Không cần lưu tạm
-            public_id=name_only,    # đặt tên file
-            folder="uploads"        # tùy chọn: thư mục trên Cloudinary
+            file,                    # Không cần lưu tạm
+            public_id=unique_name,    # tên file có timestamp
+            folder="uploads"          # tùy chọn: thư mục trên Cloudinary
         )
 
         return jsonify({

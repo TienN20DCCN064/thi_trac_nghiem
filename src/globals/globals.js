@@ -2,7 +2,7 @@
 const congAPI = 4002;
 const congAPI_image = 5000;
 const congAPI_gmail = 5002; // Phần tạo trận đấu
-const IPv4_Address = "192.168.2.145";
+const IPv4_Address = "192.168.1.61";
 const USER_KEY = "user_info"; // key lưu toàn bộ thông tin user vào localStorage
 
 
@@ -45,5 +45,5 @@ export const getLinkCongApi_image = () => {
 }
 
 export const getLinkCongApi_gmail = () => {
-  return "http://" + IPv4_Address + ":" + congAPI_gmail + "/api/";
+  return "http://" + IPv4_Address + ":" + congAPI_gmail + "/api";
 }

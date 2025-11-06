@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Layout, Dropdown, Avatar } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getUserInfo } from "../../globals/globals.js";
-
+import UserImage from "../common/UserImage.jsx";
 import hamChiTiet from "../../services/service.hamChiTiet.js"; // Giả sử hamChung nằm trong thư mục utils
 const { Header } = Layout;
 
@@ -50,15 +50,15 @@ const HeaderUserInfo = () => {
 
   const menuItems = [
     {
+      key: "profile",
+      label: "Hồ sơ cá nhân",
+      onClick: () => navigate("/profile"),
+    },
+    {
       key: "logout",
       label: "Đăng xuất",
       onClick: handleLogout,
     },
-    {
-      key: "profile",
-      label: "Hồ sơ cá nhân",
-      onClick: () => navigate("/profile"),
-    }
   ];
 
   return (
@@ -72,13 +72,48 @@ const HeaderUserInfo = () => {
         boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
       }}
     >
-      <Dropdown menu={{ items: menuItems }} trigger={["click"]}>
+      {/* <Dropdown menu={{ items: menuItems }} trigger={["click"]}>
         <div
           style={{ display: "flex", alignItems: "center", cursor: "pointer" }}
         >
           <Avatar style={{ backgroundColor: "#87d068", marginRight: 8 }}>
             {user ? user.ten?.charAt(0).toUpperCase() : "U"}
           </Avatar>
+          <span>{user ? `${user.ho} ${user.ten}` : "Người dùng"}</span>
+        </div>
+      </Dropdown> */}
+      <Dropdown menu={{ items: menuItems }} trigger={["click"]}>
+        <div
+          style={{ display: "flex", alignItems: "center", cursor: "pointer" }}
+        >
+          {user?.hinh_anh ? (
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: "50%",
+                overflow: "hidden",
+                marginRight: 8,
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <UserImage
+                publicId={user.hinh_anh}
+                maxWidth={80} // ảnh lớn hơn khung để crop đẹp
+                style={{
+                  width: "auto",
+                  height: "100%", // chiều cao đầy khung
+                  display: "block",
+                }}
+              />
+            </div>
+          ) : (
+            <Avatar style={{ backgroundColor: "#87d068", marginRight: 8 }}>
+              {user ? user.ten?.charAt(0).toUpperCase() : "U"}
+            </Avatar>
+          )}
           <span>{user ? `${user.ho} ${user.ten}` : "Người dùng"}</span>
         </div>
       </Dropdown>

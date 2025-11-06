@@ -5,10 +5,6 @@ const hamChiTiet = {
   async getUserInfoByAccountId(accountId) {
     return getUserInfoByAccountId(accountId);
   },
-  async getEmailByMaUser(ma_user) {
-    return getEmailByMaUser(ma_user);
-  },
-
   async getQuestionWithChoicesByChoiceId(choiceId) {
     return getQuestionWithChoicesByChoiceId(choiceId);
   },
@@ -31,27 +27,9 @@ async function getUserInfoByAccountId(accountId) {
     const dataOne_taiKhoanGiaoVien = await hamChung.getOne("tai_khoan_giao_vien", dataOneAccount.id_tai_khoan);
     userInfo = await hamChung.getOne("giao_vien", dataOne_taiKhoanGiaoVien.ma_gv);
   }
-  // Thêm email từ tài khoản vào đối tượng chi tiết
-  if (userInfo) {
-    userInfo.email = dataOneAccount.email || null;
-  }
   return userInfo;
 }
-async function getEmailByMaUser(ma_user) {  
-  const getAllAccountStudent = await hamChung.getAll("tai_khoan_sinh_vien");
-  const getAllAccountTeacher = await hamChung.getAll("tai_khoan_giao_vien");
-  const getAll = [...getAllAccountStudent, ...getAllAccountTeacher];
-  let email = null;
-  // tìm
-  for (const user of getAll) {
-    if (user.ma_user === ma_user) {
-      const account = await hamChung.getOne("tai_khoan", user.id_tai_khoan);
-      email = account.email || null;
-      break;
-    }
-  }
-  return email;
-}
+
 export async function getQuestionWithChoicesByChoiceId(choiceId) {
   const dataOneQuestion = await hamChung.getOne("cau_hoi", choiceId);
 

@@ -5,14 +5,20 @@ import {
   BookOutlined,
   TeamOutlined,
   SettingOutlined,
+  EditOutlined,
+  CheckCircleOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons";
+
 import { getUserInfo } from "../../globals/globals";
+import { useNavigate } from "react-router-dom";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
 
 const HomePage = () => {
   const [user, setUser] = useState(getUserInfo());
+  const navigate = useNavigate();
 
   const roleUI = {
     GiaoVu: {
@@ -22,8 +28,8 @@ const HomePage = () => {
       desc: "Bạn có thể quản lý kỳ thi, đề thi, và phân công giảng viên.",
       icon: <SettingOutlined style={{ fontSize: 64, color: "#722ed1" }} />,
       actions: [
+        { label: "Quản lý tài khoản", icon: <TeamOutlined /> },
         { label: "Quản lý kỳ thi", icon: <BookOutlined /> },
-        { label: "Quản lý giảng viên", icon: <TeamOutlined /> },
       ],
     },
     GiaoVien: {
@@ -33,8 +39,9 @@ const HomePage = () => {
       desc: "Bạn có thể tạo, chỉnh sửa câu hỏi và đề thi cho môn học của mình.",
       icon: <BookOutlined style={{ fontSize: 64, color: "#1890ff" }} />,
       actions: [
-        { label: "Soạn câu hỏi", icon: <BookOutlined /> },
-        { label: "Xem bài thi", icon: <TeamOutlined /> },
+        { label: "Soạn câu hỏi", icon: <EditOutlined /> },
+        { label: "Đăng ký thi", icon: <CheckCircleOutlined /> },
+        { label: "Bài thi SV", icon: <FileTextOutlined /> },
       ],
     },
     SinhVien: {
@@ -44,8 +51,8 @@ const HomePage = () => {
       desc: "Bạn có thể tham gia các bài thi và xem kết quả của mình.",
       icon: <UserOutlined style={{ fontSize: 64, color: "#52c41a" }} />,
       actions: [
-        { label: "Vào thi", icon: <BookOutlined /> },
-        { label: "Xem kết quả", icon: <TeamOutlined /> },
+        { label: "Vào thi", icon: <BookOutlined /> }, // hoặc ReadOutlined nếu muốn khác
+        { label: "Hồ sơ", icon: <UserOutlined /> },
       ],
     },
   };
@@ -56,7 +63,8 @@ const HomePage = () => {
     <Layout
       style={{
         height: "100vh",
-        background: "linear-gradient(-45deg, #f0f9ff, #e0f7fa, #e6f0ff, #f8f9ff)",
+        background:
+          "linear-gradient(-45deg, #f0f9ff, #e0f7fa, #e6f0ff, #f8f9ff)",
         backgroundSize: "400% 400%",
         animation: "gradientShift 12s ease infinite",
         display: "flex",
@@ -149,7 +157,9 @@ const HomePage = () => {
               }}
             >
               👋 Xin chào,{" "}
-              <strong style={{ color: ui.color }}>{user?.ten_nguoi_dung}</strong>
+              <strong style={{ color: ui.color }}>
+                {user?.ten_nguoi_dung}
+              </strong>
             </Text>
           </div>
 
@@ -168,6 +178,31 @@ const HomePage = () => {
                   borderRadius: 12,
                   fontWeight: "500",
                   boxShadow: "0 4px 10px rgba(0,0,0,0.15)",
+                }}
+                onClick={() => {
+                  // Chuyển hướng nếu là button "Vào thi"
+                  if (act.label === "Vào thi") {
+                    navigate("/exam-list");
+                  }
+                  if (act.label === "Hồ sơ") {
+                    navigate("/profile");
+                  }
+
+                  if (act.label === "Bài thi SV") {
+                    navigate("/watch-exam/list-exam");
+                  }
+                  if (act.label === "Đăng ký thi") {
+                    navigate("/register/register-exam");
+                  }
+                  if (act.label === "Soạn câu hỏi") {
+                    navigate("/question/list-question");
+                  }
+                  if (act.label === "Quản lý tài khoản") {
+                    navigate("/account/list");
+                  }
+                  if (act.label === "Quản lý kỳ thi") {
+                    navigate("/register/register-exam");
+                  }
                 }}
               >
                 {act.label}

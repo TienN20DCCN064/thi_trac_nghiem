@@ -68,7 +68,19 @@ const hamChung = {
   },
   async remove(tableName, id) {
     return remove(tableName, id);
-  }
+  },
+  async uploadImage(file) {
+    return uploadImage(file);
+  },
+  async getImageUrl(publicId) {
+    return getImageUrl(publicId);
+  },
+  async deleteImage(publicId) {
+    return deleteImage(publicId);
+  },
+
+
+
 };
 // LOGIN
 async function login(username, password) {
@@ -593,6 +605,77 @@ async function remove(tableName, id) {
   }
 }
 
+async function uploadImage(file) {
+  try {
+    const token = getToken();
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const res = await fetch(`${API_IMAGE}/image`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok || data?.error) {
+      throw new Error(data?.error || `Lỗi upload ảnh (${res.status})`);
+    }
+
+    return data; // { imageUrl, publicId }
+  } catch (err) {
+    console.error("❌ Lỗi uploadImage:", err);
+    throw err;
+  }
+}
+
+async function getImageUrl(publicId) {
+  try {
+    const token = getToken();
+    const res = await fetch(`${API_IMAGE}/${publicId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok || data?.error) {
+      throw new Error(data?.error || `Không lấy được URL ảnh (${res.status})`);
+    }
+
+    return data; // { imageUrl }
+  } catch (err) {
+    console.error("❌ Lỗi getImageUrl:", err);
+    throw err;
+  }
+}
+
+async function deleteImage(publicId) {
+  try {
+    const token = getToken();
+    const res = await fetch(`${API_IMAGE}/image/${publicId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok || data?.error) {
+      throw new Error(data?.error || `Không xóa được ảnh (${res.status})`);
+    }
+
+    return data; // { message }
+  } catch (err) {
+    console.error("❌ Lỗi deleteImage:", err);
+    throw err;
+  }
+}
 
 
 export default hamChung;
