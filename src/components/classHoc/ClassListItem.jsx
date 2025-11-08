@@ -65,7 +65,7 @@ const ClassListItem = ({ data = [], onDataChange }) => {
     : [];
 
   // Xử lý khi submit form
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.ma_lop || !formData.ten_lop || !formData.ma_khoa) {
       message.error("Vui lòng nhập đầy đủ mã lớp, tên lớp và mã khoa!");
       return;
@@ -81,6 +81,17 @@ const ClassListItem = ({ data = [], onDataChange }) => {
     };
 
     if (modalMode === "create") {
+      const getAllLop = await hamChung.getAll("lop");
+      for (let i = 0; i < getAllLop.length; i++) {
+        if (getAllLop[i].ma_lop === formData.ma_lop) {
+          message.error("Mã lớp đã tồn tại, vui lòng nhập mã khác!");
+          return;
+        }
+        if (getAllLop[i].ten_lop === formData.ten_lop) {
+          message.error("Tên lớp đã tồn tại, vui lòng nhập tên khác!");
+          return;
+        }
+      }
       dispatch(
         classSubjectActions.creators.createRequest(payload, (res) => {
           if (res.success) {

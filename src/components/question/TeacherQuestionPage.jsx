@@ -14,7 +14,7 @@ const TeacherQuestionPage = () => {
         items={[
           { label: "Trang Chủ" },
           { label: "Ngân Hàng Câu Hỏi" },
-          { label: "Câu hỏi đã soạn", isCurrent: true },
+          { label: "Danh Sách Câu Hỏi", isCurrent: true },
         ]}
       />
       <div className="custom-card">

@@ -93,20 +93,6 @@ const UserInfo = () => {
             <TeamOutlined style={{ color: "#52c41a", marginRight: 8 }} />
             <strong>Lớp:</strong> {userDetail.ma_lop}
           </Text>
-          {/* {userDetail.hinh_anh && (
-            <div style={{ textAlign: "center", marginTop: 10 }}>
-              <img
-                src={userDetail.hinh_anh}
-                alt="Ảnh sinh viên"
-                style={{
-                  width: 120,
-                  height: 120,
-                  borderRadius: "50%",
-                  objectFit: "cover",
-                }}
-              />
-            </div>
-          )} */}
         </Space>
       );
     } else {
@@ -122,7 +108,15 @@ const UserInfo = () => {
             <strong>Họ tên:</strong> {userDetail.ho} {userDetail.ten}
           </Text>
           <Text>
-            🎓 <strong>Học vị:</strong> {userDetail.hoc_vi}
+            {/* 🎓 <strong>Học vị:</strong> {userDetail.hoc_vi} */}
+            🎓 <strong>Học vị:</strong>{" "}
+            {userDetail.hoc_vi === "ThacSi"
+              ? " Thạc Sĩ"
+              : userDetail.hoc_vi === "TienSi"
+              ? " Tiến Sĩ"
+              : userDetail.hoc_vi === "CuNhan"
+              ? " Cử Nhân"
+              : " Chưa cập nhật"}
           </Text>
           <Text>
             🏫 <strong>Khoa:</strong> {userDetail.ma_khoa}
@@ -148,7 +142,15 @@ const UserInfo = () => {
       </Text>
       <Text>
         <UserOutlined style={{ color: "#52c41a", marginRight: 8 }} />
-        <strong>Vai trò:</strong> {user.vai_tro}
+        {/* <strong>Vai trò:</strong> {user.vai_tro} */}
+        {<strong>Vai trò:</strong>}
+        {user.vai_tro === "SinhVien"
+          ? " Sinh Viên"
+          : user.vai_tro === "GiaoVien"
+          ? " Giảng Viên"
+          : user.vai_tro === "GiaoVu"
+          ? " Giáo Vụ"
+          : " Người Dùng"}
       </Text>
       <Text>
         <MailOutlined style={{ color: "#faad14", marginRight: 8 }} />

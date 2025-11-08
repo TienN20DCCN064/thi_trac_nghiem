@@ -8,6 +8,7 @@ import {
 } from "@ant-design/icons";
 import { useDispatch } from "react-redux";
 import { createActions } from "../../redux/actions/factoryActions.js";
+import hamChung from "../../services/service.hamChung.js";
 
 const khoaSubjectActions = createActions("khoa");
 
@@ -44,7 +45,7 @@ const KhoaListItem = ({ data = [], onDataChange }) => {
     : [];
 
   // Xử lý khi submit form
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.ma_khoa || !formData.ten_khoa) {
       message.error("Vui lòng nhập đầy đủ mã khoa và tên khoa!");
       return;
@@ -56,6 +57,19 @@ const KhoaListItem = ({ data = [], onDataChange }) => {
     };
 
     if (modalMode === "create") {
+      // check trùng mã khoa hoặc tên khoa chưa
+      const getAllKhoa = await hamChung.getAll("khoa");
+      for (let i = 0; i < getAllKhoa.length; i++) {
+        if (getAllKhoa[i].ma_khoa === formData.ma_khoa) {
+          message.error("Mã khoa đã tồn tại, vui lòng nhập mã khác!");
+          return;
+        }
+        if (getAllKhoa[i].ten_khoa === formData.ten_khoa) {
+          message.error("Tên khoa đã tồn tại, vui lòng nhập tên khác!");
+          return;
+        }
+      }
+
       dispatch(
         khoaSubjectActions.creators.createRequest(payload, (res) => {
           if (res.success) {

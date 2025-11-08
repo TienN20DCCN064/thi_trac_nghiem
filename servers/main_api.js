@@ -45,26 +45,6 @@ function verifyToken(req, res, next) {
         next();
     });
 }
-const tables_not_token = {
-    "tai_khoan": ["id_tai_khoan"],                       // Tài khoản
-    "khoa": ["ma_khoa"],                                 // Khoa
-    "mon_hoc": ["ma_mh"],                                // Môn học
-    "giao_vien": ["ma_gv"],                              // Giáo viên
-    "lop": ["ma_lop"],                                   // Lớp
-    "sinh_vien": ["ma_sv"],                              // Sinh viên
-
-    "tai_khoan_giao_vien": ["id_tai_khoan"],             // Tài khoản - Giáo viên
-    "tai_khoan_sinh_vien": ["id_tai_khoan"],             // Tài khoản - Sinh viên
-
-    "cau_hoi": ["id_ch"],                                // Câu hỏi
-    "chon_lua": ["id_chon_lua"],                         // Đáp án lựa chọn
-
-    "dang_ky_thi": ["id_dang_ky_thi"],                   // Đăng ký thi
-    "chi_tiet_dang_ky_thi": ["id_dang_ky_thi", "chuong_so"], // Chi tiết đăng ký thi (Composite PK)
-
-    "thi": ["id_dang_ky_thi", "ma_sv"],                                   // Bài thi
-    "chi_tiet_thi": ["id_dang_ky_thi", "ma_sv", "id_ch"],                    // Chi tiết bài thi
-};
 
 // get : /api/{name_table}/{id_tbale}
 
@@ -131,61 +111,6 @@ app.post("/api/dang-nhap", (req, res) => {
         });
     });
 });
-// app.post("/api/kiem-tra-email", async (req, res) => {
-//     const { email } = req.body;
-
-//     if (!email) {
-//         return res.status(400).json({ success: false, message: "Thiếu email!" });
-//     }
-
-//     const connection = db.promise();
-
-//     try {
-//         // Kiểm tra email trong bảng giao_vien
-//         const [gvRows] = await connection.query(
-//             "SELECT ma_gv AS ma, ten, email FROM giao_vien WHERE email = ?",
-//             [email]
-//         );
-
-//         if (gvRows.length > 0) {
-//             return res.json({
-//                 success: true,
-//                 message: "Email tồn tại trong bảng giao_vien",
-//                 data: gvRows[0],
-//                 table: "giao_vien"
-//             });
-//         }
-
-//         // Kiểm tra email trong bảng sinh_vien
-//         const [svRows] = await connection.query(
-//             "SELECT ma_sv AS ma, ten, email FROM sinh_vien WHERE email = ?",
-//             [email]
-//         );
-
-//         if (svRows.length > 0) {
-//             return res.json({
-//                 success: true,
-//                 message: "Email tồn tại trong bảng sinh_vien",
-//                 data: svRows[0],
-//                 table: "sinh_vien"
-//             });
-//         }
-
-//         // Nếu không tìm thấy ở đâu cả
-//         res.json({
-//             success: false,
-//             message: "Email không tồn tại trong hệ thống!"
-//         });
-
-//     } catch (error) {
-//         console.error("❌ Lỗi khi kiểm tra email:", error);
-//         res.status(500).json({
-//             success: false,
-//             message: "Lỗi server khi kiểm tra email",
-//             error: error.message
-//         });
-//     }
-// });
 app.post("/api/lay-tai-khoan-theo-email", async (req, res) => {
     const { email } = req.body;
 
@@ -280,7 +205,6 @@ app.post("/api/lay-tai-khoan-theo-email", async (req, res) => {
         });
     }
 });
-
 app.post("/api/doi-mat-khau", async (req, res) => {
     const { id_tai_khoan, new_password } = req.body;
 
@@ -316,8 +240,6 @@ app.post("/api/doi-mat-khau", async (req, res) => {
         });
     }
 });
-
-
 // =============== API Đăng ký thi ===============
 app.post("/api/dang-ky-thi", verifyToken, async (req, res) => {
     const { ma_gv, ma_lop, ma_mh, trinh_do, ngay_thi, thoi_gian, chi_tiet_dang_ky_thi } = req.body;
@@ -374,7 +296,6 @@ app.post("/api/dang-ky-thi", verifyToken, async (req, res) => {
         res.status(500).json({ success: false, message: "Lỗi server", error: e.message });
     }
 });
-
 app.put("/api/dang-ky-thi/:id", verifyToken, async (req, res) => {
     const { id } = req.params;
     const { ma_gv, ma_lop, ma_mh, trinh_do, ngay_thi, thoi_gian, chi_tiet_dang_ky_thi } = req.body;
@@ -466,7 +387,6 @@ app.delete("/api/dang-ky-thi/:id", verifyToken, async (req, res) => {
         res.status(500).json({ success: false, message: "Lỗi server", error: e.message });
     }
 });
-
 // 🧠 API: Lấy danh sách câu hỏi random theo id_dang_ky_thi
 app.get("/api/list-questions/by-dangkythi/:id_dang_ky_thi", verifyToken, async (req, res) => {
     const { id_dang_ky_thi } = req.params;
@@ -594,9 +514,6 @@ app.get("/api/list-questions/by-dangkythi/:id_dang_ky_thi", verifyToken, async (
         });
     }
 });
-
-// Lấy thông tin kỳ thi và chi tiết bài làm của một sinh viên
-// Get one exam of a student (simplified)
 // Get one exam of a student including choices for "chon_1" questions
 app.get("/api/get-one-exam-forSV/:id_dang_ky_thi/:ma_sv", verifyToken, async (req, res) => {
     const { id_dang_ky_thi, ma_sv } = req.params;
@@ -684,7 +601,6 @@ app.get("/api/get-one-exam-forSV/:id_dang_ky_thi/:ma_sv", verifyToken, async (re
         });
     }
 });
-// ✅ API: Sinh viên nộp bài thi
 // ✅ API: Sinh viên nộp bài thi (THÊM MỚI)
 app.post("/api/submit-one-exam-forSV", verifyToken, async (req, res) => {
     const connection = db.promise();
@@ -772,7 +688,6 @@ app.post("/api/submit-one-exam-forSV", verifyToken, async (req, res) => {
         });
     }
 });
-
 // 🧠 Lấy danh sách bài thi theo id_dang_ky_thi (đơn giản)
 app.get("/api/list-exams/by-dangkythi/:id_dang_ky_thi", verifyToken, async (req, res) => {
     const { id_dang_ky_thi } = req.params;
@@ -805,9 +720,6 @@ app.get("/api/list-exams/by-dangkythi/:id_dang_ky_thi", verifyToken, async (req,
         });
     }
 });
-
-
-
 // API: Thêm danh sách câu hỏi và lựa chọn
 app.post("/api/list-questions", verifyToken, async (req, res) => {
     const { ma_mh, trinh_do, ma_gv, questions } = req.body; // thêm ma_gv từ body
@@ -968,8 +880,6 @@ app.post("/api/check-duplicate-group-questions", verifyToken, async (req, res) =
         });
     }
 });
-
-
 app.post("/api/multi-group-list-questions", verifyToken, async (req, res) => {
     const { groups } = req.body; // ⬅️ Dữ liệu đầu vào là mảng các nhóm
     const connection = db.promise();
@@ -1032,9 +942,6 @@ app.post("/api/multi-group-list-questions", verifyToken, async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 });
-
-
-// API: Xóa câu hỏi
 // API: Xóa danh sách câu hỏi và lựa chọn theo giảng viên, môn học và trình độ
 app.delete("/api/list-questions", verifyToken, async (req, res) => {
     const { ma_mh, trinh_do, ma_gv } = req.body;
@@ -1144,8 +1051,6 @@ app.delete("/api/list-questions", verifyToken, async (req, res) => {
         });
     }
 });
-
-
 // API: Cập nhật danh sách câu hỏi
 app.put("/api/list-questions", verifyToken, async (req, res) => {
     const { ma_mh, trinh_do, ma_gv, questions } = req.body;
@@ -1249,69 +1154,6 @@ app.put("/api/list-questions", verifyToken, async (req, res) => {
         res.status(500).json({ success: false, message: `Lỗi: ${error.message}` });
     }
 });
-
-
-
-
-
-
-// đây là api không cần tocken // trả về nguyên bản
-
-Object.entries(tables_not_token).forEach(([table, keys]) => {
-    app.get("/api_not_token", async (req, res) => {
-        try {
-            const apiList = [];
-
-            for (const [table, keys] of Object.entries(tables)) {
-                const columns = await getTableColumns(table);
-
-                // Tạo bodyExample với tất cả cột (trừ auto_increment nếu muốn)
-                const bodyExample = {};
-                for (const col of columns) {
-                    bodyExample[col] = `${col}`;
-                }
-
-                const idParams = keys.map((_, i) => `id${i + 1}`).join("/:");
-
-                apiList.push({
-                    tableName: table,
-                    endpoints: {
-                        getAll: { path: `/api/${table}`, httpType: "GET" },
-                        getOne: { path: `/api/${table}/:${idParams}`, httpType: "GET" },
-                    }
-                });
-            }
-
-            res.json(apiList);
-        } catch (err) {
-            console.error(err);
-            res.status(500).json({ message: "Lỗi khi lấy thông tin API" });
-        }
-    });
-
-    // GET - Lấy tất cả dữ liệu
-    app.get(`/api_not_token/${table}`, (req, res) => {
-        db.query(`SELECT * FROM ??`, [table], (err, results) => {
-            if (err) return res.status(500).send(`Lỗi khi lấy dữ liệu từ ${table}`);
-            res.json(results);
-        });
-    });
-
-    // GET - Lấy một bản ghi theo khóa chính
-    app.get(`/api_not_token/${table}/:${keys.map((_, i) => `id${i + 1}`).join("/:")}`, (req, res) => {
-        const conditions = keys.map((key, i) => `?? = ?`).join(" AND ");
-        const params = [table, ...keys.flatMap((key, i) => [key, req.params[`id${i + 1}`]])];
-
-        db.query(`SELECT * FROM ?? WHERE ${conditions}`, params, (err, results) => {
-            if (err) return res.status(500).send(`Lỗi khi lấy dữ liệu từ ${table}`);
-            if (results.length === 0) return res.status(404).send(`Không tìm thấy dữ liệu trong ${table}`);
-            res.json(results[0]);
-        });
-    });
-});
-
-
-
 Object.entries(tables).forEach(([table, keys]) => {
 
     function convertToDatetimeLocal(dateInput) {
@@ -1338,10 +1180,8 @@ Object.entries(tables).forEach(([table, keys]) => {
         }
         return datetimeLocal;
     }
-
     app.get("/api", async (req, res) => {
         try {
-
             const apiList = [];
 
             for (const [table, keys] of Object.entries(tables)) {
@@ -1366,8 +1206,9 @@ Object.entries(tables).forEach(([table, keys]) => {
                     }
                 });
             }
-            // ====== 2. API đăng nhập ======
-            // ====== 2. API đăng nhập (đúng code của bạn) ======
+
+
+            // ================== ĐĂNG NHẬP ==================
             apiList.push({
                 name: "dangNhap",
                 endpoints: {
@@ -1382,6 +1223,144 @@ Object.entries(tables).forEach(([table, keys]) => {
                     }
                 }
             });
+
+            // ================== TÀI KHOẢN ==================
+            apiList.push({
+                name: "taiKhoan",
+                endpoints: {
+                    layTheoEmail: {
+                        path: "/api/lay-tai-khoan-theo-email",
+                        httpType: "POST",
+                        bodyExample: { email: "example@gmail.com" },
+                        description: "Lấy thông tin tài khoản theo email của giáo viên hoặc sinh viên"
+                    },
+                    doiMatKhau: {
+                        path: "/api/doi-mat-khau",
+                        httpType: "POST",
+                        bodyExample: {
+                            id_tai_khoan: 1,
+                            new_password: "new123456"
+                        },
+                        description: "Đổi mật khẩu tài khoản (hash mật khẩu mới và lưu vào DB)"
+                    }
+                }
+            });
+
+            // ================== ĐĂNG KÝ THI ==================
+            apiList.push({
+                name: "dangKyThi",
+                endpoints: {
+                    create: {
+                        path: "/api/dang-ky-thi",
+                        httpType: "POST",
+                        bodyExample: {
+                            ma_gv: "GV001",
+                            ma_lop: "L01",
+                            ma_mh: "MH001",
+                            trinh_do: "ĐH",
+                            ngay_thi: "2025-12-10",
+                            thoi_gian: "90",
+                            chi_tiet_dang_ky_thi: [
+                                { chuong_so: 1, so_cau: 10 },
+                                { chuong_so: 2, so_cau: 15 }
+                            ]
+                        },
+                        description: "Giáo viên đăng ký kỳ thi mới, gồm các chương và số câu hỏi từng chương"
+                    },
+                    update: {
+                        path: "/api/dang-ky-thi/:id",
+                        httpType: "PUT",
+                        bodyExample: {
+                            ma_gv: "GV001",
+                            ma_lop: "L01",
+                            ma_mh: "MH001",
+                            trinh_do: "ĐH",
+                            ngay_thi: "2025-12-11",
+                            thoi_gian: "100",
+                            chi_tiet_dang_ky_thi: [
+                                { chuong_so: 1, so_cau: 12 },
+                                { chuong_so: 2, so_cau: 18 }
+                            ]
+                        },
+                        description: "Cập nhật thông tin đăng ký thi và danh sách chương"
+                    },
+                    delete: {
+                        path: "/api/dang-ky-thi/:id",
+                        httpType: "DELETE",
+                        description: "Xóa đăng ký thi và toàn bộ chi tiết đăng ký thi liên quan"
+                    }
+                }
+            });
+
+            // ================== CÂU HỎI ==================
+            apiList.push({
+                name: "cauHoi",
+                endpoints: {
+                    listByDangKyThi: {
+                        path: "/api/list-questions/by-dangkythi/:id_dang_ky_thi",
+                        httpType: "GET",
+                        description: "Lấy danh sách câu hỏi random theo cấu hình trong đăng ký thi"
+                    },
+                    createList: {
+                        path: "/api/list-questions",
+                        httpType: "POST",
+                        bodyExample: {
+                            ma_mh: "MH001",
+                            trinh_do: "ĐH",
+                            ma_gv: "GV001",
+                            questions: [
+                                {
+                                    chuong_so: 1,
+                                    noi_dung: "Câu hỏi mẫu?",
+                                    loai: "chon_1",
+                                    dap_an_dung: "A",
+                                    chon_lua: [
+                                        { noi_dung: "A" },
+                                        { noi_dung: "B" },
+                                        { noi_dung: "C" },
+                                        { noi_dung: "D" }
+                                    ]
+                                }
+                            ]
+                        },
+                        description: "Thêm danh sách câu hỏi kèm lựa chọn vào cơ sở dữ liệu"
+                    }
+                }
+            });
+
+            // ================== THI (BÀI LÀM SINH VIÊN) ==================
+            apiList.push({
+                name: "thi",
+                endpoints: {
+                    getOneExamForSV: {
+                        path: "/api/get-one-exam-forSV/:id_dang_ky_thi/:ma_sv",
+                        httpType: "GET",
+                        description: "Lấy một bài thi của sinh viên gồm thông tin, chi tiết câu hỏi và lựa chọn"
+                    },
+                    submitOneExamForSV: {
+                        path: "/api/submit-one-exam-forSV",
+                        httpType: "POST",
+                        bodyExample: {
+                            id_dang_ky_thi: 1,
+                            ma_sv: "SV001",
+                            thoi_gian_bat_dau: "2025-12-10T08:00:00",
+                            thoi_gian_ket_thuc: "2025-12-10T09:30:00",
+                            diem: 8.5,
+                            chi_tiet_thi: [
+                                { stt: 1, id_ch: 10, cau_tra_loi: "A" },
+                                { stt: 2, id_ch: 12, cau_tra_loi: "B" }
+                            ]
+                        },
+                        description: "Sinh viên nộp bài thi, lưu chi tiết vào bảng `thi` và `chi_tiet_thi`"
+                    },
+                    listByDangKyThi: {
+                        path: "/api/list-exams/by-dangkythi/:id_dang_ky_thi",
+                        httpType: "GET",
+                        description: "Lấy danh sách các bài thi trong một kỳ thi cụ thể"
+                    }
+                }
+            });
+
             // ====== 3. API Cloudinary ======
             apiList.push({
                 name: "imageCloudinary",
@@ -1393,12 +1372,21 @@ Object.entries(tables).forEach(([table, keys]) => {
                 }
             });
             // ====== 4. API Flask gửi email ======
-
-
-
-
-
-
+            apiList.push({
+                name: "FlaskEmailService",
+                endpoints: {
+                    sendEmail: {
+                        path: "/api/send-email",
+                        httpType: "POST",
+                        bodyExample: {
+                            to: "user@example.com",
+                            subject: "Test Email",
+                            message: "This is a test email."
+                        },
+                        description: "Gửi email thông qua dịch vụ Flask"
+                    }
+                }
+            });
 
             res.json(apiList);
         } catch (err) {
@@ -1460,7 +1448,6 @@ Object.entries(tables).forEach(([table, keys]) => {
             res.json(updatedResults);
         });
     });
-
     // GET - Lấy một bản ghi theo khóa chính
     app.get(`/api/${table}/:${keys.map((_, i) => `id${i + 1}`).join("/:")}`, verifyToken, (req, res) => {
         const conditions = keys.map((key, i) => `?? = ?`).join(" AND ");
@@ -1543,8 +1530,6 @@ Object.entries(tables).forEach(([table, keys]) => {
 
         });
     });
-
-
 
     app.post(`/api/${table}`, verifyToken, async (req, res) => {
         // Chuyển đổi dữ liệu ngày tháng sang định dạng MySQL (YYYY-MM-DD)

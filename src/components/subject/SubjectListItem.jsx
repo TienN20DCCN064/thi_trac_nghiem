@@ -8,6 +8,7 @@ import {
 } from "@ant-design/icons";
 import { useDispatch } from "react-redux";
 import { createActions } from "../../redux/actions/factoryActions.js";
+import hamChung from "../../services/service.hamChung.js";
 
 const subjectActions = createActions("mon_hoc");
 
@@ -41,7 +42,17 @@ const SubjectListItem = ({ data = [], onDataChange }) => {
     };
     try {
       if (modalMode === "create") {
-        // await dispatch(subjectActions.creators.createRequest(payload));
+        const getAllSubject = await hamChung.getAll("mon_hoc");
+        for (let i = 0; i < getAllSubject.length; i++) {
+          if (getAllSubject[i].ma_mh === formData.ma_mh) {
+            message.error("Mã môn học đã tồn tại, vui lòng nhập mã khác!");
+            return;
+          }
+          if (getAllSubject[i].ten_mh === formData.ten_mh) {
+            message.error("Tên môn học đã tồn tại, vui lòng nhập tên khác!");
+            return;
+          }
+        }
         dispatch(
           subjectActions.creators.createRequest(payload, (res) => {
             if (res.success) {
