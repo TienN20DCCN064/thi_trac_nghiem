@@ -7,6 +7,7 @@ const CellDisplay = ({
   fieldHo = "ho",
   fieldTen = "ten",
   fieldName = null,
+  upperCase = false, // ✅ thêm thuộc tính tùy chọn
 }) => {
   const [text, setText] = React.useState("----");
 
@@ -24,16 +25,20 @@ const CellDisplay = ({
           return;
         }
 
+        let value = "----";
         if (fieldName && res[fieldName]) {
-          setText(res[fieldName]); // Lấy theo cột cụ thể (vd: ma_gv hoặc ma_sv)
+          value = res[fieldName];
         } else if (res[fieldHo] && res[fieldTen]) {
-          setText(`${res[fieldHo]} ${res[fieldTen]}`); // fallback họ tên
+          value = `${res[fieldHo]} ${res[fieldTen]}`;
         } else {
-          setText(id); // fallback hiển thị id
+          value = id;
         }
+
+        // ✅ Nếu có thuộc tính upperCase thì in hoa text
+        setText(upperCase ? value.toUpperCase() : value);
       })
       .catch(() => setText("----"));
-  }, [table, id, fieldHo, fieldTen, fieldName]);
+  }, [table, id, fieldHo, fieldTen, fieldName, upperCase]);
 
   return <>{text}</>;
 };

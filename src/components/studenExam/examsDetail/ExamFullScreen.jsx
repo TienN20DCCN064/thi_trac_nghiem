@@ -321,6 +321,7 @@ const ExamFullScreen = ({ visible, exam, student, onClose }) => {
                   table="mon_hoc"
                   id={exam?.ma_mh}
                   fieldName="ten_mh"
+                  upperCase
                 />
               </Title>
               <Text type="secondary">
@@ -493,8 +494,8 @@ const ExamFullScreen = ({ visible, exam, student, onClose }) => {
 
                 {/* BẢNG ĐIỀU KHIỂN */}
                 <Col span={6}>
-                  <div style={{ position: "sticky", top: 24 }}>
-                    <Title level={5}>Bảng điều khiển</Title>
+                  <div style={{ position: "sticky", top: 1 }}>
+                    {/* <Title level={5}>Bảng điều khiển</Title> */}
                     <div
                       style={{
                         display: "flex",

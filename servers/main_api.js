@@ -387,7 +387,7 @@ app.delete("/api/dang-ky-thi/:id", verifyToken, async (req, res) => {
         res.status(500).json({ success: false, message: "Lỗi server", error: e.message });
     }
 });
-// 🧠 API: Lấy danh sách câu hỏi random theo id_dang_ky_thi
+// 🧠 API: Lấy danh sách câu hỏi random theo id_dang_ky_thi // ok
 app.get("/api/list-questions/by-dangkythi/:id_dang_ky_thi", verifyToken, async (req, res) => {
     const { id_dang_ky_thi } = req.params;
     const connection = db.promise();
@@ -514,7 +514,7 @@ app.get("/api/list-questions/by-dangkythi/:id_dang_ky_thi", verifyToken, async (
         });
     }
 });
-// Get one exam of a student including choices for "chon_1" questions
+// Get one exam of a student including choices for "chon_1" questions  // ok
 app.get("/api/get-one-exam-forSV/:id_dang_ky_thi/:ma_sv", verifyToken, async (req, res) => {
     const { id_dang_ky_thi, ma_sv } = req.params;
     const connection = db.promise();
@@ -601,7 +601,7 @@ app.get("/api/get-one-exam-forSV/:id_dang_ky_thi/:ma_sv", verifyToken, async (re
         });
     }
 });
-// ✅ API: Sinh viên nộp bài thi (THÊM MỚI)
+// ✅ API: Sinh viên nộp bài thi (THÊM MỚI)  // ok
 app.post("/api/submit-one-exam-forSV", verifyToken, async (req, res) => {
     const connection = db.promise();
 
@@ -688,7 +688,7 @@ app.post("/api/submit-one-exam-forSV", verifyToken, async (req, res) => {
         });
     }
 });
-// 🧠 Lấy danh sách bài thi theo id_dang_ky_thi (đơn giản)
+// 🧠 Lấy danh sách bài thi theo id_dang_ky_thi (đơn giản)  // ok
 app.get("/api/list-exams/by-dangkythi/:id_dang_ky_thi", verifyToken, async (req, res) => {
     const { id_dang_ky_thi } = req.params;
     const connection = db.promise();
@@ -720,7 +720,7 @@ app.get("/api/list-exams/by-dangkythi/:id_dang_ky_thi", verifyToken, async (req,
         });
     }
 });
-// API: Thêm danh sách câu hỏi và lựa chọn
+// API: Thêm danh sách câu hỏi và lựa chọn // ok
 app.post("/api/list-questions", verifyToken, async (req, res) => {
     const { ma_mh, trinh_do, ma_gv, questions } = req.body; // thêm ma_gv từ body
     const connection = db.promise();
@@ -772,7 +772,7 @@ app.post("/api/list-questions", verifyToken, async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 });
-// 🧠 API: Kiểm tra trùng danh sách câu hỏi (Excel import)
+// 🧠 API: Kiểm tra trùng danh sách câu hỏi (Excel import)  // ok
 app.post("/api/check-duplicate-group-questions", verifyToken, async (req, res) => {
     const { groups } = req.body;
     const connection = db.promise();
@@ -880,6 +880,7 @@ app.post("/api/check-duplicate-group-questions", verifyToken, async (req, res) =
         });
     }
 });
+// api : Thêm nhiều nhóm câu hỏi    // ok
 app.post("/api/multi-group-list-questions", verifyToken, async (req, res) => {
     const { groups } = req.body; // ⬅️ Dữ liệu đầu vào là mảng các nhóm
     const connection = db.promise();
@@ -942,7 +943,7 @@ app.post("/api/multi-group-list-questions", verifyToken, async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 });
-// API: Xóa danh sách câu hỏi và lựa chọn theo giảng viên, môn học và trình độ
+// API: Xóa danh sách câu hỏi và lựa chọn theo giảng viên, môn học và trình độ   // ok
 app.delete("/api/list-questions", verifyToken, async (req, res) => {
     const { ma_mh, trinh_do, ma_gv } = req.body;
     const connection = db.promise();
@@ -1051,7 +1052,7 @@ app.delete("/api/list-questions", verifyToken, async (req, res) => {
         });
     }
 });
-// API: Cập nhật danh sách câu hỏi
+// API: Cập nhật danh sách câu hỏi   // ok
 app.put("/api/list-questions", verifyToken, async (req, res) => {
     const { ma_mh, trinh_do, ma_gv, questions } = req.body;
     const connection = db.promise();
@@ -1301,6 +1302,8 @@ Object.entries(tables).forEach(([table, keys]) => {
                         httpType: "GET",
                         description: "Lấy danh sách câu hỏi random theo cấu hình trong đăng ký thi"
                     },
+
+                    // 1️⃣ Thêm danh sách câu hỏi
                     createList: {
                         path: "/api/list-questions",
                         httpType: "POST",
@@ -1324,9 +1327,74 @@ Object.entries(tables).forEach(([table, keys]) => {
                             ]
                         },
                         description: "Thêm danh sách câu hỏi kèm lựa chọn vào cơ sở dữ liệu"
+                    },
+
+                    // 2️⃣ Kiểm tra trùng câu hỏi khi import excel
+                    checkDuplicate: {
+                        path: "/api/check-duplicate-group-questions",
+                        httpType: "POST",
+                        bodyExample: {
+                            groups: [
+                                {
+                                    ma_mh: "MH001",
+                                    trinh_do: "ĐH",
+                                    ma_gv: "GV001",
+                                    questions: [
+                                        {
+                                            noi_dung: "Nội dung câu hỏi?",
+                                            loai: "chon_1",
+                                            dap_an_dung: "A",
+                                            chon_lua: [
+                                                { noi_dung: "A" },
+                                                { noi_dung: "B" }
+                                            ],
+                                            so_dong_trong_file_import: 12
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        description: "Kiểm tra trùng câu hỏi từ file Excel, trả về danh sách dòng trùng"
+                    },
+
+                    // 3️⃣ Thêm nhiều nhóm câu hỏi
+                    createMultiGroup: {
+                        path: "/api/multi-group-list-questions",
+                        httpType: "POST",
+                        bodyExample: {
+                            groups: [
+                                {
+                                    ma_mh: "MH001",
+                                    trinh_do: "ĐH",
+                                    ma_gv: "GV001",
+                                    questions: []
+                                }
+                            ]
+                        },
+                        description: "Thêm nhiều nhóm câu hỏi một lần"
+                    },
+
+                    // 4️⃣ Cập nhật danh sách câu hỏi
+                    updateList: {
+                        path: "/api/list-questions",
+                        httpType: "PUT",
+                        description: "Cập nhật (đồng bộ) danh sách câu hỏi cho giáo viên – môn học – trình độ"
+                    },
+
+                    // 5️⃣ Xóa danh sách câu hỏi
+                    deleteList: {
+                        path: "/api/list-questions",
+                        httpType: "DELETE",
+                        bodyExample: {
+                            ma_mh: "MH001",
+                            trinh_do: "ĐH",
+                            ma_gv: "GV001"
+                        },
+                        description: "Xóa câu hỏi (xóa mềm nếu đang được sử dụng – xóa cứng nếu không có ràng buộc)"
                     }
                 }
             });
+
 
             // ================== THI (BÀI LÀM SINH VIÊN) ==================
             apiList.push({
@@ -1394,9 +1462,6 @@ Object.entries(tables).forEach(([table, keys]) => {
             res.status(500).json({ message: "Lỗi khi lấy thông tin API" });
         }
     });
-
-
-
 
     app.get("/api", (req, res) => {
         const apiList = Object.entries(tables).map(([table, columns]) => {

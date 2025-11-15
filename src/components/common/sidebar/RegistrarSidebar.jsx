@@ -88,7 +88,7 @@ const RegistrarSidebar = () => {
               },
               {
                 key: "users/list-students",
-                label: "Học sinh",
+                label: "Sinh viên",
                 icon: <IdcardOutlined />,
               },
             ],
@@ -110,7 +110,7 @@ const RegistrarSidebar = () => {
               },
               {
                 key: "account/list-students",
-                label: "Học sinh",
+                label: "Sinh viên",
                 icon: <IdcardOutlined />,
               },
             ],

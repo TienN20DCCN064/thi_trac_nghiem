@@ -60,7 +60,7 @@ const AdminStudentExamPage = () => {
           onCancel={() => setFilterVisible(false)}
           footer={null}
           centered
-          width={800}
+          width={1070}
         >
           <FilterExamForm
             onDataChange={(data) => {
