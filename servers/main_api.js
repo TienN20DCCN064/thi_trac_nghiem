@@ -12,7 +12,7 @@ const app = express();       // tạo 1 ứng dụng express
 const port = 4002;           // api chạy trên cổng
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json()); 
 
 const db = mysql.createConnection({
     host: process.env.DTB_HOST,
@@ -1156,7 +1156,6 @@ app.put("/api/list-questions", verifyToken, async (req, res) => {
     }
 });
 Object.entries(tables).forEach(([table, keys]) => {
-
     function convertToDatetimeLocal(dateInput) {
         let date = dateInput;
         if (typeof dateInput === "string" && !isNaN(Date.parse(dateInput))) {
@@ -1462,7 +1461,6 @@ Object.entries(tables).forEach(([table, keys]) => {
             res.status(500).json({ message: "Lỗi khi lấy thông tin API" });
         }
     });
-
     app.get("/api", (req, res) => {
         const apiList = Object.entries(tables).map(([table, columns]) => {
             const idParams = columns.map((_, i) => `id${i + 1}`).join(":");
@@ -1484,7 +1482,6 @@ Object.entries(tables).forEach(([table, keys]) => {
 
         res.json(apiList);
     });
-
     /// nếu ko xử lý ngaỳ thì nó trả về dạng :  :::::   "ngay_tao": "2025-03-22T13:53:18.000Z"
     app.get(`/api/${table}`, verifyToken, (req, res) => {
         db.query(`SELECT * FROM ??`, [table], (err, results) => {
@@ -1541,7 +1538,6 @@ Object.entries(tables).forEach(([table, keys]) => {
             res.json(row);
         });
     });
-
     app.delete(`/api/${table}/:${keys.map((_, i) => `id${i + 1}`).join("/:")}`, verifyToken, (req, res) => {
 
         const conditions = keys.map((key) => `\`${key}\` = ?`).join(" AND ");
@@ -1556,7 +1552,6 @@ Object.entries(tables).forEach(([table, keys]) => {
         });
 
     });
-
     app.put(`/api/${table}/:${keys.map((_, i) => `id${i + 1}`).join("/:")}`, verifyToken, async (req, res) => {
         if (Object.keys(req.body).length === 0) {
             return res.status(400).send("Không có dữ liệu để cập nhật.");
