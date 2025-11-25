@@ -11,6 +11,7 @@ import { createActions } from "../../redux/actions/factoryActions.js";
 import hamChung from "../../services/service.hamChung.js";
 import moment from "moment";
 import UserImage from "../common/UserImage.jsx"; // import component vừa tạo
+import CellDisplay from "../common/CellDisplay.jsx";
 
 const studentSubjectActions = createActions("sinh_vien");
 
@@ -22,19 +23,39 @@ const StudentInfoListItem = ({ data = [], onDataChange }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState("view");
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [taiKhoanList, setTaiKhoanList] = useState([]);
+
   const [formData, setFormData] = useState({
     ma_sv: "",
+    id_tai_khoan: null, // 👈 thêm dòng này
     ho: "",
     ten: "",
     phai: "",
     dia_chi: "",
     ngay_sinh: null,
     ma_lop: "",
-    hinh_anh: "", // publicId hoặc URL cũ
-    file: null, // 👈 file local khi chọn mới
-    email: "", // 👈 thêm dòng này
+    hinh_anh: "",
+    file: null,
+    email: "",
   });
+
   const [lopList, setLopList] = useState([]);
+  useEffect(() => {
+    const fetchTaiKhoan = async () => {
+      try {
+        const data = await hamChung.getAll("tai_khoan");
+
+        // 🔥 Lọc chỉ lấy tài khoản sinh viên
+        const filtered = (data || []).filter((tk) => tk.vai_tro === "SinhVien");
+
+        setTaiKhoanList(filtered);
+      } catch (err) {
+        console.error("Lỗi lấy tài khoản:", err);
+      }
+    };
+
+    fetchTaiKhoan();
+  }, []);
 
   useEffect(() => {
     const fetchLopList = async () => {
@@ -91,6 +112,7 @@ const StudentInfoListItem = ({ data = [], onDataChange }) => {
   const handleSubmit = async () => {
     if (
       !formData.ma_sv ||
+      !formData.id_tai_khoan ||
       !formData.ho ||
       !formData.ten ||
       !formData.phai ||
@@ -105,32 +127,23 @@ const StudentInfoListItem = ({ data = [], onDataChange }) => {
     // Nếu có file mới
     if (formData.file) {
       try {
-        const res = await hamChung.uploadFile(formData.file); // giả sử trả về { publicId: ... }
+        const res = await hamChung.uploadImage(formData.file); // giả sử trả về { publicId: ... }
         hinhAnhId = res.publicId;
       } catch (err) {
         message.error("Upload hình ảnh thất bại!");
         return;
       }
     }
-    // const payload = {
-    //   ma_sv: formData.ma_sv,
-    //   ho: formData.ho,
-    //   ten: formData.ten,
-    //   phai: formData.phai,
-    //   dia_chi: formData.dia_chi,
-    //   ngay_sinh: formData.ngay_sinh
-    //     ? moment(formData.ngay_sinh).format("YYYY-MM-DD")
-    //     : null,
-    //   ma_lop: formData.ma_lop,
-    //   hinh_anh: formData.hinh_anh,
-    //   email: formData.email, // 👈 thêm dòng này
-    // };
+
     const payload = {
       ...formData,
       hinh_anh: hinhAnhId,
+      ngay_sinh: formData.ngay_sinh
+        ? moment(formData.ngay_sinh).format("YYYY-MM-DD")
+        : null,
     };
-    // Xóa trường 'file' trước khi gửi payload
     delete payload.file;
+    console.log("Payload gửi đi:", payload);
 
     if (modalMode === "create") {
       dispatch(
@@ -147,8 +160,10 @@ const StudentInfoListItem = ({ data = [], onDataChange }) => {
               ngay_sinh: null,
               ma_lop: "",
               hinh_anh: "",
-              email: "", // 👈 thêm dòng này
+              email: "",
+              id_tai_khoan: null, // 👈 thêm dòng này
             });
+
             onDataChange();
           } else {
             message.error(res.message || "Thêm sinh viên thất bại!");
@@ -173,8 +188,10 @@ const StudentInfoListItem = ({ data = [], onDataChange }) => {
                 ngay_sinh: null,
                 ma_lop: "",
                 hinh_anh: "",
-                email: "", // 👈 thêm dòng này
+                email: "",
+                id_tai_khoan: null, // 👈 thêm dòng này
               });
+
               onDataChange();
             } else {
               message.error(res.message || "Cập nhật sinh viên thất bại!");
@@ -211,6 +228,23 @@ const StudentInfoListItem = ({ data = [], onDataChange }) => {
       title: "Mã SV",
       dataIndex: "ma_sv",
       key: "ma_sv",
+    },
+    // {
+    //   title: "id_tai_khoan",
+    //   dataIndex: "id_tai_khoan",
+    //   key: "id_tai_khoan",
+    // },
+    {
+      title: "Tài khoản",
+      dataIndex: "id_tai_khoan",
+      key: "id_tai_khoan",
+      render: (value, record) => (
+        <CellDisplay
+          table="tai_khoan"
+          id={record.id_tai_khoan}
+          fieldName={"ten_dang_nhap"}
+        />
+      ),
     },
     {
       title: "Hình ảnh",
@@ -269,6 +303,7 @@ const StudentInfoListItem = ({ data = [], onDataChange }) => {
               setSelectedRecord(record);
               setFormData({
                 ma_sv: record.ma_sv,
+                id_tai_khoan: record.id_tai_khoan, // 👈 thêm
                 ho: record.ho,
                 ten: record.ten,
                 phai: record.phai,
@@ -278,6 +313,7 @@ const StudentInfoListItem = ({ data = [], onDataChange }) => {
                 hinh_anh: record.hinh_anh,
                 email: record.email || "",
               });
+
               setModalMode("edit");
               setModalVisible(true);
             }}
@@ -420,6 +456,14 @@ const StudentInfoListItem = ({ data = [], onDataChange }) => {
               <b>Mã SV:</b> {selectedRecord?.ma_sv}
             </p>
             <p>
+              <b>Tài khoản:</b>{" "}
+              <CellDisplay
+                table="tai_khoan"
+                id={selectedRecord?.id_tai_khoan}
+                fieldName="ten_dang_nhap"
+              />
+            </p>
+            <p>
               <b>Họ và tên:</b> {selectedRecord?.ho} {selectedRecord?.ten}
             </p>
             <p>
@@ -474,6 +518,27 @@ const StudentInfoListItem = ({ data = [], onDataChange }) => {
                 disabled={modalMode === "edit"}
                 placeholder="Nhập mã sinh viên"
               />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", marginBottom: 8 }}>
+                Tài khoản đăng nhập
+              </label>
+              <Select
+                value={formData.id_tai_khoan}
+                placeholder="Chọn tài khoản"
+                onChange={(value) =>
+                  setFormData({ ...formData, id_tai_khoan: value })
+                }
+                style={{ width: "100%" }}
+                showSearch
+                optionFilterProp="children"
+              >
+                {taiKhoanList.map((tk) => (
+                  <Select.Option key={tk.id_tai_khoan} value={tk.id_tai_khoan}>
+                    {tk.ten_dang_nhap} — {tk.vai_tro}
+                  </Select.Option>
+                ))}
+              </Select>
             </div>
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: "block", marginBottom: 8 }}>Họ</label>

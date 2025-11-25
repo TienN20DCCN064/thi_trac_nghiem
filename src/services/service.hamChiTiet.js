@@ -20,13 +20,17 @@ async function getUserInfoByAccountId(accountId) {
   const dataOneAccount = await hamChung.getOne("tai_khoan", accountId);
   let userInfo = null;
   if (dataOneAccount.vai_tro === "SinhVien") {
-    const dataOne_taiKhoanSinhVien = await hamChung.getOne("tai_khoan_sinh_vien", dataOneAccount.id_tai_khoan);
-    userInfo = await hamChung.getOne("sinh_vien", dataOne_taiKhoanSinhVien.ma_sv);
+    const allInforSinhVien = await hamChung.getAll("sinh_vien");
+    userInfo = allInforSinhVien.find(sv => sv.id_tai_khoan === accountId);
   }
   else if (dataOneAccount.vai_tro === "GiaoVien" || dataOneAccount.vai_tro === "GiaoVu") {
-    const dataOne_taiKhoanGiaoVien = await hamChung.getOne("tai_khoan_giao_vien", dataOneAccount.id_tai_khoan);
-    userInfo = await hamChung.getOne("giao_vien", dataOne_taiKhoanGiaoVien.ma_gv);
+    const allInforGiaoVien = await hamChung.getAll("giao_vien");
+    console.log("allInforGiaoVien:", allInforGiaoVien);
+    console.log(accountId);
+    userInfo = allInforGiaoVien.find(gv => gv.id_tai_khoan === accountId);
   }
+  console.log("Thông tin userInfo trong hamChiTiet:", userInfo);
+
   return userInfo;
 }
 

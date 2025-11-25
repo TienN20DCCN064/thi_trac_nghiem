@@ -103,16 +103,16 @@ const RegistrarSidebar = () => {
                 label: "Tất cả",
                 icon: <UserOutlined />,
               },
-              {
-                key: "account/list-teachers",
-                label: "Giáo viên",
-                icon: <UserOutlined />,
-              },
-              {
-                key: "account/list-students",
-                label: "Sinh viên",
-                icon: <IdcardOutlined />,
-              },
+              // {
+              //   key: "account/list-teachers",
+              //   label: "Giáo viên",
+              //   icon: <UserOutlined />,
+              // },
+              // {
+              //   key: "account/list-students",
+              //   label: "Sinh viên",
+              //   icon: <IdcardOutlined />,
+              // },
             ],
           },
           {

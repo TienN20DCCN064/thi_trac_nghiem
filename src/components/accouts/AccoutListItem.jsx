@@ -137,7 +137,7 @@ const AccoutListItem = ({ data = [], onDataChange }) => {
         if (record.vai_tro === "GiaoVu" || record.vai_tro === "GiaoVien") {
           return (
             <CellDisplay
-              table="tai_khoan_giao_vien"
+              table="tai_khoan_nguoi_dung"
               id={record.id_tai_khoan}
               fieldName="ma_gv"
             />
@@ -145,7 +145,7 @@ const AccoutListItem = ({ data = [], onDataChange }) => {
         } else if (record.vai_tro === "SinhVien") {
           return (
             <CellDisplay
-              table="tai_khoan_sinh_vien"
+              table="tai_khoan_nguoi_dung"
               id={record.id_tai_khoan}
               fieldName="ma_sv"
             />

@@ -7,7 +7,7 @@ const CellDisplay = ({
   fieldHo = "ho",
   fieldTen = "ten",
   fieldName = null,
-  upperCase = false, // ✅ thêm thuộc tính tùy chọn
+  upperCase = false,
 }) => {
   const [text, setText] = React.useState("----");
 
@@ -17,8 +17,13 @@ const CellDisplay = ({
       return;
     }
 
-    hamChung
-      .getOne(table, id)
+    // Nếu là bảng tai_khoan_nguoi_dung → dùng hàm đặc biệt
+    const fetchData =
+      table === "tai_khoan_nguoi_dung"
+        ? hamChung.getOneInfUserByid_tai_khoan(id)
+        : hamChung.getOne(table, id);
+
+    fetchData
       .then((res) => {
         if (!res) {
           setText("----");
@@ -26,15 +31,18 @@ const CellDisplay = ({
         }
 
         let value = "----";
+
+        // Nếu có fieldName (ma_sv / ma_gv)
         if (fieldName && res[fieldName]) {
           value = res[fieldName];
-        } else if (res[fieldHo] && res[fieldTen]) {
+        }
+        // Nếu là người dùng (họ tên)
+        else if (res[fieldHo] && res[fieldTen]) {
           value = `${res[fieldHo]} ${res[fieldTen]}`;
         } else {
           value = id;
         }
 
-        // ✅ Nếu có thuộc tính upperCase thì in hoa text
         setText(upperCase ? value.toUpperCase() : value);
       })
       .catch(() => setText("----"));
@@ -42,5 +50,6 @@ const CellDisplay = ({
 
   return <>{text}</>;
 };
+
 
 export default CellDisplay;

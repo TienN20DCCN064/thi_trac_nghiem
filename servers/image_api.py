@@ -40,9 +40,8 @@ def upload_image():
 
         # Upload trực tiếp từ bộ nhớ (file stream)
         result = cloudinary.uploader.upload(
-            file,                    # Không cần lưu tạm
-            public_id=unique_name,    # tên file có timestamp
-            folder="uploads"          # tùy chọn: thư mục trên Cloudinary
+            file,
+            public_id=unique_name
         )
 
         return jsonify({

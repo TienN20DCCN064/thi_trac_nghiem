@@ -11,24 +11,31 @@ const HeaderUserInfo = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
-  // Lấy thông tin người dùng khi component mount
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
         const userInfo = getUserInfo(); // Lấy thông tin từ localStorage
         console.log("User info from localStorage:", userInfo);
+
         if (userInfo?.id_tai_khoan) {
           const response = await hamChiTiet.getUserInfoByAccountId(
             userInfo.id_tai_khoan
           );
           console.log("Thông tin người dùng:", response);
-          setUser(response); // Giả sử API trả về dữ liệu trong trường 'data'
+
+          if (response !== undefined && response !== null) {
+            setUser(response); // API trả về dữ liệu → set user
+          } else {
+            // Nếu không tìm thấy user → quay về login
+            navigate("/login");
+          }
         } else {
-          throw new Error("Không tìm thấy id_tai_khoan");
+          // Nếu localStorage không có id_tai_khoan → quay về login
+          navigate("/login");
         }
       } catch (error) {
         console.error("Lỗi khi lấy thông tin người dùng:", error);
-        navigate("/login"); // Chuyển hướng về login nếu lỗi
+        navigate("/login"); // Quay về login nếu có lỗi
       }
     };
 

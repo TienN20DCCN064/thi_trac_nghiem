@@ -7,11 +7,12 @@ import {
   PlusOutlined,
 } from "@ant-design/icons";
 import { useDispatch } from "react-redux";
-import CellDisplay from "../../components/common/CellDisplay.jsx";
+// import CellDisplay from "../../components/common/CellDisplay.jsx";
 import { createActions } from "../../redux/actions/factoryActions.js";
 import hamChung from "../../services/service.hamChung.js";
 import UserImage from "../common/UserImage.jsx";
-import moment from "moment";
+// import moment from "moment";
+import CellDisplay from "../common/CellDisplay.jsx";
 
 const teacherSubjectActions = createActions("giao_vien");
 
@@ -22,8 +23,10 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState("view");
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [taiKhoanList, setTaiKhoanList] = useState([]);
   const [formData, setFormData] = useState({
     ma_gv: "",
+    id_tai_khoan: null, // 👈 thêm dòng này
     ho: "",
     ten: "",
     hoc_vi: "",
@@ -34,6 +37,23 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
     email: "",
   });
   const [khoaList, setKhoaList] = useState([]);
+
+  useEffect(() => {
+    const fetchTaiKhoan = async () => {
+      try {
+        const data = await hamChung.getAll("tai_khoan");
+
+        // 🔥 Lọc chỉ lấy tài khoản sinh viên
+        const filtered = (data || []).filter((tk) => tk.vai_tro !== "SinhVien");
+
+        setTaiKhoanList(filtered);
+      } catch (err) {
+        console.error("Lỗi lấy tài khoản:", err);
+      }
+    };
+
+    fetchTaiKhoan();
+  }, []);
 
   // Lấy danh sách khoa để chọn trong form
   useEffect(() => {
@@ -73,12 +93,14 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
 
   // Xử lý khi submit form
   const handleSubmit = async () => {
+    console.log("Dữ liệu form trước khi submit:", formData);  
     if (
       !formData.ma_gv ||
+      !formData.id_tai_khoan || // 👈 bắt buộc chọn tài khoản
       !formData.ho ||
       !formData.ten ||
       !formData.hoc_vi ||
-      !formData.ma_khoa
+      !formData.ma_khoa 
     ) {
       message.error("Vui lòng nhập đầy đủ thông tin bắt buộc!");
       return;
@@ -89,7 +111,7 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
     // Nếu có file mới
     if (formData.file) {
       try {
-        const res = await hamChung.uploadFile(formData.file);
+        const res = await hamChung.uploadImage(formData.file);
         hinhAnhId = res.publicId;
       } catch (err) {
         message.error("Upload hình ảnh thất bại!");
@@ -118,6 +140,8 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
               ma_khoa: "",
               hinh_anh: "",
               ghi_chu: "",
+              email: "",
+              id_tai_khoan: null,
             });
             onDataChange();
           } else {
@@ -179,6 +203,18 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
       title: "Mã GV",
       dataIndex: "ma_gv",
       key: "ma_gv",
+    },
+    {
+      title: "Tài khoản",
+      dataIndex: "id_tai_khoan",
+      key: "id_tai_khoan",
+      render: (value, record) => (
+        <CellDisplay
+          table="tai_khoan"
+          id={record.id_tai_khoan}
+          fieldName={"ten_dang_nhap"}
+        />
+      ),
     },
     {
       title: "Hình ảnh",
@@ -251,6 +287,7 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
               setSelectedRecord(record);
               setFormData({
                 ma_gv: record.ma_gv,
+                id_tai_khoan: record.id_tai_khoan, // 👈 thêm dòng này
                 ho: record.ho,
                 ten: record.ten,
                 hoc_vi: record.hoc_vi,
@@ -259,6 +296,7 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
                 ghi_chu: record.ghi_chu || "",
                 email: record.email || "", // 👈 thêm dòng này
               });
+
               setModalMode("edit");
               setModalVisible(true);
             }}
@@ -325,6 +363,8 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
               ma_khoa: "",
               hinh_anh: "",
               ghi_chu: "",
+              email: "",
+              id_tai_khoan: null,
             });
             setModalMode("create");
             setModalVisible(true);
@@ -381,6 +421,8 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
             ma_khoa: "",
             hinh_anh: "",
             ghi_chu: "",
+            email: "",
+            id_tai_khoan: null,
           });
         }}
         footer={
@@ -403,6 +445,8 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
                       ma_khoa: "",
                       hinh_anh: "",
                       ghi_chu: "",
+                      email: "",
+                      id_tai_khoan: null,
                     });
                   }}
                 >
@@ -480,6 +524,28 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
                 maxLength={50}
               />
             </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", marginBottom: 8 }}>
+                Tài khoản đăng nhập
+              </label>
+              <Select
+                value={formData.id_tai_khoan}
+                placeholder="Chọn tài khoản"
+                onChange={(value) =>
+                  setFormData({ ...formData, id_tai_khoan: value })
+                }
+                style={{ width: "100%" }}
+                showSearch
+                optionFilterProp="children"
+              >
+                {taiKhoanList.map((tk) => (
+                  <Select.Option key={tk.id_tai_khoan} value={tk.id_tai_khoan}>
+                    {tk.ten_dang_nhap} — {tk.vai_tro}
+                  </Select.Option>
+                ))}
+              </Select>
+            </div>
+
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: "block", marginBottom: 8 }}>Họ</label>
               <Input

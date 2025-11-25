@@ -50,7 +50,9 @@ const hamChung = {
   async getListExamsByDangKyThi(id_dang_ky_thi) {
     return getListExamsByDangKyThi(id_dang_ky_thi);
   },
-
+  async getOneInfUserByid_tai_khoan(id_tai_khoan) {
+    return getOneInfUserByid_tai_khoan(id_tai_khoan);
+  },
   async getAll(tableName) {
     return getAll(tableName);
   },
@@ -427,6 +429,25 @@ async function getListExamsByDangKyThi(id_dang_ky_thi) {
     throw err;
   }
 }
+async function getOneInfUserByid_tai_khoan(id_tai_khoan) {
+  const dataGiaoVien = await hamChung.getAll("giao_vien");
+  const dataSinhVien = await hamChung.getAll("sinh_vien");
+
+  // 1) Tìm trong giáo viên
+  let infoUser = dataGiaoVien.find(
+    (gv) => gv.id_tai_khoan === id_tai_khoan
+  );
+
+  // 2) Nếu chưa có thì tìm trong sinh viên
+  if (!infoUser) {
+    infoUser = dataSinhVien.find(
+      (sv) => sv.id_tai_khoan === id_tai_khoan
+    );
+  }
+
+  return infoUser || null;
+}
+
 
 
 
@@ -611,7 +632,7 @@ async function uploadImage(file) {
     const formData = new FormData();
     formData.append("image", file);
 
-    const res = await fetch(`${API_IMAGE}/image`, {
+    const res = await fetch(`${API_IMAGE}`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
