@@ -133,21 +133,29 @@ const LoginPage = () => {
       style={{
         minHeight: "100vh",
         display: "flex",
-        justifyContent: "center",
+        justifyContent: "flex-end", // 🔥 đẩy sang phải
         alignItems: "center",
-        background: "linear-gradient(135deg, #74ABE2 0%, #5563DE 100%)",
+        paddingRight: 10, // 🔥 cách lề phải 80px
+        // background: "linear-gradient(135deg, #74ABE2 0%, #5563DE 100%)",
+        background: "#ebeef4ff",
       }}
     >
       {contextHolder}
 
       <Card
         style={{
-          width: 400,
-          padding: "30px 35px",
+          width: 500,
+          // padding: "30px 35px",
           textAlign: "center",
-          borderRadius: 16,
-          boxShadow: "0 6px 25px rgba(0,0,0,0.15)",
-          background: "rgba(255,255,255,0.95)",
+          // borderRadius: 16,
+          // boxShadow: "0 6px 25px rgba(0,0,0,0.15)",
+          background: "white",
+          borderRadius: 20,
+          boxShadow: "0 15px 35px rgba(0,0,0,0.1)",
+          padding: "40px 45px",
+          border: "1px solid #dce3f0",
+
+
           backdropFilter: "blur(6px)",
           transition: "0.3s",
         }}

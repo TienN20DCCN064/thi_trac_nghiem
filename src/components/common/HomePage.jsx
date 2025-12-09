@@ -29,7 +29,7 @@ const HomePage = () => {
       icon: <SettingOutlined style={{ fontSize: 64, color: "#722ed1" }} />,
       actions: [
         { label: "Quản lý tài khoản", icon: <TeamOutlined /> },
-        { label: "Quản lý kỳ thi", icon: <BookOutlined /> },
+        { label: "Quản lý thông tin kỳ thi", icon: <BookOutlined /> },
       ],
     },
     GiaoVien: {

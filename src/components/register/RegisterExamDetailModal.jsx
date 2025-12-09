@@ -187,9 +187,13 @@ const RegisterExamDetailModal = ({
     setLoading(true);
     try {
       let payLoad = await hamChung.getOne("dang_ky_thi", id_dang_ky_thi);
-      const dataOneAccoutGv = await hamChung.getOne(
-        "tai_khoan_giao_vien",
-        getUserInfo().id_tai_khoan
+      // const dataOneAccoutGv = await hamChung.getOne(
+      //   "tai_khoan_giao_vien",
+      //   getUserInfo().id_tai_khoan
+      // );
+       const dataAllGiaoVien = await hamChung.getAll("giao_vien");
+      const dataOneAccoutGv = dataAllGiaoVien.find(
+        (gv) => gv.id_tai_khoan === getUserInfo().id_tai_khoan
       );
       payLoad.trang_thai = "Tu_choi";
       payLoad.nguoi_phe_duyet = dataOneAccoutGv?.ma_gv || null;

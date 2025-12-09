@@ -140,10 +140,14 @@ const FormAddExam = ({ visible, onCancel }) => {
       const values = await formRef.current.validateFields();
 
       const id_tai_khoanUser = getUserInfo().id_tai_khoan;
-      const gvData = await hamChung.getOne(
-        "tai_khoan_giao_vien",
-        id_tai_khoanUser
+      const dataAllGiaoVien = await hamChung.getAll("giao_vien");
+      const gvData = dataAllGiaoVien.find(
+        (gv) => gv.id_tai_khoan === id_tai_khoanUser
       );
+      // const gvData = await hamChung.getOne(
+      //   "tai_khoan_giao_vien",
+      //   id_tai_khoanUser
+      // );
       const ma_gv = gvData?.ma_gv || "";
 
       const ngayThiSQL = values.ngay_thi

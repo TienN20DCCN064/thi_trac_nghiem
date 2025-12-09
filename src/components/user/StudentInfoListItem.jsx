@@ -110,15 +110,22 @@ const StudentInfoListItem = ({ data = [], onDataChange }) => {
     : [];
   // Xử lý khi submit form
   const handleSubmit = async () => {
-    if (
-      !formData.ma_sv ||
-      !formData.id_tai_khoan ||
-      !formData.ho ||
-      !formData.ten ||
-      !formData.phai ||
-      !formData.ma_lop
-    ) {
-      message.error("Vui lòng nhập đầy đủ thông tin bắt buộc!");
+    const requiredFields = [
+      { key: "ma_sv", label: "Mã sinh viên" },
+      // { key: "id_tai_khoan", label: "Tài khoản" },
+      { key: "ho", label: "Họ" },
+      { key: "ten", label: "Tên" },
+      { key: "phai", label: "Phái" },
+      { key: "ma_lop", label: "Mã lớp" },
+      { key: "email", label: "Email" },
+    ];
+
+    const missingFields = requiredFields
+      .filter((field) => !formData[field.key])
+      .map((field) => field.label);
+
+    if (missingFields.length > 0) {
+      message.error(`Vui lòng nhập: ${missingFields.join(", ")}`);
       return;
     }
 
@@ -526,8 +533,9 @@ const StudentInfoListItem = ({ data = [], onDataChange }) => {
               <Select
                 value={formData.id_tai_khoan}
                 placeholder="Chọn tài khoản"
+                allowClear
                 onChange={(value) =>
-                  setFormData({ ...formData, id_tai_khoan: value })
+                  setFormData({ ...formData, id_tai_khoan: value ?? null })
                 }
                 style={{ width: "100%" }}
                 showSearch

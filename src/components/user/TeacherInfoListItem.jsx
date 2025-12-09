@@ -26,7 +26,7 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
   const [taiKhoanList, setTaiKhoanList] = useState([]);
   const [formData, setFormData] = useState({
     ma_gv: "",
-    id_tai_khoan: null, // 👈 thêm dòng này
+    id_tai_khoan: null,
     ho: "",
     ten: "",
     hoc_vi: "",
@@ -93,16 +93,23 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
 
   // Xử lý khi submit form
   const handleSubmit = async () => {
-    console.log("Dữ liệu form trước khi submit:", formData);  
-    if (
-      !formData.ma_gv ||
-      !formData.id_tai_khoan || // 👈 bắt buộc chọn tài khoản
-      !formData.ho ||
-      !formData.ten ||
-      !formData.hoc_vi ||
-      !formData.ma_khoa 
-    ) {
-      message.error("Vui lòng nhập đầy đủ thông tin bắt buộc!");
+    console.log("Dữ liệu form trước khi submit:", formData);
+    const requiredFields = [
+      { key: "ma_gv", label: "Mã giáo viên" },
+      // { key: "id_tai_khoan", label: "Tài khoản" }, // nếu muốn bắt buộc chọn
+      { key: "ho", label: "Họ" },
+      { key: "ten", label: "Tên" },
+      { key: "hoc_vi", label: "Học vị" },
+      { key: "ma_khoa", label: "Mã khoa" },
+      { key: "email", label: "Email" },
+    ];
+
+    const missingFields = requiredFields
+      .filter((field) => !formData[field.key])
+      .map((field) => field.label);
+
+    if (missingFields.length > 0) {
+      message.error(`Vui lòng nhập: ${missingFields.join(", ")}`);
       return;
     }
 
@@ -150,6 +157,7 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
         })
       );
     } else if (modalMode === "edit") {
+      console.log("Payload gửi đi khi cập nhật:", payload);
       dispatch(
         teacherSubjectActions.creators.updateRequest(
           formData.ma_gv,
@@ -166,6 +174,8 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
                 ma_khoa: "",
                 hinh_anh: "",
                 ghi_chu: "",
+                email: "",
+                id_tai_khoan: "",
               });
               onDataChange();
             } else {
@@ -287,7 +297,7 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
               setSelectedRecord(record);
               setFormData({
                 ma_gv: record.ma_gv,
-                id_tai_khoan: record.id_tai_khoan, // 👈 thêm dòng này
+                id_tai_khoan: record.id_tai_khoan ?? null,
                 ho: record.ho,
                 ten: record.ten,
                 hoc_vi: record.hoc_vi,
@@ -531,8 +541,9 @@ const InfoTeacherListItem = ({ data = [], onDataChange }) => {
               <Select
                 value={formData.id_tai_khoan}
                 placeholder="Chọn tài khoản"
+                allowClear
                 onChange={(value) =>
-                  setFormData({ ...formData, id_tai_khoan: value })
+                  setFormData({ ...formData, id_tai_khoan: value ?? null })
                 }
                 style={{ width: "100%" }}
                 showSearch

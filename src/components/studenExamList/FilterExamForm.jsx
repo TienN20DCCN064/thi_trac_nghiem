@@ -169,7 +169,7 @@ const FilterExamForm = () => {
     }
   };
 
- const handleExportExcel = async () => {
+  const handleExportExcel = async () => {
     if (!listExamsStudent || listExamsStudent.length === 0) return;
 
     const wb = XLSX.utils.book_new();
@@ -199,51 +199,85 @@ const FilterExamForm = () => {
     // --- Header trước bảng điểm ---
     ws_data.push([
       "HỌC VIỆN CÔNG NGHỆ BƯU CHÍNH VIỄN THÔNG", // A1
-      "", "", "",
+      "",
+      "",
+      "",
       "BẢNG ĐIỂM THI KẾT THÚC HỌC PHẦN", // E1 (Cần in đậm)
-      "", "", "", "", "",
+      "",
+      "",
+      "",
+      "",
+      "",
     ]);
     ws_data.push([
       "CƠ SỞ THÀNH HỒ CHÍ MINH",
-      "", "", "", "", "", "", "", "", "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
     ]);
     ws_data.push([
       "TRUNG TÂM KHẢO THÍ VÀ ĐẢM BẢO CLGD", // A3 (Cần in đậm)
-      "", "", "", "", "", "", "", "", "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
     ]);
     ws_data.push([]); // dòng trống
 
     ws_data.push([
       `Mã môn học: ${monHoc?.ma_mh || "---"}`,
-      "", "", "",
+      "",
+      "",
+      "",
       `Tên môn học: ${monHoc?.ten_mh || "---"}`,
-      "", "", "", "", "",
+      "",
+      "",
+      "",
+      "",
+      "",
     ]);
     ws_data.push([
       `Ngày thi: ${ngayThi}`,
-      "", "", "",
+      "",
+      "",
+      "",
       `Thời lượng thi: ${thoiLuongThi || "---"} phút`,
-      "", "", "", "", "",
+      "",
+      "",
+      "",
+      "",
+      "",
     ]);
     ws_data.push([]); // dòng trống
 
     // --- Header bảng điểm: 2 dòng (dòng 7 và 8) ---
     ws_data.push([
       "STT",
-      "Họ và tên SV",
       "Mã sinh viên",
+      "Họ và tên SV",
       "Mã lớp",
       "Số tờ giấy thi",
       "Ký tên",
       "Số phách",
-      "Điểm thi", 
+      "Điểm thi",
       "",
       "Ghi chú",
     ]);
     ws_data.push([
       "", // STT
-      "", // Họ và tên SV
       "", // Mã sinh viên
+      "", // Họ và tên SV
       "", // Mã lớp
       "", // Số tờ giấy thi
       "", // Ký tên
@@ -260,14 +294,14 @@ const FilterExamForm = () => {
 
       ws_data.push([
         index + 1,
-        `${sv.ho} ${sv.ten}`,
-        sv.ma_sv,
+        sv.ma_sv, // Mã SV lên trước
+        `${sv.ho} ${sv.ten}`, // Họ tên xuống sau
         getIfOneSv?.ma_lop || "",
         "", // Số tờ giấy thi
         "", // Ký tên
         "", // Số phách
-        sv.diem, // Đ.số (cột 7)
-        numberToWords(sv.diem), // Đ.chữ (cột 8)
+        sv.diem,
+        numberToWords(sv.diem),
         sv.ghi_chu || "",
       ]);
     }
@@ -307,7 +341,11 @@ const FilterExamForm = () => {
       ws[cellBangDiem].s = ws[cellBangDiem].s || {};
       ws[cellBangDiem].s.font = { bold: true, sz: 14 }; // Tăng size cho nổi bật
       // Căn giữa sau khi merge E1:J1
-      ws[cellBangDiem].s.alignment = { horizontal: "center", vertical: "center", wrapText: true }; 
+      ws[cellBangDiem].s.alignment = {
+        horizontal: "center",
+        vertical: "center",
+        wrapText: true,
+      };
     }
 
     // 2. "TRUNG TÂM KHẢO THÍ VÀ ĐẢM BẢO CLGD" (r:2, c:0)
@@ -318,7 +356,6 @@ const FilterExamForm = () => {
       // Căn lề trái cho tên Trung tâm (A3:D3)
       ws[cellTrungTam].s.alignment = { horizontal: "left", vertical: "top" };
     }
-
 
     // --- Căn giữa & in đậm header bảng (dòng 7 & 8) ---
     ws["!rows"] = [];
@@ -352,8 +389,8 @@ const FilterExamForm = () => {
     // --- Chiều rộng cột ---
     ws["!cols"] = [
       { wpx: 40 }, // STT
-      { wpx: 170 }, // Họ và tên SV
       { wpx: 90 }, // Mã SV
+      { wpx: 170 }, // Họ và tên SV
       { wpx: 90 }, // Mã lớp
       { wpx: 60 }, // Số tờ giấy
       { wpx: 80 }, // Ký tên
@@ -373,6 +410,13 @@ const FilterExamForm = () => {
       key: "stt",
       width: 40,
       render: (_, __, index) => index + 1,
+    },
+
+    {
+      title: <div style={{ textAlign: "center" }}>Mã sinh viên</div>,
+      dataIndex: "ma_sv",
+      key: "ma_sv",
+      width: 140,
     },
     {
       title: <div style={{ textAlign: "center" }}>Họ và tên SV</div>,
@@ -395,8 +439,8 @@ const FilterExamForm = () => {
             style={{
               position: "absolute",
               top: 0,
-              left: "130px",
-              width: "calc(170px - 130px)",
+              left: "120px",
+              width: "calc(170px - 120px)",
               wordBreak: "break-word",
             }}
           >
@@ -408,12 +452,6 @@ const FilterExamForm = () => {
           </div>
         </div>
       ),
-    },
-    {
-      title: <div style={{ textAlign: "center" }}>Mã sinh viên</div>,
-      dataIndex: "ma_sv",
-      key: "ma_sv",
-      width: 140,
     },
     {
       title: <div style={{ textAlign: "center" }}>Mã lớp</div>,
