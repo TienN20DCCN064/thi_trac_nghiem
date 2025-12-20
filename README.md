@@ -3,9 +3,11 @@
 ## 🎯 Introduction
 The **Online Multiple-Choice Exam System** is an application that allows users to participate in online multiple-choice exams, while also enabling administrators to manage questions, exams, and evaluate results. Users can register, log in, take exams, and view their results immediately after submission.
 
+
 ## 📺 Demo
-🎥 Video demo website:  
-👉 https://www.youtube.com/watch?v=WxE7SrDnLA8
+🎥 **Online Multiple-Choice Exam System – Demo Video**
+
+[![Demo Video](https://img.youtube.com/vi/WxE7SrDnLA8/maxresdefault.jpg)](https://www.youtube.com/watch?v=WxE7SrDnLA8)
 
 
 
