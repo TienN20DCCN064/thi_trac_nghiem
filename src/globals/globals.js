@@ -2,7 +2,7 @@
 const congAPI = 4002;
 const congAPI_image = 5000;
 const congAPI_gmail = 5002; // Phần tạo trận đấu
-const IPv4_Address = "192.168.2.145";
+const IPv4_Address = "localhost"; // Địa chỉ IP của server backend
 const USER_KEY = "user_info"; // key lưu toàn bộ thông tin user vào localStorage
 
 

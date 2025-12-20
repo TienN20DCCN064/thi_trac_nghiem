@@ -10,11 +10,6 @@ load_dotenv(dotenv_path=".env")
 # Lấy biến môi trường
 email = os.getenv("EMAIL_SENDER")
 password = os.getenv("EMAIL_PASSWORD")
-
-# # In ra kiểm tra
-# print("Email:", email)
-# print("Mật khẩu:", password)
-
 app = Flask(__name__)
 CORS(app)
 port = 5002
