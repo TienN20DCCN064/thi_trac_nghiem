@@ -125,6 +125,18 @@ const RegistrarSidebar = () => {
               { key: "question/list-question", label: "Danh sách câu hỏi" },
             ],
           },
+          {
+            key: "statistics",
+            icon: <BookOutlined />,
+            label: "Thống kê",
+            children: [
+              {
+                key: "statistics/statistics-page",
+                label: "Thống kê kỳ thi",
+                icon: <SettingOutlined />,
+              },
+            ],
+          },
         ]}
       />
     </Sider>

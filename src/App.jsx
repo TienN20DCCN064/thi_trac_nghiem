@@ -27,6 +27,7 @@ import TeacherQuestionPage from "./components/question/TeacherQuestionPage.jsx";
 import TeacherListQuestionsDelete from "./components/question/TeacherQuestionsDeleteListPage.jsx";
 import LoadingOverlay from "./components/common/LoadingOverlay.jsx";
 import LoginPage from "./components/auth/LoginPage.jsx";
+import StatisticsPage from "./components/statistics/StatisticsPage.jsx";
 import PrimaryKeys from "./globals/databaseKey.js"; // 👈 import PrimaryKeys
 import "./styles/App.css";
 
@@ -105,6 +106,7 @@ function App() {
               {/* <Route path="/exam-taking" element={<StudentExamTakingPage />} /> */}
               <Route path="/exam-list" element={<StudentExamViewPage />} />
               <Route path="/watch-exam/list-exam" element={<AdminStudentExamPage />} />
+              <Route path="/statistics/statistics-page" element={<StatisticsPage />} />
             </Routes>
           </Content>
         </Layout>
