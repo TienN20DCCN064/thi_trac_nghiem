@@ -31,7 +31,7 @@ const FilterExamForm = () => {
         hamChung.getAll("lop"),
       ]);
       const test = await hamChitiet.getUserInfoByAccountId(
-        getUserInfo().id_tai_khoan
+        getUserInfo().id_tai_khoan,
       );
 
       setDsGiaoVien(giaoVienData);
@@ -91,7 +91,7 @@ const FilterExamForm = () => {
     try {
       const dataDangKyThi = await hamChung.getAll("dang_ky_thi");
       const getOneDangKyThi = dataDangKyThi.find(
-        (dk) => dk.ma_lop === ma_lop && dk.ma_mh === ma_mh
+        (dk) => dk.ma_lop === ma_lop && dk.ma_mh === ma_mh,
       );
 
       if (!getOneDangKyThi) {
@@ -100,16 +100,16 @@ const FilterExamForm = () => {
       }
 
       const listExamsStudent = await hamChung.getListExamsByDangKyThi(
-        getOneDangKyThi.id_dang_ky_thi
+        getOneDangKyThi.id_dang_ky_thi,
       );
       const dataSinhVien = await hamChung.getAll("sinh_vien");
       const dataSinhVienByLop = dataSinhVien.filter(
-        (sv) => sv.ma_lop === ma_lop
+        (sv) => sv.ma_lop === ma_lop,
       );
 
       const mergedData = dataSinhVienByLop.map((sv) => {
         const baiThi = listExamsStudent?.data?.find(
-          (b) => b.ma_sv === sv.ma_sv
+          (b) => b.ma_sv === sv.ma_sv,
         );
         let diem = baiThi?.diem ?? "---";
         let trang_thai = baiThi?.trang_thai || "---";
@@ -180,14 +180,14 @@ const FilterExamForm = () => {
     const getOneDangKyThi = dataDangKyThi.find(
       (dk) =>
         dk.ma_lop === form.getFieldValue("ma_lop") &&
-        dk.ma_mh === form.getFieldValue("ma_mh")
+        dk.ma_mh === form.getFieldValue("ma_mh"),
     );
 
     const ngayThiRaw = getOneDangKyThi?.ngay_thi;
     const thoiLuongThi = getOneDangKyThi?.thoi_gian;
     const monHoc = await hamChung.getOne(
       "mon_hoc",
-      form.getFieldValue("ma_mh")
+      form.getFieldValue("ma_mh"),
     );
 
     let ngayThi = "---";
@@ -305,9 +305,27 @@ const FilterExamForm = () => {
         sv.ghi_chu || "",
       ]);
     }
+    // Xuống 3 dòng trống
+    ws_data.push([]);
+    ws_data.push([]);
+    ws_data.push([]);
+
+    // Dòng chữ ký
+    ws_data.push([
+      "", // A
+      "GIÁO VIÊN CHẤM THI", // B
+      "", // C (merge với B)
+      "TRƯỞNG BỘ MÔN", // D
+      "", // E (merge với D)
+      "", // F
+      "TRƯỞNG KHẢO THÍ", // G
+      "", // H (merge với G)
+    ]);
 
     const ws = XLSX.utils.aoa_to_sheet(ws_data);
 
+    // --- Merge cells header ---
+    ws["!merges"] = ws["!merges"] || [];
     // --- Merge cells header ---
     ws["!merges"] = [
       { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, // HỌC VIỆN... (A1:D1)
@@ -332,6 +350,13 @@ const FilterExamForm = () => {
       // Giữ nguyên merge Điểm thi
       { s: { r: 7, c: 7 }, e: { r: 7, c: 8 } }, // Điểm thi merge Đ.số + Đ.chữ (r7, c7 -> r7, c8)
     ];
+    const signRow = ws_data.length - 1;
+
+    ws["!merges"].push(
+      { s: { r: signRow, c: 1 }, e: { r: signRow, c: 2 } }, // B–C
+      { s: { r: signRow, c: 3 }, e: { r: signRow, c: 4 } }, // D–E
+      { s: { r: signRow, c: 6 }, e: { r: signRow, c: 7 } }, // G–H
+    );
 
     // --- Áp dụng style in đậm cho 2 tiêu đề chính (BỔ SUNG) ---
 

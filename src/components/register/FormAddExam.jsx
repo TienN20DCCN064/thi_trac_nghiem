@@ -12,6 +12,7 @@ import {
   message,
   Typography,
 } from "antd";
+import dayjs from "dayjs";
 import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import "../../styles/FormAddQuestionList.css";
 import hamChung from "../../services/service.hamChung.js";
@@ -85,7 +86,7 @@ const FormAddExam = ({ visible, onCancel }) => {
         chapters.map((ch) => ({
           ...ch,
           availableQuestions: data[ch.chapterNumber] || 0,
-        }))
+        })),
       );
     } catch (error) {
       console.error("Lỗi tải số câu hỏi:", error);
@@ -131,7 +132,7 @@ const FormAddExam = ({ visible, onCancel }) => {
   const checkExistsInDatabase = async (ma_lop, ma_mon) => {
     const dataDangKyThi = await hamChung.getAll("dang_ky_thi");
     return dataDangKyThi.some(
-      (item) => item.ma_lop === ma_lop && item.ma_mh === ma_mon
+      (item) => item.ma_lop === ma_lop && item.ma_mh === ma_mon,
     );
   };
 
@@ -142,12 +143,8 @@ const FormAddExam = ({ visible, onCancel }) => {
       const id_tai_khoanUser = getUserInfo().id_tai_khoan;
       const dataAllGiaoVien = await hamChung.getAll("giao_vien");
       const gvData = dataAllGiaoVien.find(
-        (gv) => gv.id_tai_khoan === id_tai_khoanUser
+        (gv) => gv.id_tai_khoan === id_tai_khoanUser,
       );
-      // const gvData = await hamChung.getOne(
-      //   "tai_khoan_giao_vien",
-      //   id_tai_khoanUser
-      // );
       const ma_gv = gvData?.ma_gv || "";
 
       const ngayThiSQL = values.ngay_thi
@@ -171,7 +168,7 @@ const FormAddExam = ({ visible, onCancel }) => {
 
       if (exists) {
         message.error(
-          `Mã lớp ${values.ma_lop} đã đăng ký thi môn ${values.ma_mh}. Vui lòng chọn mã lớp hoặc môn học khác.`
+          `Mã lớp ${values.ma_lop} đã đăng ký thi môn ${values.ma_mh}. Vui lòng chọn mã lớp hoặc môn học khác.`,
         );
         return;
       }
@@ -205,7 +202,7 @@ const FormAddExam = ({ visible, onCancel }) => {
         }
       }
 
-      message.error(error.message || "Form chưa hợp lệ hoặc lỗi server!");
+      message.error(error.message || "Form chưa hợp lệ!");
     }
   };
 
@@ -232,7 +229,11 @@ const FormAddExam = ({ visible, onCancel }) => {
     const text = Object.entries(questionCounts)
       .map(([chapter, count]) => `Chương ${chapter}: ${count} câu hỏi`)
       .join(", ");
-    return `Số câu hỏi đã soạn: ${text}`;
+    return (
+      <div
+        dangerouslySetInnerHTML={{ __html: `Số câu hỏi đã soạn:<br />${text}` }}
+      />
+    );
   };
 
   return (
@@ -314,6 +315,9 @@ const FormAddExam = ({ visible, onCancel }) => {
                 style={{ width: "100%" }}
                 format="DD/MM/YYYY"
                 placeholder="Chọn ngày thi"
+                disabledDate={(current) =>
+                  current && current <= dayjs().startOf("day")
+                }
               />
             </Form.Item>
           </Col>
@@ -359,7 +363,7 @@ const FormAddExam = ({ visible, onCancel }) => {
           {renderQuestionCountText()}
         </div>
 
-        <Form.Item label="Chi tiết chương">
+        <Form.Item label="Cấu trúc đề thi (theo chương)">
           <Row gutter={8} style={{ marginBottom: 8 }}>
             <Col span={8}>
               <Text strong>Chương</Text>
@@ -407,12 +411,18 @@ const FormAddExam = ({ visible, onCancel }) => {
                   rules={[
                     { required: true, message: "Vui lòng nhập số câu!" },
                     {
-                      validator: (_, value) =>
-                        value <= chapter.availableQuestions
-                          ? Promise.resolve()
-                          : Promise.reject(
-                              `Số câu không được vượt quá ${chapter.availableQuestions}!`
-                            ),
+                      validator: (_, value) => {
+                        if (!value) return Promise.resolve();
+
+                        if (value <= chapter.availableQuestions) {
+                          return Promise.resolve();
+                        }
+                        return Promise.reject(
+                          new Error(
+                            `Chương ${chapter.chapterNumber}: số câu không được vượt quá ${chapter.availableQuestions} câu!`,
+                          ),
+                        );
+                      },
                     },
                   ]}
                   noStyle
