@@ -32,6 +32,7 @@ import {
 } from "@ant-design/icons";
 import axios from "axios";
 import CustomBreadcrumb from "../CustomBreadcrumb.jsx";
+import hamChung from "../../services/service.hamChung.js";
 import {
   getToken,
   getLinkCongAPI,
@@ -43,9 +44,11 @@ const StatisticsPage = () => {
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(0);
   const [passingScore, setPassingScore] = useState(5);
+  const [selectedSubject, setSelectedSubject] = useState(null);
   const [loading, setLoading] = useState(false);
   const [statisticsData, setStatisticsData] = useState(null);
   const [examList, setExamList] = useState([]);
+  const [subjectList, setSubjectList] = useState([]);
   const [studentCountByExam, setStudentCountByExam] = useState([]);
   const [scoreDistribution, setScoreDistribution] = useState([]);
 
@@ -75,6 +78,16 @@ const StatisticsPage = () => {
     }
   };
 
+  // Lấy danh sách môn học
+  const fetchSubjectList = async () => {
+    try {
+      const data = await hamChung.getAll("mon_hoc");
+      setSubjectList(data);
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách môn học:", error);
+    }
+  };
+
   // Lấy thống kê bài thi theo kỳ thi
   const fetchStatistics = async () => {
     setLoading(true);
@@ -100,7 +113,8 @@ const StatisticsPage = () => {
           const examDate = new Date(exam.ngay_thi);
           const yearMatch = examDate.getFullYear() === year;
           const monthMatch = month === 0 || examDate.getMonth() + 1 === month;
-          return yearMatch && monthMatch;
+          const subjectMatch = selectedSubject === null || exam.ma_mh === selectedSubject;
+          return yearMatch && monthMatch && subjectMatch;
         }
         return false;
       });
@@ -181,8 +195,9 @@ const StatisticsPage = () => {
 
   useEffect(() => {
     fetchExamList();
+    fetchSubjectList();
     fetchStatistics();
-  }, [year, month, passingScore]);
+  }, [year, month, passingScore, selectedSubject]);
 
   const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff7c7c", "#8dd1e1"];
 
@@ -249,6 +264,25 @@ const StatisticsPage = () => {
               />
             </Col>
             <Col xs={24} sm={12} md={5}>
+              <label style={{ fontWeight: 600, fontSize: "16px" }}>
+                Môn học:
+              </label>
+              <Select
+                value={selectedSubject}
+                onChange={setSelectedSubject}
+                allowClear
+                placeholder="Chọn môn học (tùy chọn)"
+                options={[
+                  { label: "Tất cả môn học", value: null },
+                  ...subjectList.map((subject) => ({
+                    label: subject.ten_mh,
+                    value: subject.ma_mh,
+                  })),
+                ]}
+                style={{ width: "100%", marginTop: 10 }}
+              />
+            </Col>
+            <Col xs={24} sm={12} md={4}>
               <label style={{ fontWeight: 600, fontSize: "16px" }}>
                 Điểm chuẩn:
               </label>
