@@ -9,7 +9,7 @@ import dotenv from "dotenv";
 dotenv.config(); // Đọc biến môi trường từ .env
 
 const app = express();       // tạo 1 ứng dụng express
-const port = 4002;           // api chạy trên cổng
+const port = process.env.PORT || 4002;           // api chạy trên cổng
 
 app.use(cors());
 app.use(express.json());
