@@ -9,13 +9,14 @@ import dotenv from "dotenv";
 dotenv.config(); // Đọc biến môi trường từ .env
 
 const app = express();       // tạo 1 ứng dụng express
-const port = process.env.DTB_PORT || 4002;           // api chạy trên cổng
+const port = process.env.PORT || 4002;           // api chạy trên cổng
 
 app.use(cors());
 app.use(express.json());
 
 const db = mysql.createConnection({
     host: process.env.DTB_HOST,
+    port: process.env.DTB_PORT, // 👈 THÊM DÒNG NÀY
     user: process.env.DTB_USER,
     password: process.env.DTB_PASSWORD,
     database: process.env.DTB_NAME

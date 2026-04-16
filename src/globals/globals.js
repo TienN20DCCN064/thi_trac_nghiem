@@ -38,7 +38,8 @@ export const getLinkCongAPI = () => {
   // return "http://" + IPv4_Address + ":" + congAPI + "/api";
 }
 export const getLinkCongApi_notToken = () => {
-  return "http://" + IPv4_Address + ":" + congAPI + "/api_not_token";
+  // return "http://" + IPv4_Address + ":" + congAPI + "/api_not_token";
+  return "https://thi-trac-nghiem-7156.onrender.com/api_not_token";
 }
 export const getLinkCongApi_image = () => {
   // http://
