@@ -34,7 +34,8 @@ export const getRole = () => {
 }
 
 export const getLinkCongAPI = () => {
-  return "http://" + IPv4_Address + ":" + congAPI + "/api";
+  return "https://thi-trac-nghiem-7156.onrender.com/api";
+  // return "http://" + IPv4_Address + ":" + congAPI + "/api";
 }
 export const getLinkCongApi_notToken = () => {
   return "http://" + IPv4_Address + ":" + congAPI + "/api_not_token";
