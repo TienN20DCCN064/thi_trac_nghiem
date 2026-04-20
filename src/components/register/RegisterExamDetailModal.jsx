@@ -642,7 +642,7 @@ const RegisterExamDetailModal = ({
               )}
             </Descriptions>
           )}
-          <h3>Danh Sách Chương</h3>
+          <h3>Cấu trúc đề thi (theo chương)</h3>
           {mode === "edit" && (
             <div style={{ marginBottom: 16, color: "#1890ff", fontSize: 14 }}>
               {renderQuestionCountText()}
